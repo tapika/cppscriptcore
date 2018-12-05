@@ -1,0 +1,5 @@
+﻿#-----------------------------------------
+# Files to ignore
+#-----------------------------------------
+/Tools/VSModelSync/obj
+/Tools/VSModelSync/.vs
