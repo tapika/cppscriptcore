@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using System.Xml.Linq;
 
 class Program
 {
@@ -41,6 +42,37 @@ class Program
             modelFiles.Add(name, new StringBuilder());
 
         return modelFiles[name];
+    }
+
+
+    /// <summary>
+    /// Gets documentation xml file from type
+    /// </summary>
+    static XmlDocument getDocumentation(Type type)
+    {
+        String asmName = Path.GetFileNameWithoutExtension(type.Assembly.Location);
+
+        if (!xmlDocs.ContainsKey(asmName))
+        {
+            String[] docFile = Directory.GetFiles(publicAsmPath, asmName + ".xml", SearchOption.AllDirectories);
+
+            xmlDocs.Add(asmName, new XmlDocument());
+
+            if (docFile.Length != 0)
+                xmlDocs[asmName].Load(docFile[0]);
+        }
+
+        return xmlDocs[asmName];
+    }
+
+    static String getComments(XmlDocument doc, String commentStart, String xmlPath)
+    {
+        XmlNode node = doc.SelectSingleNode("//member[starts-with(@name, '" + xmlPath + "')]");
+        if (node == null)
+            return "";
+        XElement elements = XElement.Load(node.CreateNavigator().ReadSubtree());
+        String comments = String.Join("\n", elements.Elements().Select( x => commentStart + x) );
+        return comments + "\n";
     }
 
 
@@ -218,13 +250,19 @@ class Program
             sb.AppendLine("public class " + type.Name);
             sb.AppendLine("{");
 
+            XmlDocument doc = getDocumentation(type);
+
             foreach (PropertyInfo pi in type.GetProperties())
             {
                 Type pitype = pi.PropertyType;
                 if (pitype.IsEnum)
                     DumpEnum(pitype);
 
+                String propertyPath = type.Namespace  + "." + typeName + "." + pi.Name;
+
+                sb.Append(getComments(doc, "    /// ", "P:" + propertyPath));
                 sb.AppendLine("    " + pitype.Name + " " + pi.Name + ";");
+                sb.AppendLine();
             }
             sb.AppendLine("};");
             sb.AppendLine();
