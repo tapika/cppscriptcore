@@ -21,22 +21,43 @@ class Program
         }
     }
 
-    static StringBuilder sb;
     static String publicAsmPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies";
     static Dictionary<String, XmlDocument> xmlDocs = new Dictionary<string, XmlDocument>();
+    static Dictionary<String, StringBuilder> modelFiles = new Dictionary<string, StringBuilder>();
+
+
+    /// <summary>
+    /// Gets StringBuilder class where given type will be 'printed'
+    /// </summary>
+    static StringBuilder getFileFromType(Type type)
+    {
+        String asmName = Path.GetFileNameWithoutExtension(type.Assembly.Location);
+        String name = asmName;
+
+        if (type.IsEnum)
+            name += "_enums";
+
+        if (!modelFiles.ContainsKey(name))
+            modelFiles.Add(name, new StringBuilder());
+
+        return modelFiles[name];
+    }
+
+
 
     static void DumpEnum(Type enumType)
     {
-        String docXmlId = Path.GetFileNameWithoutExtension(enumType.Assembly.Location);
+        String asmName = Path.GetFileNameWithoutExtension(enumType.Assembly.Location);
+        StringBuilder sb = getFileFromType(enumType);
 
-        if (!xmlDocs.ContainsKey(docXmlId))
+        if (!xmlDocs.ContainsKey(asmName))
         {
-            String[] docFile = Directory.GetFiles(publicAsmPath, docXmlId + ".xml", SearchOption.AllDirectories);
+            String[] docFile = Directory.GetFiles(publicAsmPath, asmName + ".xml", SearchOption.AllDirectories);
 
             if (docFile.Length != 0)
             {
-                xmlDocs.Add(docXmlId, new XmlDocument());
-                xmlDocs[docXmlId].Load(docFile[0]);
+                xmlDocs.Add(asmName, new XmlDocument());
+                xmlDocs[asmName].Load(docFile[0]);
             }
         }
 
@@ -46,10 +67,10 @@ class Program
         Array values = Enum.GetValues(enumType);
         for (int i = 0; i < names.Length; i++)
         {
-            if (xmlDocs.ContainsKey(docXmlId))
+            if (xmlDocs.ContainsKey(asmName))
             {
-                string name = "F:" + enumType.FullName + "." + names[i];
-                XmlNode node = xmlDocs[docXmlId].SelectSingleNode("//member[starts-with(@name, '" + name + "')]");
+                string xmlName = "F:" + enumType.FullName + "." + names[i];
+                XmlNode node = xmlDocs[asmName].SelectSingleNode("//member[starts-with(@name, '" + xmlName + "')]");
                 sb.AppendLine("    /// " + node.InnerXml);
             }
             sb.AppendLine("    " + names[i] + " = " + (int)values.GetValue(i) + ",");
@@ -184,8 +205,6 @@ class Program
             }
         }
 
-        sb = new StringBuilder();
-
         Console.WriteLine("Processing types:");
         foreach (String typeName in classNameToType.Keys)
         {
@@ -195,19 +214,31 @@ class Program
             Console.WriteLine("    " + typeName);
             Type type = classNameToType[typeName];
 
+            StringBuilder sb = getFileFromType(type);
+            sb.AppendLine("public class " + type.Name);
+            sb.AppendLine("{");
 
             foreach (PropertyInfo pi in type.GetProperties())
             {
                 Type pitype = pi.PropertyType;
                 if (pitype.IsEnum)
-                {
                     DumpEnum(pitype);
-                }
+
+                sb.AppendLine("    " + pitype.Name + " " + pi.Name + ";");
             }
+            sb.AppendLine("};");
+            sb.AppendLine();
         }
 
-        File.WriteAllText("dump.cs", sb.ToString());
+        String vsModelDir = "vsmodel";
 
+        if ( !Directory.Exists(vsModelDir) )
+            Directory.CreateDirectory(vsModelDir);
+
+        foreach (String asmName in modelFiles.Keys)
+        {
+            File.WriteAllText(Path.Combine(vsModelDir, asmName + ".cs"), modelFiles[asmName].ToString());
+        }
 
     }
 
