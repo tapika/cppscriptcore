@@ -45,14 +45,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\vsmodel\Microsoft.VisualStudio.VCProject.cs">
+      <Link>vsmodel\Microsoft.VisualStudio.VCProject.cs</Link>
+    </Compile>
+    <Compile Include="..\..\vsmodel\Microsoft.VisualStudio.VCProjectEngine.cs">
+      <Link>vsmodel\Microsoft.VisualStudio.VCProjectEngine.cs</Link>
+    </Compile>
+    <Compile Include="..\..\vsmodel\Microsoft.VisualStudio.VCProjectEngine_enums.cs">
+      <Link>vsmodel\Microsoft.VisualStudio.VCProjectEngine_enums.cs</Link>
+    </Compile>
+    <Compile Include="..\..\vsmodel\Microsoft.VisualStudio.VCProject_enums.cs">
+      <Link>vsmodel\Microsoft.VisualStudio.VCProject_enums.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
-    <Compile Include="vsmodel\Microsoft.VisualStudio.VCProject.cs" />
-    <Compile Include="vsmodel\Microsoft.VisualStudio.VCProjectEngine.cs" />
-    <Compile Include="vsmodel\Microsoft.VisualStudio.VCProjectEngine_enums.cs" />
-    <Compile Include="vsmodel\Microsoft.VisualStudio.VCProject_enums.cs" />
-    <Compile Include="vsmodel\VSLangProj110.cs" />
-    <Compile Include="vsmodel\VSLangProj80_enums.cs" />
-    <Compile Include="vsmodel\VSLangProj_enums.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

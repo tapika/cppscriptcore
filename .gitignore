@@ -6,7 +6,6 @@
 /Tools/VSModelSync/VSModelSync.pdb
 /Tools/VSModelSync/VSModelSync.exe
 /Tools/VSModelSync/dump.cs
-/Tools/VSModelSync/vsmodel
 /bin
 /obj
-/Tools/VSModel/vsmodel
+/vsmodel

@@ -7,7 +7,55 @@ using System.Threading.Tasks;
 public class CodeBuilder
 {
     StringBuilder sb = new StringBuilder();
-    String currentIdent = "";
+    String currentIndent = "";
+    Dictionary<String, Object> userData;
+
+    /// <summary>
+    /// User defined data accociated with container.
+    /// </summary>
+    public Dictionary<String, Object> UserData
+    {
+        get {
+            if (userData == null)
+                userData = new Dictionary<string, object>();
+
+            return userData;
+        }
+    }
+
+    public T GetUserData<T>(String s) where T: class
+    {
+        var ud = UserData;
+        Object o;
+        if (!ud.ContainsKey(s))
+            ud.Add(s, default(T));
+
+        o = ud[s];
+        return o as T;
+    }
+
+    public CodeBuilder SetUserData(String k, Object v)
+    {
+        var ud = UserData;
+        if (ud.ContainsKey(k))
+            ud[k] = v;
+        else
+            ud.Add(k, v);
+
+        return this;
+    }
+
+    public int IndentValue()
+    {
+        return currentIndent.Length / 4;
+    }
+
+    public String IndentString
+    {
+        get {
+            return currentIndent;
+        }
+    }
 
     /// <summary>
     /// Adds amount of indentation of each line.
@@ -15,11 +63,11 @@ public class CodeBuilder
     /// <param name="amount">Amount of indents to add (positive) or remove (negative)</param>
     public CodeBuilder Indent(int amount = 1)
     {
-        int newIdent = (currentIdent.Length / 4) + amount;
+        int newIdent = (currentIndent.Length / 4) + amount;
         if (newIdent < 0)
             newIdent = 0;
 
-        currentIdent = "".PadLeft(newIdent * 4, ' ');
+        currentIndent = "".PadLeft(newIdent * 4, ' ');
         return this;
     }
 
@@ -37,7 +85,7 @@ public class CodeBuilder
 
     public CodeBuilder AppendLine(string value)
     {
-        sb.Append(currentIdent);
+        sb.Append(currentIndent);
         sb.AppendLine(value);
         return this;
     }

@@ -30,16 +30,48 @@ class Program
     /// <summary>
     /// Gets CodeBuilder class where given type will be 'printed'
     /// </summary>
+    /// <returns>null if type is going outside of public location</returns>
     static CodeBuilder getFileFromType(Type type)
     {
-        String asmName = Path.GetFileNameWithoutExtension(type.Assembly.Location);
+        String asmPath = type.Assembly.Location;
+        //if (!asmPath.StartsWith(publicAsmPath) && !type.Name.StartsWith("CSharpProjectConfigurationProperties"))
+        //    return null;
+
+        String asmName = Path.GetFileNameWithoutExtension(asmPath);
         String name = asmName;
 
         if (type.IsEnum)
             name += "_enums";
 
+        CodeBuilder cb;
+
         if (!modelFiles.ContainsKey(name))
-            modelFiles.Add(name, new CodeBuilder());
+        {
+            cb = new CodeBuilder();
+            modelFiles.Add(name, cb);
+            cb.AppendLine("using System;");
+            cb.AppendLine();
+        }
+        else {
+            cb = modelFiles[name];
+        }
+
+        // Specify namespace using what where we keep original type.
+        String ns = type.Namespace.Replace("Microsoft.VisualStudio", "VSSync");
+        if (cb.GetUserData<String>("namespace") != ns)
+        {
+            cb.SetUserData("namespace", ns);
+            if (cb.IndentValue() != 0)
+            {
+                cb.UnIndent();
+                cb.AppendLine("}");
+            }
+
+            cb.AppendLine("namespace " + ns);
+            cb.AppendLine("{");
+            cb.AppendLine();
+            cb.Indent();
+        }
 
         return modelFiles[name];
     }
@@ -80,7 +112,10 @@ class Program
     static void DumpEnum(Type enumType)
     {
         String asmName = Path.GetFileNameWithoutExtension(enumType.Assembly.Location);
-        CodeBuilder sb = getFileFromType(enumType);
+        CodeBuilder cb = getFileFromType(enumType);
+
+        if (cb == null)
+            return;
 
         if (!xmlDocs.ContainsKey(asmName))
         {
@@ -93,9 +128,8 @@ class Program
             }
         }
 
-        sb.Indent();
-        sb.AppendLine("public enum " + enumType.Name);
-        sb.AppendLine("{");
+        cb.AppendLine("public enum " + enumType.Name);
+        cb.AppendLine("{");
         String[] names = Enum.GetNames(enumType);
         Array values = Enum.GetValues(enumType);
         for (int i = 0; i < names.Length; i++)
@@ -104,12 +138,12 @@ class Program
             {
                 string xmlName = "F:" + enumType.FullName + "." + names[i];
                 XmlNode node = xmlDocs[asmName].SelectSingleNode("//member[starts-with(@name, '" + xmlName + "')]");
-                sb.AppendLine("    /// " + node.InnerXml);
+                cb.AppendLine("    /// " + node.InnerXml);
             }
-            sb.AppendLine("    " + names[i] + " = " + (int)values.GetValue(i) + ",");
+            cb.AppendLine("    " + names[i] + " = " + (int)values.GetValue(i) + ",");
         }
-        sb.AppendLine("}");
-        sb.AppendLine();
+        cb.AppendLine("}");
+        cb.AppendLine();
     }
 
 
@@ -247,9 +281,13 @@ class Program
             Console.WriteLine("    " + typeName);
             Type type = classNameToType[typeName];
 
-            CodeBuilder sb = getFileFromType(type);
-            sb.AppendLine("public class " + type.Name);
-            sb.AppendLine("{");
+            CodeBuilder cb = getFileFromType(type);
+
+            if (cb == null)
+                continue;
+
+            cb.AppendLine("public class " + type.Name);
+            cb.AppendLine("{");
 
             XmlDocument doc = getDocumentation(type);
 
@@ -259,24 +297,41 @@ class Program
                 if (pitype.IsEnum)
                     DumpEnum(pitype);
 
+                if (pitype != typeof(String) && !pitype.IsEnum)
+                {
+                    cb.AppendLine("    // " + pitype.Name + " " + pi.Name + ";");
+                    cb.AppendLine();
+                    continue;
+                }
                 String propertyPath = type.Namespace  + "." + typeName + "." + pi.Name;
 
-                sb.Append(getComments(doc, "    /// ", "P:" + propertyPath));
-                sb.AppendLine("    " + pitype.Name + " " + pi.Name + ";");
-                sb.AppendLine();
+                cb.Indent();
+                cb.Append(getComments(doc, cb.IndentString + "/// ", "P:" + propertyPath));
+                cb.AppendLine(pitype.Name + " " + pi.Name + ";");
+                cb.UnIndent();
+                cb.AppendLine();
             }
-            sb.AppendLine("};");
-            sb.AppendLine();
+            cb.AppendLine("};");
+            cb.AppendLine();
         }
 
-        String vsModelDir = "vsmodel";
+        String vsModelDir = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)), "vsmodel");
 
         if ( !Directory.Exists(vsModelDir) )
             Directory.CreateDirectory(vsModelDir);
 
         foreach (String asmName in modelFiles.Keys)
         {
-            File.WriteAllText(Path.Combine(vsModelDir, asmName + ".cs"), modelFiles[asmName].ToString());
+            CodeBuilder cb = modelFiles[asmName];
+
+            // Close all open braces.
+            while (cb.IndentValue() != 0)
+            {
+                cb.UnIndent();
+                cb.AppendLine("}");
+            }
+
+            File.WriteAllText(Path.Combine(vsModelDir, asmName + ".cs"), cb.ToString());
         }
 
     }
