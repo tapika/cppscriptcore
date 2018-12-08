@@ -18,7 +18,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>$(ProjectDir)..\..\bin\</OutputPath>
+    <IntermediateOutputPath>$(ProjectDir)..\..\obj\$(MSBuildProjectName)_$(Configuration)_$(Platform)</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -27,7 +28,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>$(ProjectDir)..\..\bin\</OutputPath>
+    <IntermediateOutputPath>$(ProjectDir)..\..\obj\$(MSBuildProjectName)_$(Configuration)_$(Platform)</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -43,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeBuilder.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>

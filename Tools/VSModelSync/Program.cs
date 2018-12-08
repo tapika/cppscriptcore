@@ -24,13 +24,13 @@ class Program
 
     static String publicAsmPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies";
     static Dictionary<String, XmlDocument> xmlDocs = new Dictionary<string, XmlDocument>();
-    static Dictionary<String, StringBuilder> modelFiles = new Dictionary<string, StringBuilder>();
+    static Dictionary<String, CodeBuilder> modelFiles = new Dictionary<string, CodeBuilder>();
 
 
     /// <summary>
-    /// Gets StringBuilder class where given type will be 'printed'
+    /// Gets CodeBuilder class where given type will be 'printed'
     /// </summary>
-    static StringBuilder getFileFromType(Type type)
+    static CodeBuilder getFileFromType(Type type)
     {
         String asmName = Path.GetFileNameWithoutExtension(type.Assembly.Location);
         String name = asmName;
@@ -39,7 +39,7 @@ class Program
             name += "_enums";
 
         if (!modelFiles.ContainsKey(name))
-            modelFiles.Add(name, new StringBuilder());
+            modelFiles.Add(name, new CodeBuilder());
 
         return modelFiles[name];
     }
@@ -80,7 +80,7 @@ class Program
     static void DumpEnum(Type enumType)
     {
         String asmName = Path.GetFileNameWithoutExtension(enumType.Assembly.Location);
-        StringBuilder sb = getFileFromType(enumType);
+        CodeBuilder sb = getFileFromType(enumType);
 
         if (!xmlDocs.ContainsKey(asmName))
         {
@@ -93,6 +93,7 @@ class Program
             }
         }
 
+        sb.Indent();
         sb.AppendLine("public enum " + enumType.Name);
         sb.AppendLine("{");
         String[] names = Enum.GetNames(enumType);
@@ -246,7 +247,7 @@ class Program
             Console.WriteLine("    " + typeName);
             Type type = classNameToType[typeName];
 
-            StringBuilder sb = getFileFromType(type);
+            CodeBuilder sb = getFileFromType(type);
             sb.AppendLine("public class " + type.Name);
             sb.AppendLine("{");
 

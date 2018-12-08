@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSModelSync", "VSModelSync.csproj", "{366F2418-4F65-4AF5-AEFB-0F3A40F1F4E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSModel", "..\VSModel\VSModel.csproj", "{2807D6B3-0F45-491C-8D18-883EEB0CF412}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,9 @@ Global
 		{366F2418-4F65-4AF5-AEFB-0F3A40F1F4E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{366F2418-4F65-4AF5-AEFB-0F3A40F1F4E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{366F2418-4F65-4AF5-AEFB-0F3A40F1F4E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2807D6B3-0F45-491C-8D18-883EEB0CF412}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2807D6B3-0F45-491C-8D18-883EEB0CF412}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2807D6B3-0F45-491C-8D18-883EEB0CF412}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

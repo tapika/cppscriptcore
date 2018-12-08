@@ -1,10 +1,12 @@
 ﻿#-----------------------------------------
 # Files to ignore
 #-----------------------------------------
-/Tools/VSModelSync/obj
 /Tools/VSModelSync/.vs
 /Tools/VSModelSync/ignoreAsms.txt
 /Tools/VSModelSync/VSModelSync.pdb
 /Tools/VSModelSync/VSModelSync.exe
 /Tools/VSModelSync/dump.cs
 /Tools/VSModelSync/vsmodel
+/bin
+/obj
+/Tools/VSModel/vsmodel
