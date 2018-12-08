@@ -45,6 +45,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\vsmodel\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.cs">
+      <Link>vsmodel\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.cs</Link>
+    </Compile>
     <Compile Include="..\..\vsmodel\Microsoft.VisualStudio.VCProject.cs">
       <Link>vsmodel\Microsoft.VisualStudio.VCProject.cs</Link>
     </Compile>

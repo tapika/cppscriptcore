@@ -26,19 +26,33 @@ class Program
 
     static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
     //static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview";
-    static String publicAsmPath = Path.Combine(vsInstallPath, @"Common7\IDE\PublicAssemblies");
+
+    static String[] publicAsmPaths = {
+        Path.Combine(vsInstallPath, @"Common7\IDE\PublicAssemblies"),
+        // VCProjectShim is here.
+        Path.Combine(vsInstallPath, @"Common7\IDE\CommonExtensions\Microsoft\VC\Project")
+    };
+
+
     static Dictionary<String, XmlDocument> xmlDocs = new Dictionary<string, XmlDocument>();
     static Dictionary<String, CodeBuilder> modelFiles = new Dictionary<string, CodeBuilder>();
     static Dictionary<String, bool> savedTypes = new Dictionary<string, bool>();
 
 
+    static String getPlannedNamespace(Type type)
+    {
+        String ns = type.Namespace.Replace("Microsoft.VisualStudio", "VSSync");
+        return ns;
+    }
+
     /// <summary>
     /// Gets CodeBuilder class where given type will be 'printed'
     /// </summary>
     /// <returns>null if type is going outside of public location</returns>
-    static CodeBuilder getFileFromType(Type type)
+    static CodeBuilder getFileFromType(Type type, Action<CodeBuilder> onCreateCb = null)
     {
         String asmPath = type.Assembly.Location;
+        bool bCreated = false;
         //if (!asmPath.StartsWith(publicAsmPath) && !type.Name.StartsWith("CSharpProjectConfigurationProperties"))
         //    return null;
 
@@ -55,14 +69,14 @@ class Program
             cb = new CodeBuilder();
             modelFiles.Add(name, cb);
             cb.AppendLine("using System;");
-            cb.AppendLine();
+            bCreated = true;
         }
         else {
             cb = modelFiles[name];
         }
 
         // Specify namespace using what where we keep original type.
-        String ns = type.Namespace.Replace("Microsoft.VisualStudio", "VSSync");
+        String ns = getPlannedNamespace(type);
 
         // Already saved, no need to double save
         if (savedTypes.ContainsKey(ns + "." + type.Name))
@@ -72,6 +86,13 @@ class Program
         if (cb.GetUserData<String>("namespace") != ns)
         {
             cb.SetUserData("namespace", ns);
+
+            if (bCreated)
+            {
+                if (onCreateCb != null) onCreateCb(cb);
+                cb.AppendLine();
+            }
+
             if (cb.IndentValue() != 0)
             {
                 cb.UnIndent();
@@ -97,7 +118,7 @@ class Program
 
         if (!xmlDocs.ContainsKey(asmName))
         {
-            String[] docFile = Directory.GetFiles(publicAsmPath, asmName + ".xml", SearchOption.AllDirectories);
+            String[] docFile = Directory.GetFiles(publicAsmPaths[0], asmName + ".xml", SearchOption.AllDirectories);
 
             xmlDocs.Add(asmName, new XmlDocument());
 
@@ -149,12 +170,20 @@ class Program
         bool bTraceTypeFiltering = false;
         String[] allPaths =
         {
-            publicAsmPath,
+            publicAsmPaths[0],
+            publicAsmPaths[1],
             Path.Combine(vsInstallPath, @"Enterprise\Common7\IDE\PrivateAssemblies"),
             // Microsoft.VisualStudio.DataDesign.Interfaces.dll...
-            Path.Combine(vsInstallPath, @"Common7\IDE")
+            Path.Combine(vsInstallPath, @"Common7\IDE"),
+            // Microsoft.VisualStudio.ProjectSystem.VS.dll
+            Path.Combine(vsInstallPath, @"Common7\IDE\CommonExtensions\Microsoft\Project")
+            
         };
-        String[] asmPathes = Directory.GetFiles(publicAsmPath, "*.dll");
+
+        String[] asmPathes = Directory.GetFiles(publicAsmPaths[0], "*.dll").
+            Concat(
+                Directory.GetFiles(publicAsmPaths[1], "*.dll")
+            ).ToArray();
 
         AppDomain.CurrentDomain.AssemblyResolve += (s, asmArgs) =>
         {
@@ -270,47 +299,83 @@ class Program
             }
         }
 
+        Dictionary<String, List<String>> requiredNamespaces = new Dictionary<string, List<string>>();
+
         Console.WriteLine("Processing types:");
-        foreach (String typeName in classNameToType.Keys)
+        foreach (String action in new String[] { "getinfo", "collect" })
         {
-            if (!typeName.StartsWith("VC") && !typeName.StartsWith("CSharp"))
-                continue;
-
-            Console.WriteLine("    " + typeName);
-            Type type = classNameToType[typeName];
-
-            CodeBuilder cb = getFileFromType(type);
-
-            if (cb == null)
-                continue;
-
-            cb.AppendLine("public class " + type.Name);
-            cb.AppendLine("{");
-
-            XmlDocument doc = getDocumentation(type);
-
-            foreach (PropertyInfo pi in type.GetProperties())
+            foreach (String typeName in classNameToType.Keys)
             {
-                Type pitype = pi.PropertyType;
-                if (pitype.IsEnum)
-                    DumpEnum(pitype);
+                if (!typeName.StartsWith("VC") && !typeName.StartsWith("CSharp"))
+                    continue;
 
-                if (pitype != typeof(String) && pitype != typeof(Boolean) && !pitype.IsEnum)
+                Type type = classNameToType[typeName];
+
+                // Collect namespace dependencies.
+                if (action == "getinfo")
                 {
-                    cb.AppendLine("    // " + pitype.Name + " " + pi.Name + ";");
-                    cb.AppendLine();
+                    String ns = getPlannedNamespace(type);
+
+                    if (!requiredNamespaces.ContainsKey(ns))
+                        requiredNamespaces.Add(ns, new List<string>());
+                    List<String> namespaces= requiredNamespaces[ns];
+
+                    foreach (PropertyInfo pi in type.GetProperties())
+                    {
+                        Type pitype = pi.PropertyType;
+
+                        if (pitype != typeof(String) && pitype != typeof(Boolean) && !pitype.IsEnum)
+                            continue;
+
+                        String targetNs = getPlannedNamespace(pitype);
+                        if (ns != targetNs && targetNs != "System" && !namespaces.Contains(targetNs))
+                            namespaces.Add(targetNs);
+                    }
+
                     continue;
                 }
-                String propertyPath = type.Namespace  + "." + typeName + "." + pi.Name;
 
-                cb.Indent();
-                cb.Append(getComments(doc, cb.IndentString + "/// ", "P:" + propertyPath));
-                cb.AppendLine("public " + pitype.Name + " " + pi.Name + ";");
-                cb.UnIndent();
+                Console.WriteLine("    " + typeName);
+
+                CodeBuilder cb = getFileFromType(type, (cb2) =>
+                {
+                    // Dump all dependent namespace as "using ..."
+                    foreach (String ns2 in requiredNamespaces[cb2.GetUserData<String>("namespace")])
+                        cb2.AppendLine("using " + ns2 + ";");
+                });
+
+                if (cb == null)
+                    continue;
+
+                cb.AppendLine("public class " + type.Name);
+                cb.AppendLine("{");
+
+                XmlDocument doc = getDocumentation(type);
+
+
+                foreach (PropertyInfo pi in type.GetProperties())
+                {
+                    Type pitype = pi.PropertyType;
+                    if (pitype.IsEnum)
+                        DumpEnum(pitype);
+
+                    if (pitype != typeof(String) && pitype != typeof(Boolean) && !pitype.IsEnum)
+                    {
+                        cb.AppendLine("    // " + pitype.Name + " " + pi.Name + ";");
+                        cb.AppendLine();
+                        continue;
+                    }
+                    String propertyPath = type.Namespace  + "." + typeName + "." + pi.Name;
+
+                    cb.Indent();
+                    cb.Append(getComments(doc, cb.IndentString + "/// ", "P:" + propertyPath));
+                    cb.AppendLine("public " + pitype.Name + " " + pi.Name + ";");
+                    cb.UnIndent();
+                    cb.AppendLine();
+                }
+                cb.AppendLine("};");
                 cb.AppendLine();
             }
-            cb.AppendLine("};");
-            cb.AppendLine();
         }
 
         String vsModelDir = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)), "vsmodel");
