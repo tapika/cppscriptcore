@@ -297,7 +297,7 @@ class Program
                 if (pitype.IsEnum)
                     DumpEnum(pitype);
 
-                if (pitype != typeof(String) && !pitype.IsEnum)
+                if (pitype != typeof(String) && pitype != typeof(Boolean) && !pitype.IsEnum)
                 {
                     cb.AppendLine("    // " + pitype.Name + " " + pi.Name + ";");
                     cb.AppendLine();
