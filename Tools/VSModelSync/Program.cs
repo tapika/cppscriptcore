@@ -22,11 +22,14 @@ class Program
         }
     }
 
+    //C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies
+
     static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
     //static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview";
     static String publicAsmPath = Path.Combine(vsInstallPath, @"Common7\IDE\PublicAssemblies");
     static Dictionary<String, XmlDocument> xmlDocs = new Dictionary<string, XmlDocument>();
     static Dictionary<String, CodeBuilder> modelFiles = new Dictionary<string, CodeBuilder>();
+    static Dictionary<String, bool> savedTypes = new Dictionary<string, bool>();
 
 
     /// <summary>
@@ -60,6 +63,12 @@ class Program
 
         // Specify namespace using what where we keep original type.
         String ns = type.Namespace.Replace("Microsoft.VisualStudio", "VSSync");
+
+        // Already saved, no need to double save
+        if (savedTypes.ContainsKey(ns + "." + type.Name))
+            return null;
+        savedTypes.Add(ns + "." + type.Name, true);
+
         if (cb.GetUserData<String>("namespace") != ns)
         {
             cb.SetUserData("namespace", ns);
@@ -119,29 +128,15 @@ class Program
         if (cb == null)
             return;
 
-        if (!xmlDocs.ContainsKey(asmName))
-        {
-            String[] docFile = Directory.GetFiles(publicAsmPath, asmName + ".xml", SearchOption.AllDirectories);
-
-            if (docFile.Length != 0)
-            {
-                xmlDocs.Add(asmName, new XmlDocument());
-                xmlDocs[asmName].Load(docFile[0]);
-            }
-        }
-
         cb.AppendLine("public enum " + enumType.Name);
         cb.AppendLine("{");
         String[] names = Enum.GetNames(enumType);
         Array values = Enum.GetValues(enumType);
+        XmlDocument doc = getDocumentation(enumType);
+
         for (int i = 0; i < names.Length; i++)
         {
-            if (xmlDocs.ContainsKey(asmName))
-            {
-                string xmlName = "F:" + enumType.FullName + "." + names[i];
-                XmlNode node = xmlDocs[asmName].SelectSingleNode("//member[starts-with(@name, '" + xmlName + "')]");
-                cb.AppendLine("    /// " + node.InnerXml);
-            }
+            cb.Append(getComments(doc, cb.IndentString + "/// ", "F:" + enumType.FullName + "." + names[i]));
             cb.AppendLine("    " + names[i] + " = " + (int)values.GetValue(i) + ",");
         }
         cb.AppendLine("}");
@@ -218,7 +213,8 @@ class Program
                         (name.Contains("configuration") && !name.Contains("configurations")) &&
                         !name.Contains("manager") &&
                         !name.Contains("callback") ||
-                        name.Contains("linker")
+                        name.Contains("linker") ||
+                        name.Contains("project")
                         )
                     )
                     continue;
