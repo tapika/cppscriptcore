@@ -28,7 +28,7 @@ class Program
         //    }
         //}
 
-        String f = @"C:\PrototypingQuick\ConsoleApplication1\ConsoleApplication1.vcxproj";
+        String f = @"\PrototypingQuick\ConsoleApplication1\ConsoleApplication1.vcxproj";
         XDocument doc = XDocument.Load(f, LoadOptions.PreserveWhitespace);
         doc.Save(f + "2.xml", SaveOptions.DisableFormatting);
     }

@@ -10,8 +10,8 @@ int main(void)
     time(&start);
     {
         xml_document doc;
-        CString f(L"C:\\PrototypingQuick\\ConsoleApplication1\\ConsoleApplication1.vcxproj");
-        doc.load_file(f);
+        CString f(L"\\PrototypingQuick\\ConsoleApplication1\\ConsoleApplication1.vcxproj");
+        doc.load_file(f, parse_default | parse_declaration | parse_ws_pcdata_single);
         doc.save_file((f + L"2.xml").GetBuffer(), L"  ", format_indent | format_save_file_text, encoding_utf8);
     }
     time(&end);
