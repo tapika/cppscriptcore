@@ -307,7 +307,7 @@ class Program
 
                 cb.Indent();
                 cb.Append(getComments(doc, cb.IndentString + "/// ", "P:" + propertyPath));
-                cb.AppendLine(pitype.Name + " " + pi.Name + ";");
+                cb.AppendLine("public " + pitype.Name + " " + pi.Name + ";");
                 cb.UnIndent();
                 cb.AppendLine();
             }
