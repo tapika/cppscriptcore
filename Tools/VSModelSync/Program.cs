@@ -22,7 +22,9 @@ class Program
         }
     }
 
-    static String publicAsmPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies";
+    static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
+    //static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview";
+    static String publicAsmPath = Path.Combine(vsInstallPath, @"Common7\IDE\PublicAssemblies");
     static Dictionary<String, XmlDocument> xmlDocs = new Dictionary<string, XmlDocument>();
     static Dictionary<String, CodeBuilder> modelFiles = new Dictionary<string, CodeBuilder>();
 
@@ -153,9 +155,9 @@ class Program
         String[] allPaths =
         {
             publicAsmPath,
-            @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PrivateAssemblies",
+            Path.Combine(vsInstallPath, @"Enterprise\Common7\IDE\PrivateAssemblies"),
             // Microsoft.VisualStudio.DataDesign.Interfaces.dll...
-            @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE"
+            Path.Combine(vsInstallPath, @"Common7\IDE")
         };
         String[] asmPathes = Directory.GetFiles(publicAsmPath, "*.dll");
 
