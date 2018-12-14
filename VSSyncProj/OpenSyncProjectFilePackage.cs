@@ -46,7 +46,8 @@ namespace VSSyncProj
 
     // Auto load when starting up
     [ProvideAutoLoad(UIContextGuids80.NoSolution)]
-    public sealed class OpenSyncProjectFilePackage : AsyncPackage
+    // [ProvideService(typeof(VSSyncProjService))]
+    public sealed class OpenSyncProjectFilePackage : AsyncPackage, IOleCommandTarget
     //public sealed class OpenSyncProjectFilePackage : Package
     {
         /// <summary>
@@ -87,10 +88,14 @@ namespace VSSyncProj
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             await OpenSyncProjectFile.InitializeAsync(this);
 
+            //VSSyncProjService serv = new VSSyncProjService();
+            //((IServiceContainer)this).AddService(typeof(VSSyncProjService), serv);
+
             dte = this.GetService(typeof(SDTE)) as DTE;
             solutionEvents = dte.Events.SolutionEvents;
             solutionEvents.AfterClosing += OnSolutionChanged;
             solutionEvents.Opened += OnSolutionChanged;
+            await ExecuteScript.InitializeAsync(this);
         }
 
         private void OnSolutionChanged()
@@ -103,6 +108,9 @@ namespace VSSyncProj
             Debug.WriteLine(cfg.Name + "|" + cfg.PlatformName);
 
             VCProjectShim vcproject = (p.Object as VCProjectShim);
+
+            //vcproject.ProjectGUID = "{612873E4-B1DE-4814-9477-864DDFDD40DA}";
+
             projectEvents = (VCProjectEngineEvents)dte.Events.GetObject("VCProjectEngineEventsObject");
             projectEvents.ItemPropertyChange2 += ProjectEvents_ItemPropertyChange2;
 
@@ -127,6 +135,57 @@ namespace VSSyncProj
             VCConfigurationShim conf = (VCConfigurationShim)Item;
             Debug.WriteLine("Configuration: " + conf.ConfigurationName + " Platform: " + conf.PlatformName + " in " + strPropertySheet + " type: " + strItemType + " name: " + PropertyName);
         }
+
+        int IOleCommandTarget.QueryStatus(ref Guid commandGroup, uint commandsCount, OLECMD[] commands, IntPtr pCmdText)
+        {
+            if( ( commandGroup != OpenSyncProjectFile.CommandSet && commandGroup != ExecuteScript.CommandSet  )
+                ||
+                commandsCount != 1
+            )
+                return VSConstants.E_FAIL;
+
+            // commands[0].cmdID - check if valid command
+            commands[0].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
+            return VSConstants.S_OK;
+        }
+
+        /// <summary>
+        /// Used to determine if the shell is querying for the parameter list of our command.
+        /// </summary>
+        private static bool IsQueryParameterList(IntPtr variantIn, IntPtr variantOut, uint nCmdexecopt)
+        {
+            ushort lo = (ushort)(nCmdexecopt & (uint)0xffff);
+            ushort hi = (ushort)(nCmdexecopt >> 16);
+            if (lo == (ushort)OLECMDEXECOPT.OLECMDEXECOPT_SHOWHELP)
+            {
+                if (hi == VsMenus.VSCmdOptQueryParameterList)
+                {
+                    if (variantOut != IntPtr.Zero)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        int IOleCommandTarget.Exec(ref Guid commandGroup, uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
+        {
+            if (commandGroup != OpenSyncProjectFile.CommandSet && commandGroup != ExecuteScript.CommandSet)
+                return VSConstants.E_FAIL;
+
+            if (IsQueryParameterList(variantIn, variantOut, commandExecOpt))
+            {
+                Marshal.GetNativeVariantForObject("url", variantOut);
+                return VSConstants.S_OK;
+            }
+
+            // Commands that support parameters cannot be implemented via IMenuCommandService
+            var hr = VSConstants.S_OK;
+            return hr;
+        }
+
 
     }
 }

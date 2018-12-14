@@ -15,10 +15,10 @@
         defining some of the constants that we will use inside the file. -->
 
   <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
-  <Extern href="stdidcmd.h"/>
+  <Extern href="stdidcmd.h" />
 
   <!--This header contains the command ids for the menus provided by the shell. -->
-  <Extern href="vsshlids.h"/>
+  <Extern href="vsshlids.h" />
 
   <!--The Commands section is where commands, menus, and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
@@ -49,6 +49,9 @@
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CSCD_OPEN"/>
       </Group>
         -->
+      <Group guid="guidOpenSyncProjectFilePackageCmdSet1" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
     </Groups>
 
     <!--Buttons section. -->
@@ -65,8 +68,17 @@
       <Button guid="guidOpenSyncProjectFilePackageCmdSet" id="OpenSyncProjectFileId" priority="0x0100" type="Button">
         <Parent guid="guidOpenSyncProjectFilePackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
+        <CommandFlag>AllowParams</CommandFlag>
         <Strings>
           <ButtonText>Invoke OpenSyncProjectFile</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidOpenSyncProjectFilePackageCmdSet1" id="cmdidExecuteScript" priority="0x0100" type="Button">
+        <Parent guid="guidOpenSyncProjectFilePackageCmdSet1" id="MyMenuGroup" />
+        <Icon guid="guidImages1" id="bmpPic1" />
+        <CommandFlag>AllowParams</CommandFlag>
+        <Strings>
+          <ButtonText>Invoke ExecuteScript</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -78,7 +90,8 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\OpenSyncProjectFile.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough"/>
+      <Bitmap guid="guidImages" href="Resources\OpenSyncProjectFile.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages1" href="Resources\ExecuteScript.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
     </Bitmaps>
   </Commands>
 
@@ -92,7 +105,21 @@
       <IDSymbol name="OpenSyncProjectFileId" value="0x0100" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidImages" value="{ce6b97d7-a59c-4e4a-8956-fd1e18acd7e2}" >
+    <GuidSymbol name="guidImages" value="{ce6b97d7-a59c-4e4a-8956-fd1e18acd7e2}">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{23ea7c6c-88b1-46b7-8b45-66d2294edad4}" name="guidOpenSyncProjectFilePackageCmdSet1">
+      <IDSymbol value="4128" name="MyMenuGroup" />
+      <IDSymbol value="256" name="cmdidExecuteScript" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{f38af32d-a359-4cca-972a-23fcd99bd737}" name="guidImages1">
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
       <IDSymbol name="bmpPicSearch" value="3" />
@@ -104,7 +131,7 @@
 
   <CommandPlacements>
     <CommandPlacement guid="guidOpenSyncProjectFilePackageCmdSet" id="OpenSyncProjectFileId" priority="0x0500">
-      <Parent guid="guidSHLMainMenu" id="IDG_VS_FILE_OPENP_CASCADE"/>
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_FILE_OPENP_CASCADE" />
     </CommandPlacement>
   </CommandPlacements>
 

@@ -59,6 +59,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ExecuteScript.cs" />
     <Compile Include="OpenSyncProjectFile.cs" />
     <Compile Include="OpenSyncProjectFilePackage.cs" />
   </ItemGroup>
@@ -192,6 +193,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\ExecuteScript.png" />
     <Content Include="Resources\OpenSyncProjectFile.png" />
     <Content Include="Resources\OpenSyncProjectFilePackage.ico" />
   </ItemGroup>
