@@ -137,7 +137,7 @@ class Program
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "args");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "thisIsArg1");
-            //dte.ExecuteCommand("Tools.InvokeExecuteScript");
+            dte.ExecuteCommand("Tools.InvokeExecuteScript", "thisIsArg1");
             //int cmdCount = Utils.call(() => (dte.Commands.Count));
 
 
@@ -168,6 +168,7 @@ class Program
             //Console.WriteLine(vcproj.ProjectFile);
             //Console.WriteLine(vcproj.ProjectGUID);
             Console.WriteLine();
+            Console.ReadKey();
         }
         catch (Exception ex)
         {
