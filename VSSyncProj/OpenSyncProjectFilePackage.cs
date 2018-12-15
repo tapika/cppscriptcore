@@ -17,6 +17,9 @@ using Microsoft.VisualStudio.VCProjectEngine;
 using Microsoft.Win32;
 using Task = System.Threading.Tasks.Task;
 using Microsoft.VisualStudio.Project.VisualC.VCProjectEngine;
+using System.Reflection;
+using EnvDTE80;
+using System.IO;
 
 namespace VSSyncProj
 {
@@ -66,7 +69,7 @@ namespace VSSyncProj
             // initialization is the Initialize method.
         }
 
-        DTE dte;
+        DTE2 dte;
 
         /// <summary>
         /// Keep 'SolutionEvents' instance here for events to work.
@@ -91,7 +94,7 @@ namespace VSSyncProj
             //VSSyncProjService serv = new VSSyncProjService();
             //((IServiceContainer)this).AddService(typeof(VSSyncProjService), serv);
 
-            dte = this.GetService(typeof(SDTE)) as DTE;
+            dte = this.GetService(typeof(SDTE)) as DTE2;
             solutionEvents = dte.Events.SolutionEvents;
             solutionEvents.AfterClosing += OnSolutionChanged;
             solutionEvents.Opened += OnSolutionChanged;
@@ -181,11 +184,43 @@ namespace VSSyncProj
                 return VSConstants.S_OK;
             }
 
-            // Commands that support parameters cannot be implemented via IMenuCommandService
-            var hr = VSConstants.S_OK;
-            return hr;
-        }
+            if(variantIn == IntPtr.Zero)
+                return VSConstants.E_FAIL;
 
+            // Commands that support parameters cannot be implemented via IMenuCommandService
+            String file = Marshal.GetObjectForNativeVariant(variantIn) as String;
+
+            //
+            // Dll itself gets locked by executing process
+            //
+            //Assembly asm = Assembly.LoadFile(file);
+
+            //
+            // Asm gets loaded, but cannot be debugged
+            //
+            //byte[] asmbin = File.ReadAllBytes(file);
+            //Assembly asm = Assembly.Load(asmbin);
+
+            //
+            // Can be debugged for first time, second, etc cannot debug / step in.
+            //
+            String pdbPath = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".pdb");
+            byte[] asmbin = File.ReadAllBytes(file);
+            byte[] pdb = File.ReadAllBytes(pdbPath);
+            Assembly asm = Assembly.Load(asmbin, pdb);
+
+            foreach (Type type in asm.GetTypes())
+            {
+                MethodInfo mi = type.GetMethod("init", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.IgnoreCase);
+                if (mi == null)
+                    continue;
+
+                mi.Invoke(null, new object[] { dte });
+                return VSConstants.S_OK;
+            }
+
+            return VSConstants.E_FAIL;
+        }
 
     }
 }
