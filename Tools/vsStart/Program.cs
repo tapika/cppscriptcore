@@ -12,6 +12,7 @@ using System.Text;
 using System.Management;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 class Program
 {
@@ -76,13 +77,16 @@ class Program
                     processId = Utils.call(() => (p.ProcessID));
                     String cmdArgs = GetProcessCommandLine(processId);
 
-                    if (!cmdArgs.Contains("-Embedding"))
+                    if (cmdArgs == null || !cmdArgs.Contains("-Embedding"))
                         continue;
 
                     processToAttachTo = p;
                     //Console.ReadKey();
                     Console.WriteLine("Attaching to: " + processId);
                     Utils.callVoidFunction(() => { processToAttachTo.Attach(); });
+                    // Apparently it takes some time for debugger to attach to process, otherwise missing breakpoints.
+                    // Not sure if some sort of wait could be triggerred.
+                    System.Threading.Thread.Sleep(2000);
                     bAttached = true;
                     break;
                 }
@@ -137,7 +141,7 @@ class Program
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "args");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "thisIsArg1");
-            dte.ExecuteCommand("Tools.InvokeExecuteScript", "thisIsArg1");
+            dte.ExecuteCommand("Tools.InvokeExecuteScript", @"D:\Prototyping\cppscriptcore\Tools\vsDev\bin\Debug\vsDev.dll");
             //int cmdCount = Utils.call(() => (dte.Commands.Count));
 
 
@@ -197,6 +201,11 @@ class Program
         return System.Diagnostics.Process.Start(procStartInfo).Id;
     }
 
+    /// <summary>
+    /// Gets command line of specific process.
+    /// </summary>
+    /// <param name="processId">process id</param>
+    /// <returns>null if not accessible (e.g. executed with admin priviledges)</returns>
     public static string GetProcessCommandLine(int processId)
     {
         using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT CommandLine FROM Win32_Process WHERE ProcessId = " + processId))
