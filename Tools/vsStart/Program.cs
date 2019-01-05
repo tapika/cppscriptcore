@@ -141,7 +141,7 @@ class Program
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "args");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "thisIsArg1");
-            dte.ExecuteCommand("Tools.InvokeExecuteScript", @"D:\Prototyping\cppscriptcore\Tools\vsDev\bin\Debug\vsDev.dll");
+            //dte.ExecuteCommand("Tools.InvokeExecuteScript", @"D:\Prototyping\cppscriptcore\Tools\vsDev\bin\Debug\vsDev.dll");
             //int cmdCount = Utils.call(() => (dte.Commands.Count));
 
 
@@ -163,7 +163,20 @@ class Program
             //Console.ReadKey();
 
 
-            //Solution sln = dte.Solution;
+            Solution sln = dte.Solution;
+            String slnPath = @"C:\Prototyping\testsln";
+            sln.Create(slnPath, "test");
+            Solution2 sln2 = (Solution2) sln;
+            //string csTemplatePath = sln2.GetProjectTemplate("ConsoleApplication.zip", "CSharp");
+            //string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ClassLibrary", "CSharp");
+            string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ConsoleApplication\csConsoleApplication.vstemplate", "CSharp");
+            sln.AddFromTemplate(csTemplatePath, slnPath + "\\prj", "Foo", false);
+            //sln.AddFromTemplate(csTemplatePath, slnPath, "Foo", false);
+            //sln.AddFromTemplate(@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\ProjectTemplates\CSharp\Windows\1033\ConsoleApplication\consoleapplication.csproj", slnPath + "\\prj", "Foo", false);
+            //sln.AddFromFile(@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\ProjectTemplates\CSharp\Windows\1033\ConsoleApplication\consoleapplication.csproj");
+            //sln.AddFromFile(@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\ProjectTemplates\CSharp\Windows\1033\ConsoleApplication\consoleapplication.csproj");
+
+
             //sln.Open(@"D:\PrototypingQuick\ConsoleApplication2\ConsoleApplication2.sln");
 
             //Project p = sln.Projects.Item(1);
