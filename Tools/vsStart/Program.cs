@@ -60,8 +60,9 @@ class Program
             //dte = (DTE)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.12.0"), true);
             //dte = (DTE)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.16.0"), true);
 
-            bool bNormalStart = true;
+            bool bNormalStart = false;
 
+            MessageFilter.Register();
             if (bNormalStart)
             {
                 dte = (DTE2)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.15.0"), true);
@@ -70,29 +71,46 @@ class Program
                 //Microsoft.VisualStudio.Shell.ServiceProvider.GlobalProvider.GetService()
                 bool bAttached = false;
                 int processId = 0;
-                EnvDTE.Process processToAttachTo = null;
+                Process2 processToAttachTo = null;
 
                 for (int iTry = 0; iTry < 2; iTry++)
                 {
                     dte = (DTE2)Marshal.GetActiveObject("VisualStudio.DTE.15.0");
 
-                    var processes = Utils.call(() => (dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray()));
-                    foreach (var p in processes)
+                    var processes = dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray();
+                    Debugger2 debugger2 = (Debugger2)dte.Debugger;
+                    int c = debugger2.Transports.Count;
+                    Transport transport = debugger2.Transports.Item(1 /* Default transport */);
+                    //foreach (var ix in transport.Engines)
+                    //{
+                    //    Engine e = ix as Engine;
+
+                    //    String name = e.Name;
+                    //    Console.WriteLine("'" + name + "'");
+                    //}
+
+                    // Otherwise will get timeout while trying to evaluate any com object in visual studio watch window
+                    String debuggerType = "Managed (v3.5, v3.0, v2.0)";
+                    //String debuggerType = "Managed (v4.6, v4.5, v4.0)";
+                    //String debuggerType = "Managed";
+                    Engine[] engines = new Engine[] { transport.Engines.Item(debuggerType) };
+
+                    foreach (var process in processes)
                     {
-                        String name = Path.GetFileNameWithoutExtension(Utils.call(() => (p.Name))).ToLower();
+                        String name = Path.GetFileNameWithoutExtension(Utils.call(() => (process.Name))).ToLower();
                         if (name != "devenv")
                             continue;
 
-                        processId = Utils.call(() => (p.ProcessID));
+                        processId = Utils.call(() => (process.ProcessID));
                         String cmdArgs = GetProcessCommandLine(processId);
 
                         if (cmdArgs == null || !cmdArgs.Contains("-Embedding"))
                             continue;
 
-                        processToAttachTo = p;
+                        processToAttachTo = process as Process2;
                         //Console.ReadKey();
                         Console.WriteLine("Attaching to: " + processId);
-                        Utils.callVoidFunction(() => { processToAttachTo.Attach(); });
+                        Utils.callVoidFunction(() => { processToAttachTo.Attach2(engines); });
                         // Apparently it takes some time for debugger to attach to process, otherwise missing breakpoints.
                         // Not sure if some sort of wait could be triggerred.
                         System.Threading.Thread.Sleep(2000);
@@ -120,7 +138,6 @@ class Program
                 dte = (DTE2)GetDTE(processId, 120);
                 //dte = null;
             }
-            MessageFilter.Register();
 
             String edition = dte.Edition;
             Console.WriteLine("Edition: " + edition);
@@ -189,6 +206,7 @@ class Program
                 sln.AddFromTemplate(csTemplatePath, slnPath + "\\prj", "Foo", false);
                 dte.ExecuteCommand("File.SaveAll");
             }
+            
 
             //sln.Open(@"D:\PrototypingQuick\ConsoleApplication2\ConsoleApplication2.sln");
             //Project p = sln.Projects.Item(1);
@@ -196,6 +214,16 @@ class Program
             ////VCProject vcproj = (VCProject)p.Object;
             //Console.WriteLine(vcproj.ProjectFile);
             //Console.WriteLine(vcproj.ProjectGUID);
+            Project p = sln.Projects.Item(1);
+            ProjectItems pitems = p.ProjectItems;
+
+            foreach (ProjectItem pi in pitems)
+            {
+                String name = pi.Name;
+
+            }
+
+
             MessageFilter.Revoke();
             Console.WriteLine();
             Console.ReadKey();
