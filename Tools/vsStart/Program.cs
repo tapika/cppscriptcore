@@ -13,12 +13,14 @@ using System.Management;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 using System.Threading;
+using EnvDTE90;
 
 class Program
 {
     static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
     static String devEnvExe = Path.Combine(vsInstallPath, @"Common7\IDE\devenv.exe");
 
+    [STAThread]
     static void Main(string[] args)
     {
         //var procs = System.Diagnostics.Process.GetProcesses().Where(x => x.ProcessName == "devenv").ToArray();
@@ -58,58 +60,68 @@ class Program
             //dte = (DTE)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.12.0"), true);
             //dte = (DTE)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.16.0"), true);
 
-            //Microsoft.VisualStudio.Shell.ServiceProvider.GlobalProvider.GetService()
-            bool bAttached = false;
-            int processId = 0;
-            EnvDTE.Process processToAttachTo = null;
+            bool bNormalStart = true;
 
-            for ( int iTry = 0; iTry < 2; iTry++)
+            if (bNormalStart)
             {
-                dte = (DTE2)Marshal.GetActiveObject("VisualStudio.DTE.15.0");
+                dte = (DTE2)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.15.0"), true);
+            }
+            else {
+                //Microsoft.VisualStudio.Shell.ServiceProvider.GlobalProvider.GetService()
+                bool bAttached = false;
+                int processId = 0;
+                EnvDTE.Process processToAttachTo = null;
 
-                var processes = Utils.call(() => (dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray() ));
-                foreach (var p in processes)
+                for (int iTry = 0; iTry < 2; iTry++)
                 {
-                    String name = Path.GetFileNameWithoutExtension(Utils.call(() => (p.Name))).ToLower();
-                    if (name != "devenv")
-                        continue;
+                    dte = (DTE2)Marshal.GetActiveObject("VisualStudio.DTE.15.0");
 
-                    processId = Utils.call(() => (p.ProcessID));
-                    String cmdArgs = GetProcessCommandLine(processId);
-
-                    if (cmdArgs == null || !cmdArgs.Contains("-Embedding"))
-                        continue;
-
-                    processToAttachTo = p;
-                    //Console.ReadKey();
-                    Console.WriteLine("Attaching to: " + processId);
-                    Utils.callVoidFunction(() => { processToAttachTo.Attach(); });
-                    // Apparently it takes some time for debugger to attach to process, otherwise missing breakpoints.
-                    // Not sure if some sort of wait could be triggerred.
-                    System.Threading.Thread.Sleep(2000);
-                    bAttached = true;
-                    break;
-                }
-
-                if (bAttached)
-                    break;
-
-                {
-                    if (iTry == 1)
+                    var processes = Utils.call(() => (dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray()));
+                    foreach (var p in processes)
                     {
-                        Console.WriteLine("Error: Failed to launch vs2017.");
-                        return;
+                        String name = Path.GetFileNameWithoutExtension(Utils.call(() => (p.Name))).ToLower();
+                        if (name != "devenv")
+                            continue;
+
+                        processId = Utils.call(() => (p.ProcessID));
+                        String cmdArgs = GetProcessCommandLine(processId);
+
+                        if (cmdArgs == null || !cmdArgs.Contains("-Embedding"))
+                            continue;
+
+                        processToAttachTo = p;
+                        //Console.ReadKey();
+                        Console.WriteLine("Attaching to: " + processId);
+                        Utils.callVoidFunction(() => { processToAttachTo.Attach(); });
+                        // Apparently it takes some time for debugger to attach to process, otherwise missing breakpoints.
+                        // Not sure if some sort of wait could be triggerred.
+                        System.Threading.Thread.Sleep(2000);
+                        bAttached = true;
+                        break;
                     }
 
-                    // Analogue of
-                    // Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.15.0"), true);
-                    // only with  experimental visual studio version.
-                    Start_devenv_Embedded();
-                }
-            }
+                    if (bAttached)
+                        break;
 
-            dte = (DTE2)GetDTE(processId, 120);
-            //dte = null;
+                    {
+                        if (iTry == 1)
+                        {
+                            Console.WriteLine("Error: Failed to launch vs2017.");
+                            return;
+                        }
+
+                        // Analogue of
+                        // Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.15.0"), true);
+                        // only with  experimental visual studio version.
+                        Start_devenv_Embedded();
+                    }
+                }
+
+                dte = (DTE2)GetDTE(processId, 120);
+                //dte = null;
+            }
+            MessageFilter.Register();
+
             String edition = dte.Edition;
             Console.WriteLine("Edition: " + edition);
 
@@ -164,26 +176,27 @@ class Program
 
 
             Solution sln = dte.Solution;
-            String slnPath = @"C:\Prototyping\testsln";
-            sln.Create(slnPath, "test");
+            String slnPath = @"D:\Prototyping\testsln";
+            if( !sln.IsOpen )
+                sln.Create(slnPath, "test");
             Solution2 sln2 = (Solution2) sln;
-            //string csTemplatePath = sln2.GetProjectTemplate("ConsoleApplication.zip", "CSharp");
-            //string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ClassLibrary", "CSharp");
-            string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ConsoleApplication\csConsoleApplication.vstemplate", "CSharp");
-            sln.AddFromTemplate(csTemplatePath, slnPath + "\\prj", "Foo", false);
-            //sln.AddFromTemplate(csTemplatePath, slnPath, "Foo", false);
-            //sln.AddFromTemplate(@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\ProjectTemplates\CSharp\Windows\1033\ConsoleApplication\consoleapplication.csproj", slnPath + "\\prj", "Foo", false);
-            //sln.AddFromFile(@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\ProjectTemplates\CSharp\Windows\1033\ConsoleApplication\consoleapplication.csproj");
-            //sln.AddFromFile(@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\ProjectTemplates\CSharp\Windows\1033\ConsoleApplication\consoleapplication.csproj");
+            Solution3 sln3 = (Solution3) sln;
+            
 
+            if (sln.Projects.Count <= 1)
+            {
+                string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ConsoleApplication\csConsoleApplication.vstemplate", "CSharp");
+                sln.AddFromTemplate(csTemplatePath, slnPath + "\\prj", "Foo", false);
+                dte.ExecuteCommand("File.SaveAll");
+            }
 
             //sln.Open(@"D:\PrototypingQuick\ConsoleApplication2\ConsoleApplication2.sln");
-
             //Project p = sln.Projects.Item(1);
             //VCProject vcproj = (VCProject)p.Object;
             ////VCProject vcproj = (VCProject)p.Object;
             //Console.WriteLine(vcproj.ProjectFile);
             //Console.WriteLine(vcproj.ProjectGUID);
+            MessageFilter.Revoke();
             Console.WriteLine();
             Console.ReadKey();
         }

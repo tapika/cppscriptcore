@@ -29,7 +29,7 @@ public class Utils
     public static T call<T>(Func<T> fn)
     {
         int numTries = 20;
-        int intervalMS = 50;
+        int intervalMS = 100;
 
         // We will try to call the function a number of times...
         for (int i = 0; i < numTries; ++i)

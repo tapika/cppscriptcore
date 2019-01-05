@@ -237,6 +237,9 @@ class Program
             foreach (Type type in GetLoadableTypes(asm))
             {
                 String name = type.Name.ToLower();
+
+                if (bTraceTypeFiltering) Console.WriteLine("    " + type.Name);
+
                 if (
                     !(
                         (name.Contains("configuration") && !name.Contains("configurations")) &&
@@ -244,11 +247,10 @@ class Program
                         !name.Contains("callback") ||
                         name.Contains("linker") ||
                         name.Contains("project")
+                        //name.Contains("serviceprovider")
                         )
                     )
                     continue;
-
-                if (bTraceTypeFiltering) Console.WriteLine("    " + type.Name);
 
                 //if (!name.Contains("vcconfiguration"))
                 //    continue;

@@ -198,16 +198,16 @@ namespace VSSyncProj
             //
             // Asm gets loaded, but cannot be debugged
             //
-            //byte[] asmbin = File.ReadAllBytes(file);
-            //Assembly asm = Assembly.Load(asmbin);
+            byte[] asmbin = File.ReadAllBytes(file);
+            Assembly asm = Assembly.Load(asmbin);
 
             //
             // Can be debugged for first time, second, etc cannot debug / step in.
             //
-            String pdbPath = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".pdb");
-            byte[] asmbin = File.ReadAllBytes(file);
-            byte[] pdb = File.ReadAllBytes(pdbPath);
-            Assembly asm = Assembly.Load(asmbin, pdb);
+            //String pdbPath = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".pdb");
+            //byte[] asmbin = File.ReadAllBytes(file);
+            //byte[] pdb = File.ReadAllBytes(pdbPath);
+            //Assembly asm = Assembly.Load(asmbin, pdb);
 
             foreach (Type type in asm.GetTypes())
             {
