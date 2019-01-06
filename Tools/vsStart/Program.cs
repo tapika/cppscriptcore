@@ -233,11 +233,14 @@ class Program
             //Console.WriteLine("[ Press any key to close ... ]");
             //Console.ReadKey();
             Solution2 sln2 = (Solution2)dte.Solution;
+            String mainDir = @"c:\Prototyping\testsln";
+            String slnTempDir = Path.Combine(mainDir, "slnTemp");
+
 
             for (int i = 0; i < vsTemplates.Count; i++)
             {
                 String name = vsNames[i];
-                String dir = Path.Combine(@"c:\Prototyping\testsln", name);
+                String dir = Path.Combine(mainDir, name);
                 bool bKeepProject = true;
 
                 if (Directory.Exists(dir))
@@ -245,13 +248,12 @@ class Program
 
                 Console.Write("Project '" + name + "... " );
                 Directory.CreateDirectory(dir);
-                sln2.Create(dir, name);
-                Directory.CreateDirectory(dir + "\\prj");
+                sln2.Create(slnTempDir, name);
 
                 try
                 {
                     string csTemplatePath = sln2.GetProjectTemplate(vsTemplates[i], languages[i]);
-                    sln2.AddFromTemplate(csTemplatePath, dir + "\\prj", name, false);
+                    sln2.AddFromTemplate(csTemplatePath, dir, name, false);
                     Console.WriteLine("ok." );
                 }
                 catch (Exception ex)
@@ -259,7 +261,9 @@ class Program
                     Console.WriteLine("Project '" + name + ": " + ex.Message);
                     bKeepProject = false;
                 }
-                sln2.Close(true);
+                if(bKeepProject)
+                    sln2.SaveAs(Path.Combine(dir, name + ".sln"));
+                sln2.Close(bKeepProject);
 
                 if (!bKeepProject)
                     Directory.Delete(dir, true);
