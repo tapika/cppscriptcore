@@ -221,12 +221,14 @@ class Program
             {
                 String name = pi.Name;
 
+                if (pi.Name.ToLower() == "program.cs")
+                    pi.Delete();
             }
 
 
             MessageFilter.Revoke();
-            Console.WriteLine();
-            Console.ReadKey();
+            //Console.WriteLine();
+            //Console.ReadKey();
         }
         catch (Exception ex)
         {
