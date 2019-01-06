@@ -28,19 +28,33 @@ class Program
         String prjTemplDir = Path.Combine(vsInstallPath, @"Common7\IDE\ProjectTemplates");
         List<String> vsTemplates = Directory.GetFiles(prjTemplDir, "*.vstemplate", SearchOption.AllDirectories).Select(x => x.Substring(prjTemplDir.Length + 1)).ToList();
         Regex re = new Regex("^(.*?)" + Regex.Escape(@"\"));
+        Func<String, String> untilBackSlash = (s) => { return re.Match(s).Groups[1].ToString(); };
+        List<String> languages = vsTemplates.Select(x => untilBackSlash(x)).ToList();
+        List<String> vsNames = new List<string>();
 
         for (int i = 0; i < vsTemplates.Count; i++)
         {
             bool keep = true;
-            String lang = re.Match(vsTemplates[i]).Groups[1].ToString();
-            if (lang != "CSharp" && lang != "VC")
+            String lang = languages[i];
+            if (lang != "CSharp" && lang != "VC" && lang != "Javascript")
                 keep = false;
-            
+
+            if(
+                vsTemplates[i].Contains("WebTemplate")  // has wizard
+                ||
+                vsTemplates[i].Contains("WapProj")      // hangs
+                )
+                keep = false;
+
             if (!keep)
             {
                 vsTemplates.RemoveAt(i);
+                languages.RemoveAt(i);
                 i--;
+                continue;
             }
+            vsTemplates[i] = vsTemplates[i].Substring(languages[i].Length + 1);
+            vsNames.Add(vsTemplates[i].Replace("\\", "_").Replace("1033_", "").Replace(".vstemplate", "").Replace(".", ""));
         }
         
         //var procs = System.Diagnostics.Process.GetProcesses().Where(x => x.ProcessName == "devenv").ToArray();
@@ -218,8 +232,40 @@ class Program
 
             //Console.WriteLine("[ Press any key to close ... ]");
             //Console.ReadKey();
+            Solution2 sln2 = (Solution2)dte.Solution;
 
+            for (int i = 0; i < vsTemplates.Count; i++)
+            {
+                String name = vsNames[i];
+                String dir = Path.Combine(@"c:\Prototyping\testsln", name);
+                bool bKeepProject = true;
 
+                if (Directory.Exists(dir))
+                    Directory.Delete(dir, true);
+
+                Console.Write("Project '" + name + "... " );
+                Directory.CreateDirectory(dir);
+                sln2.Create(dir, name);
+                Directory.CreateDirectory(dir + "\\prj");
+
+                try
+                {
+                    string csTemplatePath = sln2.GetProjectTemplate(vsTemplates[i], languages[i]);
+                    sln2.AddFromTemplate(csTemplatePath, dir + "\\prj", name, false);
+                    Console.WriteLine("ok." );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Project '" + name + ": " + ex.Message);
+                    bKeepProject = false;
+                }
+                sln2.Close(true);
+
+                if (!bKeepProject)
+                    Directory.Delete(dir, true);
+            }
+
+            /*
             Solution sln = dte.Solution;
             String slnPath = @"c:\Prototyping\testsln";
             if( !sln.IsOpen )
@@ -266,7 +312,7 @@ class Program
                 if (pi.Name.ToLower() == "program.cs")
                     pi.Delete();
             }
-
+            */
 
             MessageFilter.Revoke();
             Console.WriteLine();
