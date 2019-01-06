@@ -19,6 +19,7 @@ class Program
 {
     static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
     static String devEnvExe = Path.Combine(vsInstallPath, @"Common7\IDE\devenv.exe");
+    static ProjectItemsEvents pievents;
 
     [STAThread]
     static void Main(string[] args)
@@ -209,6 +210,14 @@ class Program
 
             int nCount = sln.Projects.Count;
 
+            dte.Events.SolutionEvents.ProjectAdded += SolutionEvents_ProjectAdded;
+            dte.Events.SolutionItemsEvents.ItemAdded += SolutionItemsEvents_ItemAdded;
+            dynamic events = dte.Events.GetObject("CSharpProjectItemsEvents");
+            //Events2 events2 = dte.Events as Events2;
+            //events2.ProjectItemsEvents.ItemAdded += Pievents_ItemAdded;
+            pievents = events as ProjectItemsEvents;
+            pievents.ItemAdded += Pievents_ItemAdded;
+
             if (nCount <= 0)
             {
                 string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ConsoleApplication\csConsoleApplication.vstemplate", "CSharp");
@@ -236,8 +245,8 @@ class Program
 
 
             MessageFilter.Revoke();
-            //Console.WriteLine();
-            //Console.ReadKey();
+            Console.WriteLine();
+            Console.ReadKey();
         }
         catch (Exception ex)
         {
@@ -251,6 +260,21 @@ class Program
             //if (dte != null)
             //    dte.Solution.Close();
         }
+    }
+
+    private static void Pievents_ItemAdded(ProjectItem pi)
+    {
+        Console.WriteLine("File added: " + pi.Name);
+    }
+
+    private static void SolutionItemsEvents_ItemAdded(ProjectItem pi)
+    {
+        Console.WriteLine("File added: " + pi.Name);
+    }
+
+    private static void SolutionEvents_ProjectAdded(Project project)
+    {
+        Console.WriteLine("Project added: " + project.Name);
     }
 
     public static int Start_devenv_Embedded()
