@@ -14,6 +14,7 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using EnvDTE90;
+using System.Collections.Generic;
 
 class Program
 {
@@ -24,6 +25,15 @@ class Program
     [STAThread]
     static void Main(string[] args)
     {
+        String prjTemplDir = Path.Combine(vsInstallPath, @"Common7\IDE\ProjectTemplates");
+        List<String> vsTemplates = Directory.GetFiles(prjTemplDir, "*.vstemplate", SearchOption.AllDirectories).Select(x => x.Substring(prjTemplDir.Length + 1)).ToList();
+        Regex re = new Regex("^(.*?)" + Regex.Escape(@"\"));
+
+        for (int i = 0; i < vsTemplates.Count; i++)
+        {
+            String lang = re.Match(vsTemplates[i]).Groups[1].ToString();
+        }
+        
         //var procs = System.Diagnostics.Process.GetProcesses().Where(x => x.ProcessName == "devenv").ToArray();
         //String devenvPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.exe";
         //Assembly asm = Assembly.LoadFile(devenvPath);
@@ -218,6 +228,7 @@ class Program
             pievents = events as ProjectItemsEvents;
             pievents.ItemAdded += Pievents_ItemAdded;
 
+
             if (nCount <= 0)
             {
                 string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ConsoleApplication\csConsoleApplication.vstemplate", "CSharp");
@@ -233,6 +244,10 @@ class Program
             //Console.WriteLine(vcproj.ProjectFile);
             //Console.WriteLine(vcproj.ProjectGUID);
             Project p = sln.Projects.Item(1);
+            //String kind = p.Kind;
+            //String dir = sln2.ProjectItemsTemplatePath(kind);
+            //String cppTemplDir = sln2.ProjectItemsTemplatePath("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}");
+            
             ProjectItems pitems = p.ProjectItems;
 
             foreach (ProjectItem pi in pitems)
