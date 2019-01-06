@@ -31,7 +31,16 @@ class Program
 
         for (int i = 0; i < vsTemplates.Count; i++)
         {
+            bool keep = true;
             String lang = re.Match(vsTemplates[i]).Groups[1].ToString();
+            if (lang != "CSharp" && lang != "VC")
+                keep = false;
+            
+            if (!keep)
+            {
+                vsTemplates.RemoveAt(i);
+                i--;
+            }
         }
         
         //var procs = System.Diagnostics.Process.GetProcesses().Where(x => x.ProcessName == "devenv").ToArray();
