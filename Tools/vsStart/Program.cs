@@ -79,6 +79,14 @@ class Program
 
                     var processes = dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray();
                     Debugger2 debugger2 = (Debugger2)dte.Debugger;
+
+                    //
+                    // https://varionet.wordpress.com/tag/debug/
+                    // Windows 10: Attach2 triggers error: 8971001E, need to detach from all processes.
+                    // Something to do debugging multiple processes?
+                    //
+                    debugger2.DetachAll();
+
                     int c = debugger2.Transports.Count;
                     Transport transport = debugger2.Transports.Item(1 /* Default transport */);
                     //foreach (var ix in transport.Engines)
@@ -193,14 +201,15 @@ class Program
 
 
             Solution sln = dte.Solution;
-            String slnPath = @"D:\Prototyping\testsln";
+            String slnPath = @"c:\Prototyping\testsln";
             if( !sln.IsOpen )
                 sln.Create(slnPath, "test");
             Solution2 sln2 = (Solution2) sln;
             Solution3 sln3 = (Solution3) sln;
-            
 
-            if (sln.Projects.Count <= 1)
+            int nCount = sln.Projects.Count;
+
+            if (nCount <= 0)
             {
                 string csTemplatePath = sln2.GetProjectTemplate(@"Windows\1033\ConsoleApplication\csConsoleApplication.vstemplate", "CSharp");
                 sln.AddFromTemplate(csTemplatePath, slnPath + "\\prj", "Foo", false);
