@@ -18,7 +18,14 @@ using System.Collections.Generic;
 
 class Program
 {
-    static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
+    #if VS2019
+        static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview";
+        static String vsId = "VisualStudio.DTE.16.0";
+    #else
+        static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
+        static String vsId = "VisualStudio.DTE.15.0";
+    #endif
+
     static String devEnvExe = Path.Combine(vsInstallPath, @"Common7\IDE\devenv.exe");
     static ProjectItemsEvents pievents;
 
@@ -99,7 +106,7 @@ class Program
             MessageFilter.Register();
             if (bNormalStart)
             {
-                dte = (DTE2)Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.15.0"), true);
+                dte = (DTE2)Activator.CreateInstance(Type.GetTypeFromProgID(vsId), true);
             }
             else {
                 //Microsoft.VisualStudio.Shell.ServiceProvider.GlobalProvider.GetService()
@@ -109,17 +116,19 @@ class Program
 
                 for (int iTry = 0; iTry < 2; iTry++)
                 {
-                    dte = (DTE2)Marshal.GetActiveObject("VisualStudio.DTE.15.0");
+                    dte = (DTE2)Marshal.GetActiveObject(vsId);
 
                     var processes = dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray();
                     Debugger2 debugger2 = (Debugger2)dte.Debugger;
 
+#if !VS2019
                     //
                     // https://varionet.wordpress.com/tag/debug/
                     // Windows 10: Attach2 triggers error: 8971001E, need to detach from all processes.
                     // Something to do debugging multiple processes?
                     //
-                    debugger2.DetachAll();
+                    //debugger2.DetachAll();
+#endif
 
                     int c = debugger2.Transports.Count;
                     Transport transport = debugger2.Transports.Item(1 /* Default transport */);
@@ -166,12 +175,12 @@ class Program
                     {
                         if (iTry == 1)
                         {
-                            Console.WriteLine("Error: Failed to launch vs2017.");
+                            Console.WriteLine("Error: Failed to launch vs2017/2019.");
                             return;
                         }
 
                         // Analogue of
-                        // Activator.CreateInstance(Type.GetTypeFromProgID("VisualStudio.DTE.15.0"), true);
+                        // Activator.CreateInstance(Type.GetTypeFromProgID(vsId), true);
                         // only with  experimental visual studio version.
                         Start_devenv_Embedded();
                     }
@@ -183,14 +192,18 @@ class Program
 
             String edition = dte.Edition;
             Console.WriteLine("Edition: " + edition);
+            Console.WriteLine("-----------------------------------------------");
 
             // Make it visible.
-            dte.MainWindow.Visible = true;
-            dte.UserControl = true;
+            if (!dte.MainWindow.Visible)
+            {
+                dte.MainWindow.Visible = true;
+                dte.UserControl = true;
+            }
 
             //if (bAttached)
             //{
-            //    dte = (DTE2)Marshal.GetActiveObject("VisualStudio.DTE.15.0");
+            //    dte = (DTE2)Marshal.GetActiveObject(vsId);
 
             //    var processes = Utils.call(() => (dte.Debugger.LocalProcesses));
             //    foreach (var proc in processes)
@@ -232,8 +245,11 @@ class Program
 
             //Console.WriteLine("[ Press any key to close ... ]");
             //Console.ReadKey();
+
+            /*
+            // Generate huge amount of temporary projects.
             Solution2 sln2 = (Solution2)dte.Solution;
-            String mainDir = @"c:\Prototyping\testsln";
+            String mainDir = @"d:\Prototyping\testsln";
             String slnTempDir = Path.Combine(mainDir, "slnTemp");
 
 
@@ -268,9 +284,12 @@ class Program
                 if (!bKeepProject)
                     Directory.Delete(dir, true);
             }
+            */
+
+
+            Solution sln = dte.Solution;
 
             /*
-            Solution sln = dte.Solution;
             String slnPath = @"c:\Prototyping\testsln";
             if( !sln.IsOpen )
                 sln.Create(slnPath, "test");
@@ -294,7 +313,7 @@ class Program
                 sln.AddFromTemplate(csTemplatePath, slnPath + "\\prj", "Foo", false);
                 dte.ExecuteCommand("File.SaveAll");
             }
-            
+            */
 
             //sln.Open(@"D:\PrototypingQuick\ConsoleApplication2\ConsoleApplication2.sln");
             //Project p = sln.Projects.Item(1);
@@ -306,21 +325,22 @@ class Program
             //String kind = p.Kind;
             //String dir = sln2.ProjectItemsTemplatePath(kind);
             //String cppTemplDir = sln2.ProjectItemsTemplatePath("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}");
-            
+            VCProjectShim vcproject = p.Object as VCProjectShim;
+            VCProject vcProject = p.Object as VCProject;
+
             ProjectItems pitems = p.ProjectItems;
 
             foreach (ProjectItem pi in pitems)
             {
                 String name = pi.Name;
 
-                if (pi.Name.ToLower() == "program.cs")
-                    pi.Delete();
+                Console.WriteLine(name);
             }
-            */
+            
 
             MessageFilter.Revoke();
-            Console.WriteLine();
-            Console.ReadKey();
+            //Console.WriteLine();
+            //Console.ReadKey();
         }
         catch (Exception ex)
         {
