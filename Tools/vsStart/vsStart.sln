@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vsStart", "vsStart.csproj", "{BAF1C089-BBDD-46F5-AF47-8D4D2FA14D90}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vsStart_vs2017", "vsStart_vs2017.csproj", "{BAF1C089-BBDD-46F5-AF47-8D4D2FA14D90}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vsDev", "..\vsDev\vsDev.csproj", "{3DA82FA0-F46B-482E-9F79-358DA1EEDC71}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSSyncProj", "..\..\VSSyncProj\VSSyncProj.csproj", "{199B8984-5F31-4E46-94C7-20CAA33081AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vsStart_vs2013", "vsStart_vs2013.csproj", "{1D12A97B-9D64-4ED7-A611-A756E41DBC6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +28,10 @@ Global
 		{199B8984-5F31-4E46-94C7-20CAA33081AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{199B8984-5F31-4E46-94C7-20CAA33081AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{199B8984-5F31-4E46-94C7-20CAA33081AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D12A97B-9D64-4ED7-A611-A756E41DBC6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D12A97B-9D64-4ED7-A611-A756E41DBC6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D12A97B-9D64-4ED7-A611-A756E41DBC6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D12A97B-9D64-4ED7-A611-A756E41DBC6A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

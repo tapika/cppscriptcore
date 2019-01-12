@@ -18,13 +18,19 @@ using System.Collections.Generic;
 
 class Program
 {
-    #if VS2019
-        static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview";
-        static String vsId = "VisualStudio.DTE.16.0";
-    #else
-        static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
-        static String vsId = "VisualStudio.DTE.15.0";
-    #endif
+#if VS2019
+    static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview";
+    static String vsId = "VisualStudio.DTE.16.0";
+#endif
+#if VS2017
+    static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise";
+    static String vsId = "VisualStudio.DTE.15.0";
+#endif
+#if VS2013
+    static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio 12.0";
+    static String vsId = "VisualStudio.DTE.12.0";
+#endif
+    static String debuggerVsId = "VisualStudio.DTE.15.0";       // If for visual studio, which you use for debugging.
 
     static String devEnvExe = Path.Combine(vsInstallPath, @"Common7\IDE\devenv.exe");
     static ProjectItemsEvents pievents;
@@ -116,19 +122,17 @@ class Program
 
                 for (int iTry = 0; iTry < 2; iTry++)
                 {
-                    dte = (DTE2)Marshal.GetActiveObject(vsId);
+                    dte = (DTE2)Marshal.GetActiveObject(debuggerVsId);
 
                     var processes = dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray();
                     Debugger2 debugger2 = (Debugger2)dte.Debugger;
 
-#if !VS2019
                     //
                     // https://varionet.wordpress.com/tag/debug/
-                    // Windows 10: Attach2 triggers error: 8971001E, need to detach from all processes.
+                    // Attach2 sometimes triggers error: 8971001E, need to detach from all processes.
                     // Something to do debugging multiple processes?
                     //
-                    //debugger2.DetachAll();
-#endif
+                    debugger2.DetachAll();
 
                     int c = debugger2.Transports.Count;
                     Transport transport = debugger2.Transports.Item(1 /* Default transport */);
@@ -164,7 +168,7 @@ class Program
                         Utils.callVoidFunction(() => { processToAttachTo.Attach2(engines); });
                         // Apparently it takes some time for debugger to attach to process, otherwise missing breakpoints.
                         // Not sure if some sort of wait could be triggerred.
-                        System.Threading.Thread.Sleep(2000);
+                        //System.Threading.Thread.Sleep(2000);
                         bAttached = true;
                         break;
                     }
@@ -200,26 +204,6 @@ class Program
                 dte.MainWindow.Visible = true;
                 dte.UserControl = true;
             }
-
-            //if (bAttached)
-            //{
-            //    dte = (DTE2)Marshal.GetActiveObject(vsId);
-
-            //    var processes = Utils.call(() => (dte.Debugger.LocalProcesses));
-            //    foreach (var proc in processes)
-            //    {
-            //        EnvDTE.Process p = (EnvDTE.Process)proc;
-            //        int pId = Utils.call(() => (p.ProcessID));
-            //        if (pId != processId)
-            //            continue;
-
-            //        Console.WriteLine("Attaching to: " + processId);
-            //        Utils.callVoidFunction(() => { p.Attach(); });
-            //        bAttached = true;
-            //        //Console.ReadKey();
-            //        break;
-            //    }
-            //}
 
             //Microsoft.VisualStudio.OLE.Interop.IServiceProvider serv = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte;
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "args");
@@ -316,27 +300,47 @@ class Program
             */
 
             //sln.Open(@"D:\PrototypingQuick\ConsoleApplication2\ConsoleApplication2.sln");
-            //Project p = sln.Projects.Item(1);
-            //VCProject vcproj = (VCProject)p.Object;
-            ////VCProject vcproj = (VCProject)p.Object;
-            //Console.WriteLine(vcproj.ProjectFile);
-            //Console.WriteLine(vcproj.ProjectGUID);
+            if (sln.Projects.Count == 0)
+            {
+                MessageFilter.Revoke();
+                Console.WriteLine("Please open C++ project in newly opened visual studio");
+                return;
+            }
+
             Project p = sln.Projects.Item(1);
-            //String kind = p.Kind;
-            //String dir = sln2.ProjectItemsTemplatePath(kind);
-            //String cppTemplDir = sln2.ProjectItemsTemplatePath("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}");
-            VCProjectShim vcproject = p.Object as VCProjectShim;
             VCProject vcProject = p.Object as VCProject;
 
-            ProjectItems pitems = p.ProjectItems;
+            if (vcProject == null)
+            {
+                MessageFilter.Revoke();
+                Console.WriteLine("Not a C++ project or vs2017 or later (registry moved to file problem).");
+                return;
+            }
 
-            foreach (ProjectItem pi in pitems)
+            foreach (ProjectItem pi in (ProjectItems)p.ProjectItems)
             {
                 String name = pi.Name;
-
                 Console.WriteLine(name);
             }
-            
+
+            foreach (object oFile in (IVCCollection)vcProject.Files)
+            {
+                VCFile file = oFile as VCFile;
+                Console.WriteLine(file.Name);
+                Console.WriteLine(" " + file.RelativePath);
+
+                foreach (var _conf in (IVCCollection)file.FileConfigurations)
+                {
+                    VCFileConfiguration conf = _conf as VCFileConfiguration;
+                    Console.WriteLine(conf.Name);
+
+                    VCCLCompilerTool compilerTool = conf.Tool as VCCLCompilerTool;
+                    if (compilerTool == null)
+                        continue;
+
+                    Console.WriteLine("Defines: " + compilerTool.PreprocessorDefinitions);
+                }
+            }
 
             MessageFilter.Revoke();
             //Console.WriteLine();
