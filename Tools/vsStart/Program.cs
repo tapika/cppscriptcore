@@ -303,7 +303,9 @@ class Program
             if (sln.Projects.Count == 0)
             {
                 MessageFilter.Revoke();
-                Console.WriteLine("Please open C++ project in newly opened visual studio");
+                Console.WriteLine("Please open C++ project in newly opened visual studio and run this vsStart again");
+                Console.WriteLine("[Press any key to close]");
+                Console.ReadLine();
                 return;
             }
 
@@ -314,6 +316,8 @@ class Program
             {
                 MessageFilter.Revoke();
                 Console.WriteLine("Not a C++ project or vs2017 or later (registry moved to file problem).");
+                Console.WriteLine("[Press any key to close]");
+                Console.ReadLine();
                 return;
             }
 
