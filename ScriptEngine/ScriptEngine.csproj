@@ -155,7 +155,11 @@
     <Analyzer Include="packages\Microsoft.VisualStudio.Threading.Analyzers.15.8.122\analyzers\cs\Microsoft.VisualStudio.Threading.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\ProjectScriptLinkCommand.png" />
     <Content Include="Resources\ScriptEnginePackage.ico" />
+    <VSCTCompile Include="ScriptEnginePackage.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="VSPackage.resx">
