@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using EnvDTE90;
 using System.Collections.Generic;
+using Microsoft.VisualStudio.Shell.Interop;
 
 class Program
 {
@@ -337,6 +338,11 @@ class Program
             //    return;
             //}
 
+            //VCProjectEngine peng2 = vcProject.VCProjectEngine as VCProjectEngine;
+            //VCProjectEngineShim peng = peng2 as VCProjectEngineShim;
+            //var sp = peng.VsServiceProvider;
+
+
             //foreach (ProjectItem pi in (ProjectItems)p.ProjectItems)
             //{
             //    String name = pi.Name;
@@ -361,6 +367,17 @@ class Program
             //        Console.WriteLine("Defines: " + compilerTool.PreprocessorDefinitions);
             //    }
             //}
+            IVsSolution service = GetService( dte, typeof(IVsSolution)) as IVsSolution;
+
+            String uname = p.UniqueName;
+            IVsHierarchy hierarchy;
+            service.GetProjectOfUniqueName(uname, out hierarchy);
+            Guid projectGuid;
+            hierarchy.GetGuidProperty(Microsoft.VisualStudio.VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ProjectIDGuid, out projectGuid);
+
+            Console.WriteLine("Project guid: " + projectGuid.ToString());
+
+
 
             MessageFilter.Revoke();
             //Console.WriteLine();
@@ -379,6 +396,40 @@ class Program
             //    dte.Solution.Close();
         }
     }
+
+    public static object GetService(object serviceProvider, System.Type type)
+    {
+        return GetService(serviceProvider, type.GUID);
+    }
+
+    public static object GetService(object serviceProviderObject, System.Guid guid)
+    {
+
+        object service = null;
+        Microsoft.VisualStudio.OLE.Interop.IServiceProvider serviceProvider = null;
+        IntPtr serviceIntPtr;
+        int hr = 0;
+        Guid SIDGuid;
+        Guid IIDGuid;
+
+        SIDGuid = guid;
+        IIDGuid = SIDGuid;
+        serviceProvider = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)serviceProviderObject;
+        hr = serviceProvider.QueryService(ref SIDGuid, ref IIDGuid, out serviceIntPtr);
+
+        if (hr != 0)
+        {
+            System.Runtime.InteropServices.Marshal.ThrowExceptionForHR(hr);
+        }
+        else if (!serviceIntPtr.Equals(IntPtr.Zero))
+        {
+            service = System.Runtime.InteropServices.Marshal.GetObjectForIUnknown(serviceIntPtr);
+            System.Runtime.InteropServices.Marshal.Release(serviceIntPtr);
+        }
+
+        return service;
+    }
+
 
     private static void Pievents_ItemAdded(ProjectItem pi)
     {
