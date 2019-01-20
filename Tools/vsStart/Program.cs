@@ -132,7 +132,7 @@ class Program
                     // Attach2 sometimes triggers error: 8971001E, need to detach from all processes.
                     // Something to do debugging multiple processes?
                     //
-                    debugger2.DetachAll();
+                    //debugger2.DetachAll();
 
                     int c = debugger2.Transports.Count;
                     Transport transport = debugger2.Transports.Item(1 /* Default transport */);
@@ -310,41 +310,57 @@ class Program
             }
 
             Project p = sln.Projects.Item(1);
-            VCProject vcProject = p.Object as VCProject;
 
-            if (vcProject == null)
+            // C#/C++ project properties scanning
+            Dictionary<String, Object> d = new Dictionary<string, object>();
+            foreach (Property prop in p.Properties)
             {
-                MessageFilter.Revoke();
-                Console.WriteLine("Not a C++ project or vs2017 or later (registry moved to file problem).");
-                Console.WriteLine("[Press any key to close]");
-                Console.ReadLine();
-                return;
-            }
-
-            foreach (ProjectItem pi in (ProjectItems)p.ProjectItems)
-            {
-                String name = pi.Name;
-                Console.WriteLine(name);
-            }
-
-            foreach (object oFile in (IVCCollection)vcProject.Files)
-            {
-                VCFile file = oFile as VCFile;
-                Console.WriteLine(file.Name);
-                Console.WriteLine(" " + file.RelativePath);
-
-                foreach (var _conf in (IVCCollection)file.FileConfigurations)
+                try
                 {
-                    VCFileConfiguration conf = _conf as VCFileConfiguration;
-                    Console.WriteLine(conf.Name);
-
-                    VCCLCompilerTool compilerTool = conf.Tool as VCCLCompilerTool;
-                    if (compilerTool == null)
-                        continue;
-
-                    Console.WriteLine("Defines: " + compilerTool.PreprocessorDefinitions);
+                    d[prop.Name] = prop.Value;
+                }
+                catch (Exception)
+                {
                 }
             }
+
+            // C++ project model scanning
+            //VCProject vcProject = p.Object as VCProject;
+            //VCProject vcProject = (VCProject)p.Object;
+
+            //if (vcProject == null)
+            //{
+            //    MessageFilter.Revoke();
+            //    Console.WriteLine("Not a C++ project or vs2017 or later (registry moved to file problem).");
+            //    Console.WriteLine("[Press any key to close]");
+            //    Console.ReadLine();
+            //    return;
+            //}
+
+            //foreach (ProjectItem pi in (ProjectItems)p.ProjectItems)
+            //{
+            //    String name = pi.Name;
+            //    Console.WriteLine(name);
+            //}
+
+            //foreach (object oFile in (IVCCollection)vcProject.Files)
+            //{
+            //    VCFile file = oFile as VCFile;
+            //    Console.WriteLine(file.Name);
+            //    Console.WriteLine(" " + file.RelativePath);
+
+            //    foreach (var _conf in (IVCCollection)file.FileConfigurations)
+            //    {
+            //        VCFileConfiguration conf = _conf as VCFileConfiguration;
+            //        Console.WriteLine(conf.Name);
+
+            //        VCCLCompilerTool compilerTool = conf.Tool as VCCLCompilerTool;
+            //        if (compilerTool == null)
+            //            continue;
+
+            //        Console.WriteLine("Defines: " + compilerTool.PreprocessorDefinitions);
+            //    }
+            //}
 
             MessageFilter.Revoke();
             //Console.WriteLine();
@@ -503,6 +519,11 @@ class Program
         }
 
         return runningObject as DTE;
+    }
+
+    public static void init(DTE2 dte)
+    {
+        Debug.WriteLine("I was started, hurray v5 !");
     }
 
 }
