@@ -326,7 +326,7 @@ class Program
             }
 
             // C++ project model scanning
-            //VCProject vcProject = p.Object as VCProject;
+            VCProject vcProject = p.Object as VCProject;
             //VCProject vcProject = (VCProject)p.Object;
 
             //if (vcProject == null)
@@ -349,24 +349,6 @@ class Program
             //    Console.WriteLine(name);
             //}
 
-            //foreach (object oFile in (IVCCollection)vcProject.Files)
-            //{
-            //    VCFile file = oFile as VCFile;
-            //    Console.WriteLine(file.Name);
-            //    Console.WriteLine(" " + file.RelativePath);
-
-            //    foreach (var _conf in (IVCCollection)file.FileConfigurations)
-            //    {
-            //        VCFileConfiguration conf = _conf as VCFileConfiguration;
-            //        Console.WriteLine(conf.Name);
-
-            //        VCCLCompilerTool compilerTool = conf.Tool as VCCLCompilerTool;
-            //        if (compilerTool == null)
-            //            continue;
-
-            //        Console.WriteLine("Defines: " + compilerTool.PreprocessorDefinitions);
-            //    }
-            //}
             IVsSolution service = GetService( dte, typeof(IVsSolution)) as IVsSolution;
 
             String uname = p.UniqueName;
@@ -377,7 +359,45 @@ class Program
 
             Console.WriteLine("Project guid: " + projectGuid.ToString());
 
+            // Add file in programming language independent manner.
+            //p.ProjectItems.AddFromFile(@"D:\Prototyping\cppscriptcore\cppscript\cppscript.cpp");
 
+            if (vcProject != null)
+            {
+                //foreach (object oFile in (IVCCollection)vcProject.Files)
+                //{
+                //    VCFile file = oFile as VCFile;
+                //    Console.WriteLine(file.Name);
+                //    Console.WriteLine(" " + file.RelativePath);
+
+                //    foreach (var _conf in (IVCCollection)file.FileConfigurations)
+                //    {
+                //        VCFileConfiguration conf = _conf as VCFileConfiguration;
+                //        Console.WriteLine(conf.Name);
+
+                //        VCCLCompilerTool compilerTool = conf.Tool as VCCLCompilerTool;
+                //        if (compilerTool == null)
+                //            continue;
+
+                //        Console.WriteLine("Defines: " + compilerTool.PreprocessorDefinitions);
+                //    }
+                //}
+
+
+                VCFilter f = null;
+                foreach (object oItem in (IVCCollection)vcProject.Items)
+                {
+                    VCFile file = oItem as VCFile;
+                    VCFilter fitem = oItem as VCFilter;
+
+                    if (fitem != null && fitem.Name == "Test1")
+                        f = fitem;
+                }
+
+                if( f == null )
+                    f = vcProject.AddFilter("Test1") as VCFilter;
+                f.AddFile(@"D:\Prototyping\cppscriptcore\cppscript\cppscript.cpp");
+            }
 
             MessageFilter.Revoke();
             //Console.WriteLine();
