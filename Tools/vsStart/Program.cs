@@ -385,18 +385,56 @@ class Program
 
 
                 VCFilter f = null;
-                foreach (object oItem in (IVCCollection)vcProject.Items)
-                {
-                    VCFile file = oItem as VCFile;
-                    VCFilter fitem = oItem as VCFilter;
+                //foreach (object oItem in (IVCCollection)vcProject.Items)
+                //{
+                //    VCFile file = oItem as VCFile;
+                //    VCFilter fitem = oItem as VCFilter;
 
-                    if (fitem != null && fitem.Name == "Test1")
-                        f = fitem;
+                //    if (fitem != null && fitem.Name == "Test1")
+                //        f = fitem;
+                //}
+
+                //if( f == null )
+                //    f = vcProject.AddFilter("Test1") as VCFilter;
+                //f.AddFile(@"D:\Prototyping\cppscriptcore\cppscript\cppscript.cpp");
+
+                String fromDir = @"C:\Prototyping\vlc-3.0.2";
+
+                List<String> files = Directory.GetFiles(fromDir, "*.c", SearchOption.AllDirectories).ToList();
+                files.AddRange(Directory.GetFiles(fromDir, "*.h", SearchOption.AllDirectories));
+                files = files.Select(x => x.Substring(fromDir.Length + 1)).ToList();
+
+                Stopwatch sw = Stopwatch.StartNew();
+
+                foreach (String file in files)
+                {
+                    String[] pp = file.Split('\\');
+                    IVCCollection items = (IVCCollection)vcProject.Items;
+                    VCFilter parent = null;
+                    VCFilter filter = null;
+
+                    for (int i = 0; i < pp.Length - 1; i++)
+                    {
+                        filter = items.OfType<VCFilter>().Where(x => x.Name == pp[i]).FirstOrDefault();
+                        if (filter == null)
+                            if (i == 0)
+                                filter = (VCFilter)vcProject.AddFilter(pp[i]);
+                            else
+                                filter = (VCFilter)parent.AddFilter(pp[i]);
+
+                        parent = filter;
+                        items = (IVCCollection)parent.Items;
+                    }
+
+                    if (filter == null)
+                        vcProject.AddFile(file);
+                    else
+                        filter.AddFile(file);
                 }
 
-                if( f == null )
-                    f = vcProject.AddFilter("Test1") as VCFilter;
-                f.AddFile(@"D:\Prototyping\cppscriptcore\cppscript\cppscript.cpp");
+                sw.Stop();
+                Console.WriteLine(sw.ElapsedMilliseconds);
+
             }
 
             MessageFilter.Revoke();
