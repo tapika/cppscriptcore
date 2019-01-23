@@ -426,10 +426,11 @@ class Program
                         items = (IVCCollection)parent.Items;
                     }
 
+                    String fullpath = Path.Combine(fromDir, file);
                     if (filter == null)
-                        vcProject.AddFile(file);
+                        vcProject.AddFile(fullpath);
                     else
-                        filter.AddFile(file);
+                        filter.AddFile(fullpath);
                 }
 
                 sw.Stop();
