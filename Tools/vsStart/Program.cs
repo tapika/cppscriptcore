@@ -16,6 +16,8 @@ using System.Threading;
 using EnvDTE90;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Project.VisualC.VsShell.Interop;
+using VSLangProj;
 
 class Program
 {
@@ -349,6 +351,18 @@ class Program
             //    Console.WriteLine(name);
             //}
 
+
+            // C#, reference listing.
+            VSProject2 vsp2 = p.Object as VSProject2;
+            if (vsp2 != null)
+            {
+                foreach (Reference r in ((References)vsp2.References).Cast<Reference>())
+                {
+                    Console.WriteLine(r.Path);
+                    Console.WriteLine("CopyLocal = " + r.CopyLocal);
+                }
+            }
+
             IVsSolution service = GetService( dte, typeof(IVsSolution)) as IVsSolution;
 
             String uname = p.UniqueName;
@@ -398,43 +412,45 @@ class Program
                 //    f = vcProject.AddFilter("Test1") as VCFilter;
                 //f.AddFile(@"D:\Prototyping\cppscriptcore\cppscript\cppscript.cpp");
 
-                String fromDir = @"C:\Prototyping\vlc-3.0.2";
 
-                List<String> files = Directory.GetFiles(fromDir, "*.c", SearchOption.AllDirectories).ToList();
-                files.AddRange(Directory.GetFiles(fromDir, "*.h", SearchOption.AllDirectories));
-                files = files.Select(x => x.Substring(fromDir.Length + 1)).ToList();
+                // Recursive files / folder adding / C++ project
+                //String fromDir = @"C:\Prototyping\vlc-3.0.2";
 
-                Stopwatch sw = Stopwatch.StartNew();
+                //List<String> files = Directory.GetFiles(fromDir, "*.c", SearchOption.AllDirectories).ToList();
+                //files.AddRange(Directory.GetFiles(fromDir, "*.h", SearchOption.AllDirectories));
+                //files = files.Select(x => x.Substring(fromDir.Length + 1)).ToList();
 
-                foreach (String file in files)
-                {
-                    String[] pp = file.Split('\\');
-                    IVCCollection items = (IVCCollection)vcProject.Items;
-                    VCFilter parent = null;
-                    VCFilter filter = null;
+                //Stopwatch sw = Stopwatch.StartNew();
 
-                    for (int i = 0; i < pp.Length - 1; i++)
-                    {
-                        filter = items.OfType<VCFilter>().Where(x => x.Name == pp[i]).FirstOrDefault();
-                        if (filter == null)
-                            if (i == 0)
-                                filter = (VCFilter)vcProject.AddFilter(pp[i]);
-                            else
-                                filter = (VCFilter)parent.AddFilter(pp[i]);
+                //foreach (String file in files)
+                //{
+                //    String[] pp = file.Split('\\');
+                //    IVCCollection items = (IVCCollection)vcProject.Items;
+                //    VCFilter parent = null;
+                //    VCFilter filter = null;
 
-                        parent = filter;
-                        items = (IVCCollection)parent.Items;
-                    }
+                //    for (int i = 0; i < pp.Length - 1; i++)
+                //    {
+                //        filter = items.OfType<VCFilter>().Where(x => x.Name == pp[i]).FirstOrDefault();
+                //        if (filter == null)
+                //            if (i == 0)
+                //                filter = (VCFilter)vcProject.AddFilter(pp[i]);
+                //            else
+                //                filter = (VCFilter)parent.AddFilter(pp[i]);
 
-                    String fullpath = Path.Combine(fromDir, file);
-                    if (filter == null)
-                        vcProject.AddFile(fullpath);
-                    else
-                        filter.AddFile(fullpath);
-                }
+                //        parent = filter;
+                //        items = (IVCCollection)parent.Items;
+                //    }
 
-                sw.Stop();
-                Console.WriteLine(sw.ElapsedMilliseconds);
+                //    String fullpath = Path.Combine(fromDir, file);
+                //    if (filter == null)
+                //        vcProject.AddFile(fullpath);
+                //    else
+                //        filter.AddFile(fullpath);
+                //}
+
+                //sw.Stop();
+                //Console.WriteLine(sw.ElapsedMilliseconds);
 
             }
 
