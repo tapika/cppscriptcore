@@ -135,7 +135,7 @@ class Program
                     // Attach2 sometimes triggers error: 8971001E, need to detach from all processes.
                     // Something to do debugging multiple processes?
                     //
-                    //debugger2.DetachAll();
+                    debugger2.DetachAll();
 
                     int c = debugger2.Transports.Count;
                     Transport transport = debugger2.Transports.Item(1 /* Default transport */);
@@ -344,24 +344,27 @@ class Program
             //VCProjectEngineShim peng = peng2 as VCProjectEngineShim;
             //var sp = peng.VsServiceProvider;
 
-
-            //foreach (ProjectItem pi in (ProjectItems)p.ProjectItems)
-            //{
-            //    String name = pi.Name;
-            //    Console.WriteLine(name);
-            //}
-
-
-            // C#, reference listing.
-            VSProject2 vsp2 = p.Object as VSProject2;
-            if (vsp2 != null)
+            // Scan for all subprojects.
+            List<Project> projects = GetProjects(sln);
+            foreach (Project genProj in projects)
             {
-                foreach (Reference r in ((References)vsp2.References).Cast<Reference>())
-                {
-                    Console.WriteLine(r.Path);
-                    Console.WriteLine("CopyLocal = " + r.CopyLocal);
-                }
+                VSProject2 vsp2 = genProj.Object as VSProject2;
+                if (vsp2 == null)
+                    continue;
+
+                String name = genProj.Name.ToLower();
+
+                Console.WriteLine("Project: " + name);
+
+                //foreach (Reference r in ((References)vsp2.References).Cast<Reference>())
+                //{
+                //    Console.WriteLine(r.Path);
+                //    Console.WriteLine("CopyLocal = " + r.CopyLocal);
+                //}
             }
+
+            Console.WriteLine("[Press any key to close]");
+            Console.ReadLine();
 
             IVsSolution service = GetService( dte, typeof(IVsSolution)) as IVsSolution;
 
@@ -471,6 +474,24 @@ class Program
             //    dte.Solution.Close();
         }
     }
+
+    /// <summary>
+    /// Queries for all projects in solution, recursively (without recursion)
+    /// </summary>
+    /// <param name="sln">Solution</param>
+    /// <returns>List of projects</returns>
+    static List<Project> GetProjects(Solution sln)
+    {
+        List<Project> list = new List<Project>();
+        list.AddRange(sln.Projects.Cast<Project>());
+
+        for (int i = 0; i < list.Count; i++)
+            // OfType will ignore null's.
+            list.AddRange(list[i].ProjectItems.Cast<ProjectItem>().Select(x => x.SubProject).OfType<Project>());
+
+        return list;
+    }
+
 
     public static object GetService(object serviceProvider, System.Type type)
     {
