@@ -18,6 +18,10 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Project.VisualC.VsShell.Interop;
 using VSLangProj;
+#if !VS2013
+using VSLangProj140;
+using VSLangProj150;
+#endif
 
 class Program
 {
@@ -303,32 +307,28 @@ class Program
             */
 
             //sln.Open(@"D:\PrototypingQuick\ConsoleApplication2\ConsoleApplication2.sln");
-            if (sln.Projects.Count == 0)
+            while (sln.Projects.Count == 0)
             {
-                MessageFilter.Revoke();
-                Console.WriteLine("Please open C++ project in newly opened visual studio and run this vsStart again");
-                Console.WriteLine("[Press any key to close]");
+                Console.WriteLine("Please open solution in newly opened visual studio and then press enter to continue...");
                 Console.ReadLine();
-                return;
             }
-
-            Project p = sln.Projects.Item(1);
 
             // C#/C++ project properties scanning
-            Dictionary<String, Object> d = new Dictionary<string, object>();
-            foreach (Property prop in p.Properties)
-            {
-                try
-                {
-                    d[prop.Name] = prop.Value;
-                }
-                catch (Exception)
-                {
-                }
-            }
+            //Project p = sln.Projects.Item(1);
+            //Dictionary<String, Object> d = new Dictionary<string, object>();
+            //foreach (Property prop in p.Properties)
+            //{
+            //    try
+            //    {
+            //        d[prop.Name] = prop.Value;
+            //    }
+            //    catch (Exception)
+            //    {
+            //    }
+            //}
 
             // C++ project model scanning
-            VCProject vcProject = p.Object as VCProject;
+            //VCProject vcProject = p.Object as VCProject;
             //VCProject vcProject = (VCProject)p.Object;
 
             //if (vcProject == null)
@@ -348,13 +348,28 @@ class Program
             List<Project> projects = GetProjects(sln);
             foreach (Project genProj in projects)
             {
-                VSProject2 vsp2 = genProj.Object as VSProject2;
-                if (vsp2 == null)
+#if VS2013
+                VSProject2 sharpProj = genProj.Object as VSProject2;
+#else
+                VSProject2 sharpProj = genProj.Object as VSProject2;
+                //VSProject3 sharpProj = genProj.Object as VSProject3;
+                //VSProject4 sharpProj = genProj.Object as VSProject4;
+#endif
+                VCProject cppProj = genProj.Object as VCProject;
+
+                String name = genProj.Name;
+                Console.Write("Project: " + name + " - language( ~" + genProj.Kind + "): ");
+                if (sharpProj == null && cppProj == null)
+                {
+                    Console.WriteLine("Unknown");
                     continue;
+                }
 
-                String name = genProj.Name.ToLower();
+                if (sharpProj != null)
+                    Console.WriteLine("C#");
 
-                Console.WriteLine("Project: " + name);
+                if (cppProj != null)
+                    Console.WriteLine("C++ ");
 
                 //foreach (Reference r in ((References)vsp2.References).Cast<Reference>())
                 //{
@@ -366,21 +381,22 @@ class Program
             Console.WriteLine("[Press any key to close]");
             Console.ReadLine();
 
-            IVsSolution service = GetService( dte, typeof(IVsSolution)) as IVsSolution;
+            // Get project GUID
+            //IVsSolution service = GetService( dte, typeof(IVsSolution)) as IVsSolution;
 
-            String uname = p.UniqueName;
-            IVsHierarchy hierarchy;
-            service.GetProjectOfUniqueName(uname, out hierarchy);
-            Guid projectGuid;
-            hierarchy.GetGuidProperty(Microsoft.VisualStudio.VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ProjectIDGuid, out projectGuid);
+            //String uname = p.UniqueName;
+            //IVsHierarchy hierarchy;
+            //service.GetProjectOfUniqueName(uname, out hierarchy);
+            //Guid projectGuid;
+            //hierarchy.GetGuidProperty(Microsoft.VisualStudio.VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ProjectIDGuid, out projectGuid);
 
-            Console.WriteLine("Project guid: " + projectGuid.ToString());
+            //Console.WriteLine("Project guid: " + projectGuid.ToString());
 
             // Add file in programming language independent manner.
             //p.ProjectItems.AddFromFile(@"D:\Prototyping\cppscriptcore\cppscript\cppscript.cpp");
 
-            if (vcProject != null)
-            {
+            //if (vcProject != null)
+            //{
                 //foreach (object oFile in (IVCCollection)vcProject.Files)
                 //{
                 //    VCFile file = oFile as VCFile;
@@ -401,7 +417,7 @@ class Program
                 //}
 
 
-                VCFilter f = null;
+                //VCFilter f = null;
                 //foreach (object oItem in (IVCCollection)vcProject.Items)
                 //{
                 //    VCFile file = oItem as VCFile;
@@ -454,8 +470,7 @@ class Program
 
                 //sw.Stop();
                 //Console.WriteLine(sw.ElapsedMilliseconds);
-
-            }
+            //}
 
             MessageFilter.Revoke();
             //Console.WriteLine();
