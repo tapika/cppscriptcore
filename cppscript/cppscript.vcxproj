@@ -26,6 +26,9 @@
     <ClInclude Include="..\pugixml\pugiconfig.hpp" />
     <ClInclude Include="..\pugixml\pugixml.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\pugixml\pugixml.natvis" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{554DCA95-1B50-4AF5-B90A-503F3EB07159}</ProjectGuid>
