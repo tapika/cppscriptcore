@@ -4,9 +4,28 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Solution.cpp" />
     <ClCompile Include="Project.cpp" />
+    <ClCompile Include="..\pugixml\pugixml.cpp">
+      <Filter>pugixml</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solution.h" />
     <ClInclude Include="Project.h" />
+    <ClInclude Include="..\pugixml\pugiconfig.hpp">
+      <Filter>pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pugixml\pugixml.hpp">
+      <Filter>pugixml</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="pugixml">
+      <UniqueIdentifier>{dc4500a1-3168-41af-9b6a-7a1298a4c3bc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\pugixml\pugixml.natvis">
+      <Filter>pugixml</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>
