@@ -220,11 +220,13 @@ class Program
             }
 
             Solution2 sln2 = (Solution2)dte.Solution;
-            sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution2.sln");
+            //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution2.sln");
             //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution.sln");
             //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution1.sln");
-
-
+            sln2.Close();
+            String projPath = @"\PrototypingQuick\ProjectGen\ConsoleApplication1\ConsoleApplication1\ConsoleApplication1.vcxproj";
+            sln2.AddFromFile(projPath);
+            sln2.SolutionBuild.Build();
 
 
             //Microsoft.VisualStudio.OLE.Interop.IServiceProvider serv = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte;
