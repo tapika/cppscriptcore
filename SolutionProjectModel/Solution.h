@@ -1,16 +1,9 @@
-#pragma once
-#include "../pugixml/pugixml.hpp"
+#include "Project.h"
 
-#ifdef SPM_EXPORT
-    #define SPM_DLLEXPORT __declspec(dllexport)
-#else
-    #define SPM_DLLEXPORT __declspec(dllexport)
-#endif
-
-class SPM_DLLEXPORT Solution: public pugi::xml_document
+class SPM_DLLEXPORT Solution : public pugi::xml_document
 {
 public:
-    bool Load(const wchar_t* file);
+    
 
 };
 
