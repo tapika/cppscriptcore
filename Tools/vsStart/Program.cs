@@ -1,4 +1,7 @@
-﻿using System;
+﻿#if VS2012 || VS2013
+    #define OLD_VS
+#endif
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -18,7 +21,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Project.VisualC.VsShell.Interop;
 using VSLangProj;
-#if !VS2013
+#if !OLD_VS
 using VSLangProj140;
 using VSLangProj150;
 #endif
@@ -36,6 +39,10 @@ class Program
 #if VS2013
     static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio 12.0";
     static String vsId = "VisualStudio.DTE.12.0";
+#endif
+#if VS2012
+    static String vsInstallPath = @"C:\Program Files (x86)\Microsoft Visual Studio 11.0";
+    static String vsId = "VisualStudio.DTE.11.0";
 #endif
     static String debuggerVsId = "VisualStudio.DTE.15.0";       // If for visual studio, which you use for debugging.
 
@@ -212,6 +219,14 @@ class Program
                 dte.UserControl = true;
             }
 
+            Solution2 sln2 = (Solution2)dte.Solution;
+            sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution2.sln");
+            //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution.sln");
+            //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution1.sln");
+
+
+
+
             //Microsoft.VisualStudio.OLE.Interop.IServiceProvider serv = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte;
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "args");
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile");
@@ -348,7 +363,8 @@ class Program
             List<Project> projects = GetProjects(sln);
             foreach (Project genProj in projects)
             {
-#if VS2013
+#if !OLD_VS
+
                 VSProject2 sharpProj = genProj.Object as VSProject2;
 #else
                 VSProject2 sharpProj = genProj.Object as VSProject2;
