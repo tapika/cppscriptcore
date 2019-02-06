@@ -223,11 +223,13 @@ class Program
             //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution2.sln");
             //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution.sln");
             //sln2.Open(@"C:\PrototypingQuick\ProjectGen\Solution1.sln");
-            sln2.Close();
-            String projPath = @"\PrototypingQuick\ProjectGen\ConsoleApplication1\ConsoleApplication1\ConsoleApplication1.vcxproj";
-            sln2.AddFromFile(projPath);
-            sln2.SolutionBuild.Build();
-
+            //sln2.Close();
+            
+            // Add existing project to solution
+            //String projPath = @"D:\PrototypingQuick\ProjectGen\Dll1\Dll1.vcxproj";
+            //String projPath = @"D:\PrototypingQuick\ProjectGen\Dll1\Dll2.vcxproj";
+            //sln2.AddFromFile(projPath);
+            //sln2.SolutionBuild.Build();
 
             //Microsoft.VisualStudio.OLE.Interop.IServiceProvider serv = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte;
             //dte.ExecuteCommand("File.InvokeOpenSyncProjectFile", "args");
@@ -329,6 +331,14 @@ class Program
                 Console.WriteLine("Please open solution in newly opened visual studio and then press enter to continue...");
                 Console.ReadLine();
             }
+
+            // Enumerate available configurations within a project
+            Project p = sln2.Projects.Item(1);
+            var oConfs = p.ConfigurationManager.Cast<Configuration>().ToArray();
+            var confs = oConfs.Select(x => x.ConfigurationName + "|" + x.PlatformName).ToArray();
+
+            foreach (String c in confs)
+                Console.WriteLine("- " + c);
 
             // C#/C++ project properties scanning
             //Project p = sln.Projects.Item(1);
