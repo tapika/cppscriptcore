@@ -13,7 +13,7 @@ partial class Builder : SolutionProjectBuilder
         files("testCppApp.cpp");
         referencesProject("SolutionProjectModel.vcxproj");
         targetdir(@"$(ProjectDir)\bin\$(Platform)_$(Configuration)\");
-        objdir(@"$(ProjectDir)\bin\$(Platform)_$(Configuration)\");
+        objdir(@"$(ProjectDir)\obj\$(Platform)_$(Configuration)\");
         symbols("on");
         optimize("off");
     }
