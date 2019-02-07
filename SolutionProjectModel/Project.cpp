@@ -2,6 +2,12 @@
 #include <stdio.h>
 using namespace pugi;
 
+//
+// Expose over .dll boundary
+//
+template class __declspec(dllexport) std::allocator<char>;
+template class __declspec(dllexport) std::basic_string<char, std::char_traits<char>, std::allocator<char> >;
+
 
 bool Project::Load(const wchar_t* file)
 {
@@ -14,10 +20,10 @@ bool Project::Load(const wchar_t* file)
 
     for (xml_node conf : node.children())
     {
-        xml_attribute attrib = conf.attribute(L"Include");
-        printf("%S\r\n", attrib.value());
-        printf("Configuration = %S , ", conf.child(L"Configuration").text().get());
-        printf("Platform = %S\r\n", conf.child(L"Platform").text().get());
+        Configuration c;
+        c.ConfigurationName = as_utf8(conf.child(L"Configuration").text().get());
+        c.PlatformName = as_utf8(conf.child(L"Platform").text().get());
+        Configurations.push_back(c);
     }
 
     return true;
