@@ -1,17 +1,17 @@
-﻿using EnvDTE80;
+﻿using csscript;
+using CSScriptLibrary;
+using EnvDTE80;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Windows.Forms;
 
 public class ScriptHost
 {
@@ -19,8 +19,22 @@ public class ScriptHost
     [STAThread]
     static void Main(string[] args)
     {
-        ConnectDebugger();
+        ScriptServer_ConnectDebugger(null);
     }
+
+    public static void ConnectDebugger([System.Runtime.CompilerServices.CallerFilePath] String csScript = null, String additionCommandLineArguments = "")
+    {
+        string[] args = Environment.GetCommandLineArgs();
+        if (args.Contains("-Embedding"))
+            return;
+
+        ScriptServer_ConnectDebugger(csScript, additionCommandLineArguments);
+    }
+
+    /// <summary>
+    /// C# script to monitor for changes.
+    /// </summary>
+    static String scriptToMonitor = "";
 
     /// <summary>
     /// Starts exe and attaches debugger to it.
@@ -28,7 +42,7 @@ public class ScriptHost
     /// </summary>
     /// <param name="exe">Executable to start</param>
     /// <param name="additionCommandLineArguments">Additional command line arguments to executable</param>
-    public static void ConnectDebugger(String exe = null, String additionCommandLineArguments = "")
+    public static void ScriptServer_ConnectDebugger(String csScript = null, String additionCommandLineArguments = "")
     {
         //---------------------------------------------------------------
         // Detect Visual studio, which is debugging us.
@@ -80,14 +94,13 @@ public class ScriptHost
             }
 
             // Breakpoint will start to work here
-            String msg = "";
-            if (new IpcChannel(Process.GetCurrentProcess().Id).Receive(ref msg, 5000))
-                Console.WriteLine("Dispatch file: " + msg);
+            if (new IpcChannel(Process.GetCurrentProcess().Id).Receive(ref scriptToMonitor, 5000))
+                Console.WriteLine("Dispatch file: " + scriptToMonitor);
 
             FileSystemWatcher watcher = new FileSystemWatcher();
-            watcher.Path = @"C:\Prototyping\cppscriptcore\bin";
+            watcher.Path = Path.GetDirectoryName(scriptToMonitor);
             watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            watcher.Filter = "*.exe";
+            watcher.Filter = "*.cs";
             watcher.Changed += FileChanged;
             watcher.Created += FileChanged;
             watcher.Renamed += FileChanged;
@@ -114,13 +127,23 @@ public class ScriptHost
                 }
             }
 
-            FileReload(Path.Combine(watcher.Path, "testScript.exe"));
+            FileReload(scriptToMonitor);
 
-            if (exe == null)
+            if (csScript == null)
             {
                 Console.WriteLine("Started with command line arguments: '" + String.Join(" ", args) + "'");
                 Console.WriteLine("[ Press enter to close host ]");
-                Console.ReadLine();
+
+                //Console.ReadLine();
+                while (true)
+                {
+                    if (Console.KeyAvailable)
+                        break;
+
+                    // Needed for AppDomain.Unload
+                    Application.DoEvents();
+                    Thread.Sleep(50);
+                }
             }
 
             if ( dte != null ) MessageFilter.Revoke();
@@ -130,8 +153,7 @@ public class ScriptHost
         //---------------------------------------------------------------
         // Self hosting if not embedded in application
         //---------------------------------------------------------------
-        if (exe == null)
-            exe = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        String hostExePath = Assembly.GetExecutingAssembly().Location;
 
         if (dte != null)
         {
@@ -151,7 +173,7 @@ public class ScriptHost
                 for( int i = 0; i < exeNames.Length; i++)
                 {
                     var process = processes[i];
-                    if (exeNames[i] == exe)
+                    if (exeNames[i] == hostExePath)
                     {
                         try
                         {
@@ -164,7 +186,7 @@ public class ScriptHost
                                 throw ex;
                         }
 
-                        new IpcChannel(process.ProcessID).Send("Hello world");
+                        new IpcChannel(process.ProcessID).Send(csScript);
                         bAttached = true;
                         break;
                     }
@@ -176,20 +198,22 @@ public class ScriptHost
                 ProcessStartInfo procStartInfo = new ProcessStartInfo();
                 procStartInfo.Arguments = "-Embedding " + additionCommandLineArguments;
                 procStartInfo.CreateNoWindow = true;
-                procStartInfo.FileName = exe;
+                procStartInfo.FileName = hostExePath;
                 procStartInfo.WorkingDirectory = Environment.CurrentDirectory;
 
                 Process.Start(procStartInfo);
-                Console.WriteLine("Starting process '" + exe + "'");
+                Console.WriteLine("Starting process '" + hostExePath + "'");
                 //System.Threading.Thread.Sleep(1000);
             } //for
 
         }
 
         if ( dte != null ) MessageFilter.Revoke();
+        Environment.Exit(0);
     }
 
-    static List<String> changedFiles = new List<string>();
+
+    //static List<String> changedFiles = new List<string>();
 
 
     /// <summary>
@@ -197,39 +221,42 @@ public class ScriptHost
     /// </summary>
     private static void FileChanged(object sender, FileSystemEventArgs e)
     {
-        lock (changedFiles)
-        {
-            if (changedFiles.Contains(e.FullPath))
-            {
-                return;
-            }
-            changedFiles.Add(e.FullPath);
-        }
+        FileReload(e.FullPath);
+        //Console.WriteLine("File changed: * " + e.FullPath);
+        //lock (changedFiles)
+        //{
+        //    if (changedFiles.Contains(e.FullPath))
+        //    {
+        //        return;
+        //    }
+        //    changedFiles.Add(e.FullPath);
+        //}
 
-        System.Timers.Timer timer = new System.Timers.Timer(100) { AutoReset = false };
-        timer.Elapsed += (timerElapsedSender, timerElapsedArgs) =>
-        {
-            lock (changedFiles)
-            {
-                changedFiles.Remove(e.FullPath);
-                FileReload(e.FullPath);
-            }
-        };
-        timer.Start();
+        //System.Timers.Timer timer = new System.Timers.Timer(100) { AutoReset = false };
+        //timer.Elapsed += (timerElapsedSender, timerElapsedArgs) =>
+        //{
+        //    lock (changedFiles)
+        //    {
+        //        changedFiles.Remove(e.FullPath);
+        //        FileReload(e.FullPath);
+        //    }
+        //};
+        //timer.Start();
     }
-
-    static int loadCount = 0;
 
     static void FileReload( String file )
     {
-        Console.WriteLine("File changed, reload: " + file);
+        //Console.WriteLine("File changed: " + file);
 
-        loadCount++;
-        String exeName = Path.GetFileNameWithoutExtension(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-        String dirReload = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), "scriptHost", exeName + "_" + Process.GetCurrentProcess().Id.ToString());
+        if (file != scriptToMonitor)
+            return;
 
-        if (!Directory.Exists(dirReload))
-            Directory.CreateDirectory(dirReload);
+        //loadCount++;
+        //String exeName = Path.GetFileNameWithoutExtension(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+        //String dirReload = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), "scriptHost", exeName + "_" + Process.GetCurrentProcess().Id.ToString());
+
+        //if (!Directory.Exists(dirReload))
+        //    Directory.CreateDirectory(dirReload);
 
         //
         // Dynamically loadable .dll/assembly cannot reside next with application folder, as it gets loaded from there by default. 
@@ -251,12 +278,59 @@ public class ScriptHost
         //p.WaitForExit();
 
         //Assembly asm = Assembly.LoadFile(destFile);
-        //asm.GetTypes().Select(x => x.GetMethod("Reload", BindingFlags.Static | BindingFlags.Public)).First().Invoke(null, null);
-        String errors = "";
-        if (!CsScript.RunScript(dirReload, loadCount, @"C:\Prototyping\cppscriptcore\Test\testScript\testScript.cs", false, false, out errors))
+        //asm.GetTypes().Select(x => x.GetMethod("Execute", BindingFlags.Static | BindingFlags.Public)).First().Invoke(null, null);
+
+        //String exe = @"C:\Prototyping\cppscriptcore\bin\testScript.exe";
+
+        // Not marked as serializable.
+        // AppDomainSetup setup = new AppDomainSetup();
+        // setup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
+        // var appDomain = AppDomain.CreateDomain("myAppDomain", null, setup);
+
+        // // Only loads assembly in one application domain.
+        // appDomain.DoCallBack(() => {
+        //     Assembly asm = Assembly.LoadFile(destFile);
+        //     asm.GetTypes().Select(x => x.GetMethod("Execute", BindingFlags.Static | BindingFlags.Public)).First().Invoke(null, null);
+        // }
+
+        //);
+
+        // AppDomain.Unload(appDomain);
+
+
+
+        // Works
+        //String errors = "";
+        //if (!CsScript.RunScript(dirReload, loadCount, @"C:\Prototyping\cppscriptcore\Test\testScript\testScript.cs", false, false, out errors))
+        //{
+        //    Console.WriteLine("Error: " + errors);
+        //    Console.WriteLine("");
+        //}
+
+        //String csScript = @"C:\Prototyping\cppscriptcore\Test\testScript\testScript.cs";
+
+        //if (!File.Exists(scriptToMonitor))
+        //    return;
+
+        //Console.WriteLine("- reload");
+
+        // Causes .pdb lock, assembly domain unload does not help.
+        //using (AsmHelper helper = new AsmHelper(exe, "LoadDomain", true))
+
+        //
+        // Works, releases .pdb & .dll correctly.
+        //
+        try
         {
-            Console.WriteLine("Error: " + errors);
-            Console.WriteLine("");
+            using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(scriptToMonitor, null, true, null), null, true))
+            {
+                helper.Invoke("*.Main");
+            }
+        }
+        catch (Exception ex)
+        {
+            CompilerException ce = ex as CompilerException;
+            Console.WriteLine(ce.Message);
         }
     }
 
