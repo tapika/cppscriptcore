@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
@@ -98,6 +99,8 @@ public class ScriptHost
                 }
             }
 
+            FileReload(Path.Combine(watcher.Path, "testScript.exe"));
+
             if (exe == null)
             {
                 Console.WriteLine("Started with command line arguments: '" + String.Join(" ", args) + "'");
@@ -187,11 +190,78 @@ public class ScriptHost
             lock (changedFiles)
             {
                 changedFiles.Remove(e.FullPath);
-                Console.WriteLine("File changed, reload: " + e.FullPath);
+                FileReload(e.FullPath);
             }
         };
         timer.Start();
     }
+
+    static int loadCount = 0;
+
+    static void FileReload( String file )
+    {
+        Console.WriteLine("File changed, reload: " + file);
+
+        loadCount++;
+        String exeName = Path.GetFileNameWithoutExtension(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+        String dirReload = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), "scriptHost", exeName + "_" + Process.GetCurrentProcess().Id.ToString());
+
+        if (!Directory.Exists(dirReload))
+            Directory.CreateDirectory(dirReload);
+
+        //
+        // Dynamically loadable .dll/assembly cannot reside next with application folder, as it gets loaded from there by default. 
+        // Also need to change assembly name whenever new compilation comes up.
+        //
+        //String destFile = Path.Combine(dirReload, Path.GetFileName(file));
+        //String srcPdb = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".pdb");
+        //String destPdb = Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile) + ".pdb");
+        //File.Copy(file, destFile, true);
+        //File.Copy(srcPdb, destPdb, true);
+
+        //Process p = new Process();
+        //p.StartInfo.UseShellExecute = false;
+        //p.StartInfo.RedirectStandardOutput = true;
+        //p.StartInfo.FileName = @"C:\Users\PikarTa1\Downloads\DebugInfo\Debug\DebugInfo.exe";
+        //p.StartInfo.Arguments = "\"" + destFile + "\" clean-path";
+        //p.Start();
+        //String error = p.StandardOutput.ReadToEnd();
+        //p.WaitForExit();
+
+        //Assembly asm = Assembly.LoadFile(destFile);
+        //asm.GetTypes().Select(x => x.GetMethod("Reload", BindingFlags.Static | BindingFlags.Public)).First().Invoke(null, null);
+        String errors = "";
+        if (!CsScript.RunScript(dirReload, loadCount, @"C:\Prototyping\cppscriptcore\Test\testScript\testScript.cs", false, false, out errors))
+        {
+            Console.WriteLine("Error: " + errors);
+            Console.WriteLine("");
+        }
+    }
+
+    /// <summary>
+    /// Executes command and returns standard output & standard error to error string.
+    /// </summary>
+    /// <returns>Application exit code</returns>
+    public static int ExecCmd(String cmd, ref String error)
+    {
+        Process p = new Process();
+        p.StartInfo.UseShellExecute = false;
+        p.StartInfo.RedirectStandardOutput = true;
+        p.StartInfo.FileName = "cmd.exe";
+        // Whole command should be quoted.
+        // cmd.exe /C ""mytool.exe" "c:\mypath\myfile.txt""
+        //            ^                                   ^                                   ^
+        // https://social.msdn.microsoft.com/forums/vstudio/en-US/03ea84cf-19a6-450d-a3d6-8a139857e0cd/help-with-paths-containing-spaces
+        //
+        p.StartInfo.Arguments = "/C \"" + cmd + "\" 2>&1";
+        // Console.WriteLine("Executing 'cmd.exe " + p.StartInfo.Arguments + "'");
+        p.Start();
+        error = p.StandardOutput.ReadToEnd();
+        p.WaitForExit();
+
+        return p.ExitCode;
+    } //ExecCmd
+
 
     [DllImport("ole32.dll")]
     private static extern int CreateBindCtx(uint reserved, out IBindCtx ppbc);

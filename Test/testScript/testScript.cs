@@ -12,4 +12,10 @@ class Program
     {
         ScriptHost.ConnectDebugger();
     }
+
+    public static void Reload(string[] args)
+    {
+        Console.WriteLine("Reload v7");
+    }
+
 }

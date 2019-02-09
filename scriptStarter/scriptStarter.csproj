@@ -56,6 +56,7 @@
     <Compile Include="..\Tools\vsStart\MessageFilter.cs">
       <Link>MessageFilter.cs</Link>
     </Compile>
+    <Compile Include="CsScript.cs" />
     <Compile Include="ScriptHost.cs" />
   </ItemGroup>
   <ItemGroup>
