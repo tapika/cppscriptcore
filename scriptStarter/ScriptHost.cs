@@ -3,16 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 public class ScriptHost
 {
+    // Must be here when using EnvDTE
+    [STAThread]
     static void Main(string[] args)
     {
         ConnectDebugger();
@@ -72,10 +76,14 @@ public class ScriptHost
                 if (Debugger.IsAttached)
                     break;
 
-                System.Threading.Thread.Sleep(50);
+                Thread.Sleep(50);
             }
 
             // Breakpoint will start to work here
+            String msg = "";
+            if (new IpcChannel(Process.GetCurrentProcess().Id).Receive(ref msg, 5000))
+                Console.WriteLine("Dispatch file: " + msg);
+
             FileSystemWatcher watcher = new FileSystemWatcher();
             watcher.Path = @"C:\Prototyping\cppscriptcore\bin";
             watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
@@ -93,9 +101,16 @@ public class ScriptHost
 
                 if (processedBeingDebugged.Count != 0)
                 {
-                    Process anotherProcess = Process.GetProcessById(processedBeingDebugged[0]);
-                    anotherProcess.EnableRaisingEvents = true;
-                    anotherProcess.Exited += (sender, e) => { Environment.Exit(0); };
+                    try
+                    {
+                        Process anotherProcess = Process.GetProcessById(processedBeingDebugged[0]);
+                        anotherProcess.EnableRaisingEvents = true;
+                        anotherProcess.Exited += (sender, e) => { Environment.Exit(0); };
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Process terminated, don't care about it's status anymore.
+                    }
                 }
             }
 
@@ -121,6 +136,11 @@ public class ScriptHost
         if (dte != null)
         {
             MessageFilter.Register();
+
+            if (dte.Debugger.DebuggedProcesses.Count > 1)
+                // If starting debug with two processes, then wait a little for second to start so 3-rd process won't start
+                Thread.Sleep(500);
+
             bool bAttached = false;
 
             for (int iTry = 0; iTry < 2; iTry++)
@@ -130,11 +150,12 @@ public class ScriptHost
 
                 for( int i = 0; i < exeNames.Length; i++)
                 {
+                    var process = processes[i];
                     if (exeNames[i] == exe)
                     {
                         try
                         {
-                            processes[i].Attach();
+                            process.Attach();
                         }
                         catch (Exception ex)
                         {
@@ -143,6 +164,7 @@ public class ScriptHost
                                 throw ex;
                         }
 
+                        new IpcChannel(process.ProcessID).Send("Hello world");
                         bAttached = true;
                         break;
                     }

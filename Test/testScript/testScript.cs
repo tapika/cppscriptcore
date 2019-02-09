@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 class Program
 {
-    // Must be here
+    // Must be here when using EnvDTE
     [STAThread]
     static void Main(string[] args)
     {
