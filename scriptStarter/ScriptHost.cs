@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 public class ScriptHost
@@ -22,34 +23,33 @@ public class ScriptHost
         ScriptServer_ConnectDebugger(null);
     }
 
-    public static void ConnectDebugger([System.Runtime.CompilerServices.CallerFilePath] String csScript = null, String additionCommandLineArguments = "")
+    /// <summary>
+    /// Client side: Either starts hostExePath or attaches debugger to that process. 
+    /// </summary>
+    /// <param name="csScript">C# script to monitor on</param>
+    /// <param name="hostExePath">Executable, which hosts C# scripting</param>
+    /// <param name="additionCommandLineArguments">Additional command line arguments for host executable</param>
+    public static void ConnectDebugger([System.Runtime.CompilerServices.CallerFilePath] String csScript = null, String hostExePath = null, String additionCommandLineArguments = "")
     {
         string[] args = Environment.GetCommandLineArgs();
         if (args.Contains("-Embedding"))
             return;
 
-        ScriptServer_ConnectDebugger(csScript, additionCommandLineArguments);
+        ScriptServer_ConnectDebugger(csScript, hostExePath, additionCommandLineArguments);
     }
 
     /// <summary>
-    /// C# script to monitor for changes.
+    /// Client side - see ConnectDebugger description.
+    /// Server side - starts ipc channel / monitors for newly attaching ipc connections.
     /// </summary>
-    static String scriptToMonitor = "";
-
-    /// <summary>
-    /// Starts exe and attaches debugger to it.
-    /// If process is hosted, waits for debugger
-    /// </summary>
-    /// <param name="exe">Executable to start</param>
-    /// <param name="additionCommandLineArguments">Additional command line arguments to executable</param>
-    public static void ScriptServer_ConnectDebugger(String csScript = null, String additionCommandLineArguments = "")
+    /// <param name="csScript">C# script</param>
+    public static void ScriptServer_ConnectDebugger(String csScript = null, String hostExePath = null, String additionCommandLineArguments = "")
     {
         //---------------------------------------------------------------
         // Detect Visual studio, which is debugging us.
         //---------------------------------------------------------------
         Process currentProcess = Process.GetCurrentProcess();
         Process debuggerProcess = null;
-        DTE2 dte = null;
         var processName = currentProcess.ProcessName;
         var nbrOfProcessWithThisName = Process.GetProcessesByName(processName).Length;
 
@@ -73,8 +73,9 @@ public class ScriptHost
         }
 
         if (debuggerProcess != null && debuggerProcess.ProcessName.ToLower() != "devenv")
-            debuggerProcess = null;
+            debuggerProcess = null;     // Not a visual studio, e.g. cmd
 
+        DTE2 dte = null;
         if (debuggerProcess != null)
         {
             MessageFilter.Register();
@@ -93,20 +94,12 @@ public class ScriptHost
                 Thread.Sleep(50);
             }
 
-            // Breakpoint will start to work here
-            if (new IpcChannel(Process.GetCurrentProcess().Id).Receive(ref scriptToMonitor, 5000))
-                Console.WriteLine("Dispatch file: " + scriptToMonitor);
+            // Breakpoint will start to work after this point.
+            Task.Run(() => { IpcServerLoop(); });
 
-            FileSystemWatcher watcher = new FileSystemWatcher();
-            watcher.Path = Path.GetDirectoryName(scriptToMonitor);
-            watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            watcher.Filter = "*.cs";
-            watcher.Changed += FileChanged;
-            watcher.Created += FileChanged;
-            watcher.Renamed += FileChanged;
-            // Begin watching.
-            watcher.EnableRaisingEvents = true;
-
+            //---------------------------------------------------------------------------------------------------------------
+            // If starting two process debug session, monitor child process - if it dies - we can close outselves as well
+            //---------------------------------------------------------------------------------------------------------------
             if (dte != null)
             {
                 List<int> processedBeingDebugged = dte.Debugger.DebuggedProcesses.Cast<EnvDTE.Process>().Select(x => x.ProcessID).ToList();
@@ -126,8 +119,6 @@ public class ScriptHost
                     }
                 }
             }
-
-            FileReload(scriptToMonitor);
 
             if (csScript == null)
             {
@@ -153,7 +144,8 @@ public class ScriptHost
         //---------------------------------------------------------------
         // Self hosting if not embedded in application
         //---------------------------------------------------------------
-        String hostExePath = Assembly.GetExecutingAssembly().Location;
+        if (hostExePath == null )
+            hostExePath = Assembly.GetExecutingAssembly().Location;
 
         if (dte != null)
         {
@@ -213,8 +205,83 @@ public class ScriptHost
     }
 
 
-    //static List<String> changedFiles = new List<string>();
+    /// <summary>
+    /// C# scripts to monitor for changes.
+    /// </summary>
+    static List<String> scriptsToMonitor = new List<string>();
+    static List<FileSystemWatcher> fswatchers = new List<FileSystemWatcher>();
 
+    static void DebugPrint(String msg)
+    {
+        //Console.WriteLine(msg);
+    }
+
+
+    static void IpcServerLoop()
+    {
+        var ipc = new IpcChannel(Process.GetCurrentProcess().Id);
+        Process currentProcess = Process.GetCurrentProcess();
+
+        while (true)
+        {
+            String scriptToMonitor = "";
+
+            for (int iRetry = 0; iRetry < 100; iRetry++)
+            {
+                bool b = ipc.Receive(ref scriptToMonitor, Timeout.Infinite);
+
+                if (!b)
+                    continue;
+
+                break;
+            }
+
+            if (scriptToMonitor == "")
+            {
+                Console.WriteLine("Error: Too many failures, shutdowning...");
+                break;
+            }
+
+            if (!File.Exists(scriptToMonitor))
+            {
+                Console.WriteLine("Error: File does not exists: " + scriptToMonitor);
+                continue;
+            }
+
+            if (scriptsToMonitor.Contains(scriptToMonitor))
+                continue;
+
+
+            List<String> dirs = new List<string>();
+            foreach (String script in scriptsToMonitor)
+            {
+                String dir = Path.GetDirectoryName(script);
+                if (!dirs.Contains(dir))
+                    dirs.Add(dir);
+            }
+
+            scriptsToMonitor.Add(scriptToMonitor);
+
+            String newDir = Path.GetDirectoryName(scriptToMonitor);
+            if (!dirs.Contains(newDir))
+            {
+                FileSystemWatcher watcher = new FileSystemWatcher();
+                watcher.Path = newDir;
+                watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+                watcher.Filter = "*.cs";
+                watcher.Changed += FileChanged;
+                watcher.Created += FileChanged;
+                watcher.Renamed += FileChanged;
+                // Begin watching.
+                watcher.EnableRaisingEvents = true;
+                DebugPrint("- Monitoring for folder '" + newDir + "'");
+                fswatchers.Add(watcher);
+            }
+
+            FileReload(scriptToMonitor);
+        } //while
+
+    }
 
     /// <summary>
     /// Triggered multiple times when file is changed. 
@@ -222,33 +289,13 @@ public class ScriptHost
     private static void FileChanged(object sender, FileSystemEventArgs e)
     {
         FileReload(e.FullPath);
-        //Console.WriteLine("File changed: * " + e.FullPath);
-        //lock (changedFiles)
-        //{
-        //    if (changedFiles.Contains(e.FullPath))
-        //    {
-        //        return;
-        //    }
-        //    changedFiles.Add(e.FullPath);
-        //}
-
-        //System.Timers.Timer timer = new System.Timers.Timer(100) { AutoReset = false };
-        //timer.Elapsed += (timerElapsedSender, timerElapsedArgs) =>
-        //{
-        //    lock (changedFiles)
-        //    {
-        //        changedFiles.Remove(e.FullPath);
-        //        FileReload(e.FullPath);
-        //    }
-        //};
-        //timer.Start();
     }
 
     static void FileReload( String file )
     {
-        //Console.WriteLine("File changed: " + file);
+        DebugPrint("- File changed '" + file + "'");
 
-        if (file != scriptToMonitor)
+        if (!scriptsToMonitor.Contains(file))
             return;
 
         //loadCount++;
@@ -322,7 +369,7 @@ public class ScriptHost
         //
         try
         {
-            using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(scriptToMonitor, null, true, null), null, true))
+            using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(file, null, true, null), null, true))
             {
                 helper.Invoke("*.Main");
             }
@@ -330,7 +377,12 @@ public class ScriptHost
         catch (Exception ex)
         {
             CompilerException ce = ex as CompilerException;
-            Console.WriteLine(ce.Message);
+
+            String msg = ex.Message;
+            if (ce != null)
+                msg = "Error: " + ex.Message;
+
+            Console.WriteLine(ex);
         }
     }
 
