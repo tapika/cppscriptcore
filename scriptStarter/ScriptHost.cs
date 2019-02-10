@@ -97,29 +97,6 @@ public class ScriptHost
             // Breakpoint will start to work after this point.
             Task.Run(() => { IpcServerLoop(); });
 
-            //---------------------------------------------------------------------------------------------------------------
-            // If starting two process debug session, monitor child process - if it dies - we can close outselves as well
-            //---------------------------------------------------------------------------------------------------------------
-            if (dte != null)
-            {
-                List<int> processedBeingDebugged = dte.Debugger.DebuggedProcesses.Cast<EnvDTE.Process>().Select(x => x.ProcessID).ToList();
-                processedBeingDebugged.Remove(currentProcess.Id);
-
-                if (processedBeingDebugged.Count != 0)
-                {
-                    try
-                    {
-                        Process anotherProcess = Process.GetProcessById(processedBeingDebugged[0]);
-                        anotherProcess.EnableRaisingEvents = true;
-                        anotherProcess.Exited += (sender, e) => { Environment.Exit(0); };
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        // Process terminated, don't care about it's status anymore.
-                    }
-                }
-            }
-
             if (csScript == null)
             {
                 Console.WriteLine("Started with command line arguments: '" + String.Join(" ", args) + "'");
@@ -167,16 +144,9 @@ public class ScriptHost
                     var process = processes[i];
                     if (exeNames[i] == hostExePath)
                     {
-                        try
-                        {
+                        // No need to attach if debugging multiple processes
+                        if (dte != null && dte.Debugger.DebuggedProcesses.Count <= 1)
                             process.Attach();
-                        }
-                        catch (Exception ex)
-                        {
-                            // When debugging multiple processes this is expected.
-                            if (dte.Debugger.DebuggedProcesses.Count == 1)
-                                throw ex;
-                        }
 
                         new IpcChannel(process.ProcessID).Send(csScript);
                         bAttached = true;
