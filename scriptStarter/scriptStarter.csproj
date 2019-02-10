@@ -63,11 +63,13 @@
     </Compile>
     <Compile Include="CsScript.cs" />
     <Compile Include="IpcChannel.cs" />
-    <Compile Include="Properties\AssemblyInfo1.cs" />
     <Compile Include="ScriptHost.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
