@@ -334,6 +334,15 @@ class Program
 
             // Enumerate available configurations within a project
             Project p = sln2.Projects.Item(1);
+
+            //
+            // Get / set .NET framework version, https://blogs.msdn.microsoft.com/visualstudio/2010/02/25/how-to-retarget-a-project-using-dte/
+            //
+            // ".NETFramework,Version=v4.7.2"
+            //
+            String DotNetVersion = p.Properties.Item("TargetFrameworkMoniker").Value;
+
+
             var oConfs = p.ConfigurationManager.Cast<Configuration>().ToArray();
             var confs = oConfs.Select(x => x.ConfigurationName + "|" + x.PlatformName).ToArray();
 
