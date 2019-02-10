@@ -337,23 +337,49 @@ public class ScriptHost
         //
         // Works, releases .pdb & .dll correctly.
         //
-        try
+
+        Exception lastException = null;
+
+        for( int iRetry = 0; iRetry < 10; iRetry++ )
         {
-            using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(file, null, true, null), null, true))
+            try
             {
-                helper.Invoke("*.Main");
+                using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(file, null, true, null), null, true))
+                {
+                    helper.Invoke("*.Main");
+                }
+
+                break;
+            }
+            catch (IOException ex)
+            {
+                // File might be in a middle of save. Try to retry within 50 ms again.
+                if (iRetry == 9)
+                {
+                    lastException = ex;
+                    break;
+                }
+                Thread.Sleep(50);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                break;
             }
         }
-        catch (Exception ex)
+
+        if (lastException != null)
         {
-            CompilerException ce = ex as CompilerException;
+            CompilerException ce = lastException as CompilerException;
 
-            String msg = ex.Message;
+            String msg = lastException.Message;
             if (ce != null)
-                msg = "Error: " + ex.Message;
+                msg = "Error: " + lastException.Message;
 
-            Console.WriteLine(ex);
+            Console.WriteLine(lastException);
         }
+
     }
 
     /// <summary>

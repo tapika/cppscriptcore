@@ -62,7 +62,6 @@
       <Link>MessageFilter.cs</Link>
     </Compile>
     <Compile Include="CsScript.cs" />
-    <Compile Include="CustomSynchronizationContext.cs" />
     <Compile Include="IpcChannel.cs" />
     <Compile Include="Properties\AssemblyInfo1.cs" />
     <Compile Include="ScriptHost.cs" />
