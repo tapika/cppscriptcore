@@ -19,160 +19,50 @@ public class CsScript
     static CSharpCodeProvider provider;
     static ICodeCompiler compiler;
     static String[] refAssemblies;
+    static int loadCounter = 1;
 
     /// <summary>
+    /// 
     /// Compiles .cs script into dll/pdb, loads as assembly, and executes Main function.
-    /// Temporary dll/pdb gets deleted. If .cs throws exception - it will be converted to
-    /// error information, including .cs filename and source code line information.
+    /// 
+    /// Assembly gets executed within same appDomain.
+    /// 
+    /// If there is any compilation error - it will be thrown as exception.
+    /// 
+    /// Any //css_ref referred file will be loaded into appDomain once, and will stay there until application shuts down.
+    /// 
+    /// Unfortunately this function will collect .dll & .pdb compilations into %TEMP%\CSScriptHost.
+    /// Use CleanupScScriptTempDir() on application startup to wipe out compilation folder.
+    /// 
     /// </summary>
-    /// <param name="_path">Path to script which to execute</param>
-    /// <param name="bAllowThrow">true if allow to throw exceptions</param>
-    /// <param name="errors">Errors if any</param>
-    /// <param name="args">Main argument parameters</param>
-    /// <param name="bCompileOnly">true if only to compile</param>
-    /// <returns>true if execution was successful.</returns>
-    static public bool RunScript( String cacheDir, int loadCount, String _path, bool bCompileOnly, bool bAllowThrow, out String errors, params String[] args )
+    static public void RunScript( String scriptPath )
     {
-        errors = "";
+        String tempDir = GetScriptTempDir();
 
-        // ----------------------------------------------------------------
-        //  Load script
-        // ----------------------------------------------------------------
-        String path = Path.GetFullPath( _path );
+        if (!Directory.Exists(tempDir))
+            Directory.CreateDirectory(tempDir);
+
+        String path = Path.GetFullPath(scriptPath);
         if( !File.Exists( path ) )
+            throw new Exception("Error: Could not load file '" + Path.GetFileName(path) + "': File does not exists.");
+
+        String dllBaseName = Path.GetFileNameWithoutExtension(path) + "_" + loadCounter.ToString();
+        String basePath =  Path.Combine(tempDir, dllBaseName);
+
+        String pdbPath = basePath + ".pdb";
+        String dllPath = basePath + ".dll";
+
+        try
         {
-            errors = "Error: Could not load file '" + Path.GetFileName(path) + "': File does not exists.";
-            if (bAllowThrow)
-                throw new Exception(errors);
-            return false;
-        }
+            List<String> filesToCompile = new List<string>();
+            filesToCompile.Add(path);
 
-        String dllBaseName = Path.GetFileNameWithoutExtension(_path) + "_" + loadCount.ToString();
-        String tempDll;
-        String dllInfoFile = "";
-        DateTime dllInfoRealDate = DateTime.MinValue;
+            //---------------------------------------------------------------------------------------------------
+            //  Get referenced .cs script file list, and from referenced files further other referenced files.
+            //---------------------------------------------------------------------------------------------------
+            CsScriptInfo csInfo = getCsFileInfo(filesToCompile[0], true);
+            filesToCompile.AddRange(csInfo.csFiles);
 
-        for (int i = 1; ; i++)
-        {
-            tempDll = Path.Combine(cacheDir, dllBaseName);
-            if (i != 1)
-                tempDll += i;
-
-            dllInfoFile = tempDll + "_script.txt";       // We keep here C# script full path just not to get collisions.
-            if (!File.Exists(dllInfoFile))
-            {
-                File.WriteAllText(dllInfoFile, path);
-                break;
-            }
-
-            String pathFromFile = "";
-            //
-            // Another instance of syncProj might be accessing same file at the same time, we try to retry automatically after some delay.
-            //
-            for ( int iTry = 0 ; iTry < 20; iTry++)
-            {
-                try
-                {
-                    pathFromFile = File.ReadAllText(dllInfoFile);
-                    break;
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(10 + iTry * 5);   // 5*20+10, overall (5*20+10)*20 / 2 = 1.1 sec
-                }
-            }
-
-            if (pathFromFile == path)
-            {
-                dllInfoRealDate = File.GetLastWriteTime(dllInfoFile);
-                break;
-            }
-        }
-
-        String pdb = tempDll + ".pdb";
-        tempDll += ".dll";
-
-        List<String> filesToCompile = new List<string>();
-        filesToCompile.Add(path);
-
-        //---------------------------------------------------------------------------------------------------
-        //  Get referenced .cs script file list, and from referenced files further other referenced files.
-        //---------------------------------------------------------------------------------------------------
-        CsScriptInfo csInfo = getCsFileInfo(filesToCompile[0], true);
-        filesToCompile.AddRange(csInfo.csFiles);
-
-        bool bCompileDll = false;
-
-        //---------------------------------------------------------------------------------------------------
-        // Compile .dll only if script.cs and it's dependent .cs are newer than compiled .dll.
-        //---------------------------------------------------------------------------------------------------
-        if (!File.Exists(tempDll))
-            bCompileDll = true;
-
-        DateTime dllInfoTargetDate = DateTime.MinValue;
-
-        //---------------------------------------------------------------------------------------------------
-        // Calculate target date anyway, so we can set it to file.
-        // I have made such logic that scripts will be compiled if date / time of main script or any sub-script is changed.
-        //---------------------------------------------------------------------------------------------------
-        List<long> times = filesToCompile.Select(x => File.GetLastWriteTime(x).Ticks).ToList();
-
-        //
-        // If we are referencing any local .dll file, add it's time into calculation scheme.
-        //
-        foreach (String refDll in csInfo.refFiles)
-        {
-            if (File.Exists(refDll))
-                times.Add(File.GetLastAccessTime(refDll).Ticks);
-        }
-
-        // If syncProj.exe also changed, requires recompiling all .dll's.
-        // GetEntryAssembly() returns null during unit testing.
-        String exeFile = Assembly.GetExecutingAssembly().Location;
-        times.Add(File.GetLastWriteTime(exeFile).Ticks);
-
-        times.Sort();
-
-        //---------------------------------------------------------------------------------------------------
-        //  Basically we have multiple files, each with it's own modification date, we need to detect if any of files
-        //  has changed  - either updated forth (svn update) or back (svn revert with set file dates to last commit time)
-        //  We try to calculate date / time from multiple date times 
-        //---------------------------------------------------------------------------------------------------
-
-        long time = times[0];                               // smallest date/time
-        for (int i = 1; i < times.Count; i += 2)
-        {
-            if (i + 1 == times.Count)
-                time = (time + times[i]) / 2;               // medium between current date/time and highest
-            else
-                time += (times[i + 1] - times[i]) / 2;      // just take different between dates / times and get medium from there.
-        }
-
-        dllInfoTargetDate = new DateTime(time);
-        if (times.Count != 1)
-            dllInfoTargetDate.AddSeconds(-times.Count);     // Just some checksum on how many files we actually have.
-
-        if (!bCompileDll)
-        {
-
-            if (dllInfoRealDate != dllInfoTargetDate)
-                bCompileDll = true;
-        }
-
-        if (csInfo.DebugEnabled())
-        {
-            if( !bCompileDll )
-                Console.WriteLine(Path.GetFileName(path) + " dll is up-to-date.");
-            else
-                Console.WriteLine(Path.GetFileName(path) + " dll will be compiled.");
-            //+ ": Date found: " + dllInfoRealDate.ToString("o") + " Date expected: " + dllInfoTargetDate.ToString("o") 
-        }
-
-        if (bCompileDll)
-        {
-            // ----------------------------------------------------------------
-            //  Compile it into ram
-            // ----------------------------------------------------------------
             if (provider == null)
                 provider = new CSharpCodeProvider();
 #pragma warning disable 618
@@ -181,6 +71,7 @@ public class CsScript
 #pragma warning restore 618
             CompilerParameters compilerparams = new CompilerParameters();
             compilerparams.GenerateExecutable = false;
+
 #if NODEBUGTRACE
             // Currently it's not possible to generate in ram pdb debugging information.
             // Compiler option /debug:full should in theory allow that, but it does not work.
@@ -188,7 +79,7 @@ public class CsScript
 #else
             compilerparams.GenerateInMemory = false;
             compilerparams.IncludeDebugInformation = true;          // Needed to get line / column numbers
-            compilerparams.OutputAssembly = tempDll;
+            compilerparams.OutputAssembly = dllPath;
             compilerparams.CompilerOptions = "/d:DEBUG /d:TRACE";   // /debug+ /debug:full /optimize-
 #endif
 
@@ -208,8 +99,9 @@ public class CsScript
 
                 refAssemblies = assemblies.ToArray();
             }
+
             compilerparams.ReferencedAssemblies.AddRange(refAssemblies);
-            foreach( var f in csInfo.refFiles)
+            foreach (var f in csInfo.refFiles)
                 compilerparams.ReferencedAssemblies.Add(f);
 
             // ----------------------------------------------------------------
@@ -236,144 +128,132 @@ public class CsScript
                     else
                         sb.Append("(" + error.Line + "," + error.Column + ")");
 
-                    sb.AppendFormat(": error {0}: {1}\r\n", error.ErrorNumber, error.ErrorText );
+                    sb.AppendFormat(": error {0}: {1}\r\n", error.ErrorNumber, error.ErrorText);
                 }
-                errors = sb.ToString();
-                if (bAllowThrow)
-                    throw new Exception(errors);
 
-                return false;
+                throw new Exception(sb.ToString());
             }
-        } //if
+            loadCounter++;
 
-        try
-        {
-            File.SetLastWriteTime(dllInfoFile, dllInfoTargetDate);
-        }
-        catch (Exception)
-        { 
-            // Visual studio can launch multiple instances of syncProj, and then each will try to compile it's own copy.
-            // Add here just some guard, let's check if this needs to be improved later on.
-        }
+            // ----------------------------------------------------------------
+            //  Preload compiled .dll and it's debug information into ram.
+            // ----------------------------------------------------------------
+            MethodInfo entry = null;
+            String funcName = "";
+            Assembly asm = Assembly.LoadFrom(dllPath);
 
-        if (bCompileOnly)
-            return true;
+            // ----------------------------------------------------------------
+            //  Locate entry point
+            // ----------------------------------------------------------------
+            BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.IgnoreCase;
 
-        //------------------------------------------------------------------------------------------------------
-        //
-        // Let's check that script contains correct css_ref (Might be copied from another project).
-        // We allow here also multiple copies of syncProj, as long as path to syncProj.exe is valid in .cs header
-        // (Can be edited by C# script)
-        //
-        //------------------------------------------------------------------------------------------------------
-        Regex reCssRef = new Regex("^ *//css_ref  *(.*syncproj\\.exe);?([\r\n]+|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        bool bUpdateScriptPath = false;
-        String targetCsPath = "";
-
-        using (StreamReader reader = new StreamReader(path))
-        {
-            for (int i = 0; i < 10; i++)
-            { 
-                String line = reader.ReadLine() ?? "";
-                var re = reCssRef.Match(line);
-                if (re.Success)
-                {
-                    // Current path, referred from C# script
-                    String currentCsPath = re.Groups[1].Value;
-                    String dir = Path.GetDirectoryName(path);
-                    String referredExe = currentCsPath;
-                    
-                    if( !Path.IsPathRooted(referredExe) )       // Uses relative path, let's make it absolute.
-                        referredExe = Path.Combine(dir, currentCsPath);
-                } //if
-            } //for
-        } //using
-
-        // ----------------------------------------------------------------
-        //  Preload compiled .dll and it's debug information into ram.
-        // ----------------------------------------------------------------
-        MethodInfo entry = null;
-        String funcName = "";
-        Assembly asm = Assembly.LoadFrom(tempDll);
-            
-        //Assembly asm = results.CompiledAssembly;
-        // ----------------------------------------------------------------
-        //  Locate entry point
-        // ----------------------------------------------------------------
-        BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.IgnoreCase;
-
-        foreach (Type type in asm.GetTypes())
-        {
-            funcName = "Reload";
-            entry = type.GetMethod(funcName, flags);
-
-            if (entry != null)
-                break;
-        }
-
-        if( entry == null )
-        {
-            errors = String.Format( "{0}(1,1): error: Code does not have 'Main' function\r\n", Path.GetFileName(path) );
-            if (bAllowThrow)
-                throw new Exception(errors);
-            return false;
-        }
-
-        if ( entry.GetParameters().Length != 1 )
-        {
-            errors = String.Format("{0}(1,1): error: Function '{1}' is not expected to have {2} parameter(s)\r\n", Path.GetFileName(path), funcName,entry.GetParameters().Length);
-            if (bAllowThrow)
-                throw new Exception(errors);
-            return false;
-            
-        }
-
-        String oldDir = Environment.CurrentDirectory;
-        //
-        // We set current directory to where script is, just so script can use Directory.GetFiles without specifying directory.
-        //
-        Directory.SetCurrentDirectory( Path.GetDirectoryName(_path) );
-
-        // ----------------------------------------------------------------
-        //  Run script
-        // ----------------------------------------------------------------
-        try
-        {
-            entry.Invoke(null, new object[] { args });
-            Directory.SetCurrentDirectory( oldDir );
-        }
-        catch ( Exception ex )
-        {
-            Directory.SetCurrentDirectory( oldDir );
-
-            try
-                {
-                StackFrame[] stack = new StackTrace(ex.InnerException, true).GetFrames();
-                StackFrame lastCall = stack[0];
-
-                errors = String.Format("{0}({1},{2}): error: {3}\r\n", path,
-                    lastCall.GetFileLineNumber(), lastCall.GetFileColumnNumber(), ex.InnerException.Message);
-                
-            } catch (Exception ex3 )
+            foreach (Type type in asm.GetTypes())
             {
-                errors = String.Format("{0}(1,1): error: Internal error - exception '{3}'\r\n", path, ex3.Message);
+                funcName = "Main";
+                entry = type.GetMethod(funcName, flags);
+
+                if (entry != null)
+                    break;
             }
-            if (bAllowThrow)
+
+            if (entry == null)
+                throw new Exception(String.Format("{0}(1,1): error: Code does not have 'Main' function\r\n", Path.GetFileName(path)));
+
+            if (entry.GetParameters().Length != 0)
+                throw new Exception(String.Format("{0}(1,1): error: Function '{1}' is not expected to have no input parameters\r\n", Path.GetFileName(path), funcName));
+
+            String oldDir = Environment.CurrentDirectory;
+            //
+            // We set current directory to where script is, just so script can use Directory.GetFiles without specifying directory.
+            //
+            Directory.SetCurrentDirectory(Path.GetDirectoryName(scriptPath));
+
+            // ----------------------------------------------------------------
+            //  Run script
+            // ----------------------------------------------------------------
+            try
+            {
+                entry.Invoke(null, new object[] { });
+                Directory.SetCurrentDirectory(oldDir);
+            }
+            catch (Exception ex)
+            {
+                Directory.SetCurrentDirectory(oldDir);
+
+                String errors = "";
+
+                try
+                {
+                    StackFrame[] stack = new StackTrace(ex.InnerException, true).GetFrames();
+                    StackFrame lastCall = stack[0];
+
+                    errors = String.Format("{0}({1},{2}): error: {3}\r\n", path,
+                        lastCall.GetFileLineNumber(), lastCall.GetFileColumnNumber(), ex.InnerException.Message);
+
+                }
+                catch (Exception ex3)
+                {
+                    errors = String.Format("{0}(1,1): error: Internal error - exception '{3}'\r\n", path, ex3.Message);
+                }
                 throw new Exception(errors);
-            return false;
+            }
         }
+        finally
+        {
+            // Will work only if main was not possible to find.
+            try { File.Delete(dllPath); } catch { }
 
-        return true;
-    } //RunScript
-
-    static String GetUniqueTempFilename( String path )
-    {
-        String baseName = Path.GetFileNameWithoutExtension(path);
-        string ProcID = Process.GetCurrentProcess().Id.ToString();
-        string tmpFolder = Path.GetTempPath();
-        string outFile = tmpFolder + baseName + "_" + ProcID;
-        return outFile;
+            // Works only when there is no debugger attached.
+            try { File.Delete(pdbPath); } catch { }
+        }
     }
+
+    static String GetGlobalScriptTempDir()
+    {
+        return Path.Combine(Environment.GetEnvironmentVariable("TEMP"), "CSScriptHost");
+    }
+
+    static String GetScriptTempDir()
+    {
+        String exeName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
+        // Use process id, so would not conflict.
+        return Path.Combine(GetGlobalScriptTempDir(), exeName + "_" + Process.GetCurrentProcess().Id.ToString());
+    }
+
+    /// <summary>
+    /// Cleans up temporary folder from compiled files.
+    /// </summary>
+    static public void CleanupScScriptTempDir()
+    {
+        try
+        {
+            String scTempDir = GetGlobalScriptTempDir();
+            if (!Directory.Exists(scTempDir))
+                return;
+
+            String[] dirs = Directory.GetDirectories(scTempDir);
+            Regex r = new Regex("_(\\d+)$");
+            foreach (String dir in dirs)
+            {
+                var rr = r.Match(dir);
+                if (!rr.Success)
+                    continue;
+
+                try
+                {
+                    Process.GetProcessById(int.Parse(rr.Groups[1].ToString()));
+                    continue;
+                }
+                catch(ArgumentException) { }
+
+                Directory.Delete(dir, true);
+            }
+        }
+        catch
+        {
+        }
+    }
+
 
     /// <summary>
     /// Scans through C# script and gets additional information about C# script itself, 

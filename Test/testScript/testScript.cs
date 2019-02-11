@@ -1,4 +1,5 @@
-﻿//css_ref ..\..\bin\scriptStarter.exe
+﻿//xss_ref ..\..\bin\ClassLibrary1.dll
+//css_ref ..\..\bin\ClassLibrary2.dll
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,10 @@ class Program
     public static void Main()
     {
         ScriptHost.ConnectDebugger();
-        //Console.Clear();
+        //Class2.dataList.Add("testScript.Main was here");
+        Console.Clear();
+        Class2.HelloClass2();
+        Class1.HelloClass1();
         //Console.WriteLine(DateTime.Now.ToString());
         Console.WriteLine(__FILE__() + ": Hello !");
         //for (int i = 0; i < 10; i++)

@@ -1,5 +1,5 @@
-﻿using csscript;
-using CSScriptLibrary;
+﻿//using csscript;
+//using CSScriptLibrary;
 using EnvDTE80;
 using System;
 using System.Collections.Generic;
@@ -20,6 +20,8 @@ public class ScriptHost
     [STAThread]
     static void Main(string[] args)
     {
+        Class1.dataList.Add("ScriptHost::Main was here");
+        CsScript.CleanupScScriptTempDir();
         ScriptServer_ConnectDebugger(null);
     }
 
@@ -50,29 +52,16 @@ public class ScriptHost
         //---------------------------------------------------------------
         Process currentProcess = Process.GetCurrentProcess();
         Process debuggerProcess = null;
-        var processName = currentProcess.ProcessName;
-        var nbrOfProcessWithThisName = Process.GetProcessesByName(processName).Length;
+        debuggerProcess = GetParentProcess(currentProcess);
 
-        for (var index = 0; index < nbrOfProcessWithThisName; index++)
-        {
-            var processIndexdName = index == 0 ? processName : processName + "#" + index;
-            var processId = new PerformanceCounter("Process", "ID Process", processIndexdName);
-            if ((int)processId.NextValue() == currentProcess.Id)
-            {
-                var parentId = new PerformanceCounter("Process", "Creating Process ID", processIndexdName);
-                try
-                {
-                    debuggerProcess = Process.GetProcessById((int)parentId.NextValue());
-                }
-                catch (ArgumentException)
-                {
-                    // Expected when starting with debugger to single process
-                }
-                break;
-            }
-        }
+        //
+        // Visual studio is either debug process by itself, or it starts msvsmon.exe, when we locate
+        // parent of parent approach.
+        //
+        if (debuggerProcess != null && debuggerProcess.ProcessName.ToLower() == "msvsmon")
+            debuggerProcess = GetParentProcess(debuggerProcess);
 
-        if (debuggerProcess != null && debuggerProcess.ProcessName.ToLower() != "devenv")
+        if (debuggerProcess != null && debuggerProcess.ProcessName.ToLower() != "devenv" )
             debuggerProcess = null;     // Not a visual studio, e.g. cmd
 
         DTE2 dte = null;
@@ -114,14 +103,14 @@ public class ScriptHost
                 }
             }
 
-            if ( dte != null ) MessageFilter.Revoke();
+            if (dte != null) MessageFilter.Revoke();
             return;
         }
 
         //---------------------------------------------------------------
         // Self hosting if not embedded in application
         //---------------------------------------------------------------
-        if (hostExePath == null )
+        if (hostExePath == null)
             hostExePath = Assembly.GetExecutingAssembly().Location;
 
         if (dte != null)
@@ -139,7 +128,7 @@ public class ScriptHost
                 var processes = dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray();
                 var exeNames = processes.Select(x => x.Name).ToArray();
 
-                for( int i = 0; i < exeNames.Length; i++)
+                for (int i = 0; i < exeNames.Length; i++)
                 {
                     var process = processes[i];
                     if (exeNames[i] == hostExePath)
@@ -170,8 +159,41 @@ public class ScriptHost
 
         }
 
-        if ( dte != null ) MessageFilter.Revoke();
+        if (dte != null) MessageFilter.Revoke();
         Environment.Exit(0);
+    }
+
+    /// <summary>
+    /// Queries for parent process, returns null if cannot be identified.
+    /// </summary>
+    /// <param name="process"></param>
+    /// <returns>parent process or null if not found</returns>
+    private static Process GetParentProcess(Process process)
+    {
+        Process parentProcess = null;
+        var processName = process.ProcessName;
+        var nbrOfProcessWithThisName = Process.GetProcessesByName(processName).Length;
+
+        for (var index = 0; index < nbrOfProcessWithThisName; index++)
+        {
+            var processIndexdName = index == 0 ? processName : processName + "#" + index;
+            var processId = new PerformanceCounter("Process", "ID Process", processIndexdName);
+            if ((int)processId.NextValue() == process.Id)
+            {
+                var parentId = new PerformanceCounter("Process", "Creating Process ID", processIndexdName);
+                try
+                {
+                    parentProcess = Process.GetProcessById((int)parentId.NextValue());
+                }
+                catch (ArgumentException)
+                {
+                    // Expected when starting with debugger to single process
+                }
+                break;
+            }
+        }
+
+        return parentProcess;
     }
 
 
@@ -268,13 +290,6 @@ public class ScriptHost
         if (!scriptsToMonitor.Contains(file))
             return;
 
-        //loadCount++;
-        //String exeName = Path.GetFileNameWithoutExtension(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-        //String dirReload = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), "scriptHost", exeName + "_" + Process.GetCurrentProcess().Id.ToString());
-
-        //if (!Directory.Exists(dirReload))
-        //    Directory.CreateDirectory(dirReload);
-
         //
         // Dynamically loadable .dll/assembly cannot reside next with application folder, as it gets loaded from there by default. 
         // Also need to change assembly name whenever new compilation comes up.
@@ -344,11 +359,15 @@ public class ScriptHost
         {
             try
             {
-                using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(file, null, true, null), null, true))
-                {
-                    helper.Invoke("*.Main");
-                }
+                // Works, but in isolated appDomain.
+                //String[] asms = new CSharpParser(file, true).RefAssemblies;
 
+                //using (AsmHelper helper = new AsmHelper(CSScript.CompileFile(file, null, true, asms), null, true))
+                //{
+                //    helper.Invoke("*.Main");
+                //}
+
+                CsScript.RunScript(file);
                 break;
             }
             catch (IOException ex)
@@ -370,15 +389,7 @@ public class ScriptHost
         }
 
         if (lastException != null)
-        {
-            CompilerException ce = lastException as CompilerException;
-
-            String msg = lastException.Message;
-            if (ce != null)
-                msg = "Error: " + lastException.Message;
-
-            Console.WriteLine(lastException);
-        }
+            Console.WriteLine(lastException.Message);
 
     }
 
