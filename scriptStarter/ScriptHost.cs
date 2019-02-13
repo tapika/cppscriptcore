@@ -14,6 +14,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
+public enum CodeType
+{
+    Managed = 0,
+    Mixed,
+    Native
+};
+
+
+
 public class ScriptHost
 {
     // Must be here when using EnvDTE
@@ -22,22 +32,25 @@ public class ScriptHost
     {
         Class1.dataList.Add("ScriptHost::Main was here");
         CsScript.CleanupScScriptTempDir();
-        ScriptServer_ConnectDebugger(null);
+        ScriptServer_ConnectDebugger(CodeType.Managed, null);
     }
 
     /// <summary>
     /// Client side: Either starts hostExePath or attaches debugger to that process. 
     /// </summary>
+    /// <param name="codetype">Code type to debug</param>
     /// <param name="csScript">C# script to monitor on</param>
     /// <param name="hostExePath">Executable, which hosts C# scripting</param>
     /// <param name="additionCommandLineArguments">Additional command line arguments for host executable</param>
-    public static void ConnectDebugger([System.Runtime.CompilerServices.CallerFilePath] String csScript = null, String hostExePath = null, String additionCommandLineArguments = "")
+    public static void ConnectDebugger(
+        CodeType codetype = CodeType.Managed,
+        [System.Runtime.CompilerServices.CallerFilePath] String csScript = null, String hostExePath = null, String additionCommandLineArguments = "")
     {
         string[] args = Environment.GetCommandLineArgs();
         if (args.Contains("-Embedding"))
             return;
 
-        ScriptServer_ConnectDebugger(csScript, hostExePath, additionCommandLineArguments);
+        ScriptServer_ConnectDebugger(codetype, csScript, hostExePath, additionCommandLineArguments);
     }
 
     /// <summary>
@@ -45,7 +58,7 @@ public class ScriptHost
     /// Server side - starts ipc channel / monitors for newly attaching ipc connections.
     /// </summary>
     /// <param name="csScript">C# script</param>
-    public static void ScriptServer_ConnectDebugger(String csScript = null, String hostExePath = null, String additionCommandLineArguments = "")
+    public static void ScriptServer_ConnectDebugger(CodeType codetype = CodeType.Managed, String csScript = null, String hostExePath = null, String additionCommandLineArguments = "")
     {
         //---------------------------------------------------------------
         // Detect Visual studio, which is debugging us.
@@ -122,20 +135,43 @@ public class ScriptHost
                 Thread.Sleep(500);
 
             bool bAttached = false;
+            String debuggerTypes = "Managed (v4.6, v4.5, v4.0)";
+
+            switch (codetype)
+            {
+                case CodeType.Managed:
+                    debuggerTypes = "Managed (v4.6, v4.5, v4.0)";
+                    break;
+                case CodeType.Mixed:
+                    debuggerTypes = "Managed (v4.6, v4.5, v4.0)|Native";       // Application will terminate when detached from debugger.
+                    break;
+                case CodeType.Native:
+                    debuggerTypes = "Native";
+                    break;
+            }
+
+
+            Debugger2 debugger2 = (Debugger2)dte.Debugger;
+            Transport transport = debugger2.Transports.Item(1 /* Default transport */);
+
+            String[] debTypes = debuggerTypes.Split('|').ToArray();
+            Engine[] engines = new Engine[debTypes.Length];
+            for (int i = 0; i < engines.Length; i++)
+                engines[i] = transport.Engines.Item(debTypes[i]);
 
             for (int iTry = 0; iTry < 2; iTry++)
             {
-                var processes = dte.Debugger.LocalProcesses.Cast<EnvDTE.Process>().ToArray();
+                var processes = dte.Debugger.LocalProcesses.Cast<Process2>().ToArray();
                 var exeNames = processes.Select(x => x.Name).ToArray();
 
-                for (int i = 0; i < exeNames.Length; i++)
+                for( int i = 0; i < exeNames.Length; i++)
                 {
                     var process = processes[i];
                     if (exeNames[i] == hostExePath)
                     {
                         // No need to attach if debugging multiple processes
                         if (dte != null && dte.Debugger.DebuggedProcesses.Count <= 1)
-                            process.Attach();
+                            process.Attach2(engines);
 
                         new IpcChannel(process.ProcessID).Send(csScript);
                         bAttached = true;
@@ -388,31 +424,6 @@ public class ScriptHost
             Console.WriteLine(lastException.Message);
 
     }
-
-    /// <summary>
-    /// Executes command and returns standard output & standard error to error string.
-    /// </summary>
-    /// <returns>Application exit code</returns>
-    public static int ExecCmd(String cmd, ref String error)
-    {
-        Process p = new Process();
-        p.StartInfo.UseShellExecute = false;
-        p.StartInfo.RedirectStandardOutput = true;
-        p.StartInfo.FileName = "cmd.exe";
-        // Whole command should be quoted.
-        // cmd.exe /C ""mytool.exe" "c:\mypath\myfile.txt""
-        //            ^                                   ^                                   ^
-        // https://social.msdn.microsoft.com/forums/vstudio/en-US/03ea84cf-19a6-450d-a3d6-8a139857e0cd/help-with-paths-containing-spaces
-        //
-        p.StartInfo.Arguments = "/C \"" + cmd + "\" 2>&1";
-        // Console.WriteLine("Executing 'cmd.exe " + p.StartInfo.Arguments + "'");
-        p.Start();
-        error = p.StandardOutput.ReadToEnd();
-        p.WaitForExit();
-
-        return p.ExitCode;
-    } //ExecCmd
-
 
     [DllImport("ole32.dll")]
     private static extern int CreateBindCtx(uint reserved, out IBindCtx ppbc);
