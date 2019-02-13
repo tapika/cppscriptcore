@@ -349,10 +349,6 @@ public class ScriptHost
         // Causes .pdb lock, assembly domain unload does not help.
         //using (AsmHelper helper = new AsmHelper(exe, "LoadDomain", true))
 
-        //
-        // Works, releases .pdb & .dll correctly.
-        //
-
         Exception lastException = null;
 
         for( int iRetry = 0; iRetry < 10; iRetry++ )
