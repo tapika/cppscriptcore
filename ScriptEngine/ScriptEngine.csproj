@@ -173,7 +173,7 @@
     <ProjectReference Include="..\ScriptEngineStarter\ScriptEngineStarter.csproj">
       <Project>{aff313bd-8d4e-4eb7-93ee-e43b751bfd31}</Project>
       <Name>ScriptEngineStarter</Name>
-      <Private>False</Private>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
