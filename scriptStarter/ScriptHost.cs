@@ -167,7 +167,7 @@ public class ScriptHost
                 for( int i = 0; i < exeNames.Length; i++)
                 {
                     var process = processes[i];
-                    if (exeNames[i] == hostExePath)
+                    if (exeNames[i].ToLower() == hostExePath.ToLower())
                     {
                         // No need to attach if debugging multiple processes
                         if (dte != null && dte.Debugger.DebuggedProcesses.Count <= 1)
@@ -180,6 +180,10 @@ public class ScriptHost
                 }
 
                 if (bAttached)
+                    break;
+
+                // Don't launch second process
+                if (iTry == 1)
                     break;
 
                 ProcessStartInfo procStartInfo = new ProcessStartInfo();
