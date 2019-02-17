@@ -12,17 +12,17 @@ using System.Threading.Tasks;
 /// <summary>
 /// Handles errors coming from C# script compilation.
 /// </summary>
-public class VsScriptExceptionHandler : ScriptExceptionHandler
+public class VsScriptExceptionHandler : ScriptConsole
 {
-    public override async void ReportScriptResult(String file, Exception ex)
+    DTE2 GetDTE()
     {
-        //Debug.WriteLine("Started from: " + Assembly.GetExecutingAssembly().FullName);
-        ErrorListProvider errList = ScriptHost.GetUserObject<ErrorListProvider>(ScriptHost.mainArg);
+        DTE2 dte = ScriptHost.mainArg.GetType().GetField("dte").GetValue(ScriptHost.mainArg) as DTE2;
+        return dte;
+    }
 
-        AsyncPackage sepkg = (AsyncPackage)ScriptHost.mainArg;
-        DTE2 dte = await sepkg.GetServiceAsync(typeof(DTE)) as DTE2;
-
-        OutputWindowPanes panes = dte.ToolWindows.OutputWindow.OutputWindowPanes;
+    OutputWindowPane GetOutputPanel()
+    {
+        OutputWindowPanes panes = GetDTE().ToolWindows.OutputWindow.OutputWindowPanes;
         OutputWindowPane pane;
         String cppScript = "Script Engine";
         try
@@ -34,6 +34,17 @@ public class VsScriptExceptionHandler : ScriptExceptionHandler
             pane = panes.Add(cppScript);
         }
 
+        return pane;
+    }
+
+
+    public override void ReportScriptResult(String file, Exception ex)
+    {
+        //Debug.WriteLine("Started from: " + Assembly.GetExecutingAssembly().FullName);
+        ErrorListProvider errList = ScriptHost.GetUserObject<ErrorListProvider>(ScriptHost.mainArg);
+
+        var dte = GetDTE();
+        var pane = GetOutputPanel();
         pane.Clear();
 
         String msg;
@@ -55,6 +66,25 @@ public class VsScriptExceptionHandler : ScriptExceptionHandler
 
         pane.OutputString(msg);
         pane.Activate();
+    }
+
+
+    public override void WriteLine(string msg)
+    {
+        var pane = GetOutputPanel();
+
+        var dte = GetDTE();
+        // Bring into front in case of errors, otherwise don't activate window
+        dte.ToolWindows.OutputWindow.Parent.AutoHides = false;
+        dte.ToolWindows.OutputWindow.Parent.Activate();
+
+        pane.OutputString(msg + "\n");
+        pane.Activate();
+    }
+
+    public override void Clear()
+    {
+        GetOutputPanel().Clear();
     }
 }
 

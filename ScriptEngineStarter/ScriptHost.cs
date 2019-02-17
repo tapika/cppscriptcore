@@ -29,14 +29,14 @@ public enum CodeType
 /// Depending on application itself exception from compilation and execution errors can be handled differently (log, print, display in output panel, etc)
 /// Here is specified base class with initial implementation for console application, override it if necessary
 /// </summary>
-public class ScriptExceptionHandler
+public class ScriptConsole
 {
     /// <summary>
     /// Reports either successful script compilation & execution or reports an exception happening in either compilation or execution of script
     /// </summary>
     /// <param name="path">Path to .cs script</param>
     /// <param name="ex">Exception occurred, null if everything was ok</param>
-    virtual public async void ReportScriptResult(String path, Exception ex)
+    virtual public void ReportScriptResult(String path, Exception ex)
     {
         if (ex == null)
             return;
@@ -44,12 +44,22 @@ public class ScriptExceptionHandler
         Console.WriteLine(ex.Message);
         Debug.WriteLine(ex.Message);
     }
+
+    virtual public void WriteLine(String line)
+    {
+        Console.WriteLine(line);
+    }
+
+    virtual public void Clear()
+    {
+        Console.Clear();
+    }
 }
 
 
 public class ScriptHost
 {
-    public static ScriptExceptionHandler exceptionHandler = new VsScriptExceptionHandler();
+    public static ScriptConsole console = new VsScriptExceptionHandler();
     static String serverSwitch = "/rootsuffix";
 
     /// <summary>
@@ -486,7 +496,7 @@ public class ScriptHost
                 object oRet = CsScript.RunScript(file, mainArg);
 
                 if(!(oRet is bool) || (bool)oRet != false)
-                    exceptionHandler.ReportScriptResult(file, null);
+                    console.ReportScriptResult(file, null);
                 break;
             }
             catch (IOException ex)
@@ -511,7 +521,7 @@ public class ScriptHost
         {
             try
             {
-                exceptionHandler.ReportScriptResult(file, lastException);
+                console.ReportScriptResult(file, lastException);
             }
             catch (Exception ex)
             {

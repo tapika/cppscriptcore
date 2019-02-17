@@ -25,14 +25,16 @@ using System.Threading.Tasks;
 
 public class vsDev
 {
-    public static void Main( object arg )
+    public static bool Main( object arg )
     {
-        ScriptEnginePackage sepkg = (ScriptEnginePackage)arg;
-
         Debug.WriteLine("New compilation: " + Assembly.GetExecutingAssembly().FullName);
-        var dte = sepkg.dte;
-        
-        //File.Delete(Assembly.GetExecutingAssembly().Location);
+
+        Solution solution = ((ScriptEnginePackage)arg).dte.Solution;
+
+        ScriptHost.console.Clear();
+        ScriptHost.console.WriteLine(solution.FileName);
+
+        return false;
     }
 
 }
