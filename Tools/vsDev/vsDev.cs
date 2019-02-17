@@ -27,11 +27,11 @@ public class vsDev
 {
     public static bool Main( object arg )
     {
-        Debug.WriteLine("New compilation: " + Assembly.GetExecutingAssembly().FullName);
-
         Solution solution = ((ScriptEnginePackage)arg).dte.Solution;
 
         ScriptHost.console.Clear();
+        ScriptHost.console.WriteLine("Build: " + Assembly.GetExecutingAssembly().Location);
+        ScriptHost.console.WriteLine("---------------------------------------------------------------------------------");
         ScriptHost.console.WriteLine(solution.FileName);
 
         return false;

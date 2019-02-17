@@ -45,7 +45,7 @@ public class ScriptConsole
         Debug.WriteLine(ex.Message);
     }
 
-    virtual public void WriteLine(String line)
+    virtual public void WriteLine(String line = "")
     {
         Console.WriteLine(line);
     }

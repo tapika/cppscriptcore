@@ -69,7 +69,7 @@ public class VsScriptExceptionHandler : ScriptConsole
     }
 
 
-    public override void WriteLine(string msg)
+    public override void WriteLine(string msg = "")
     {
         var pane = GetOutputPanel();
 
