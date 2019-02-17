@@ -35,7 +35,8 @@ public class CsScript
     /// Use CleanupScScriptTempDir() on application startup to wipe out compilation folder.
     /// 
     /// </summary>
-    static public void RunScript( String scriptPath, Object mainArg)
+    /// <returns>Returns object from main method call, null if not called</returns>
+    static public object RunScript( String scriptPath, Object mainArg)
     {
         String tempDir = GetScriptTempDir();
 
@@ -168,8 +169,10 @@ public class CsScript
             // ----------------------------------------------------------------
             try
             {
-                entry.Invoke(null, new object[] { mainArg });
+                object oRet = entry.Invoke(null, new object[] { mainArg });
                 Directory.SetCurrentDirectory(oldDir);
+
+                return oRet;
             }
             catch (Exception ex)
             {
@@ -180,11 +183,9 @@ public class CsScript
                 try
                 {
                     StackFrame[] stack = new StackTrace(ex.InnerException, true).GetFrames();
-                    StackFrame lastCall = stack[0];
+                    StackFrame lastCall = stack.Last();
 
-                    errors = String.Format("{0}({1},{2}): error: {3}\r\n", path,
-                        lastCall.GetFileLineNumber(), lastCall.GetFileColumnNumber(), ex.InnerException.Message);
-
+                    errors = String.Format("{0}({1},{2}): error: {3}\r\n", path, lastCall.GetFileLineNumber(), lastCall.GetFileColumnNumber(), ex.InnerException.Message);
                 }
                 catch (Exception ex3)
                 {
@@ -203,6 +204,8 @@ public class CsScript
             // Works only when there is no debugger attached.
             //try { File.Delete(pdbPath); } catch { }
         }
+
+        return null;
     }
 
     static String GetGlobalScriptTempDir()

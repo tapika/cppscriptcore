@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 /// <summary>
 /// Handles errors coming from C# script compilation.
 /// </summary>
-class VsScriptExceptionHandler : ScriptExceptionHandler
+public class VsScriptExceptionHandler : ScriptExceptionHandler
 {
     public override async void ReportScriptResult(String file, Exception ex)
     {

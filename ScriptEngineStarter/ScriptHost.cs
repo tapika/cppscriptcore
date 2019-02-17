@@ -483,8 +483,10 @@ public class ScriptHost
                 //    helper.Invoke("*.Main");
                 //}
 
-                CsScript.RunScript(file, mainArg);
-                exceptionHandler.ReportScriptResult(file, null);
+                object oRet = CsScript.RunScript(file, mainArg);
+
+                if(!(oRet is bool) || (bool)oRet != false)
+                    exceptionHandler.ReportScriptResult(file, null);
                 break;
             }
             catch (IOException ex)

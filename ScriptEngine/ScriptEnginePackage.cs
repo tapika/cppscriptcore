@@ -3,6 +3,7 @@ using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
@@ -24,6 +25,7 @@ namespace ScriptEngine
         public const int CommandId = 0x0100;
 
         public dynamic vsModule;
+        public DTE2 dte;
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -36,6 +38,7 @@ namespace ScriptEngine
         {
             // Switch to main thread
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            dte = await this.GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
 
             // Register menu handlers
             OleMenuCommandService commandService = await GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;

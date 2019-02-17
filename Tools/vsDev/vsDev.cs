@@ -25,14 +25,14 @@ using System.Threading.Tasks;
 
 public class vsDev
 {
-
-    public static async void Main( object arg )
+    public static void Main( object arg )
     {
         ScriptEnginePackage sepkg = (ScriptEnginePackage)arg;
-        DTE2 dte = await sepkg.GetServiceAsync(typeof(DTE)) as DTE2;
-        IServiceProvider serviceProvider = sepkg as IServiceProvider;
 
         Debug.WriteLine("New compilation: " + Assembly.GetExecutingAssembly().FullName);
+        var dte = sepkg.dte;
+        
+        //File.Delete(Assembly.GetExecutingAssembly().Location);
     }
 
 }
