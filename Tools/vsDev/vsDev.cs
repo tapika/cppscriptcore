@@ -10,6 +10,7 @@
 //css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Framework.15.0.26228\lib\net45\Microsoft.VisualStudio.Shell.Framework.dll
 //css_ref C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies\EnvDTE.dll
 //css_ref C:\Prototyping\cppscriptcore\bin\ScriptEngineStarter.exe
+//css_include ..\VSModelSync\CodeBuilder.cs
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
@@ -33,7 +34,44 @@ public class vsDev
         ScriptHost.console.WriteLine("Build: " + Assembly.GetExecutingAssembly().Location);
         ScriptHost.console.WriteLine("---------------------------------------------------------------------------------");
         ScriptHost.console.WriteLine(solution.FileName);
+        //ScriptHost.console.WriteLine(solution.IsOpen.ToString());
 
+        Project[] projects = solution.Projects.Cast<Project>().ToArray();
+        foreach (Project project in projects)
+        {
+            String path = project.FileName;
+
+            //
+            // The "Miscellaneous Files" node is used to contain open files that are not associated 
+            // with the current project contents within the solution
+            //
+            if (project.Kind == Constants.vsProjectKindMisc)
+                continue;
+
+            String dir = Path.GetDirectoryName(path);
+            String scriptBase = Path.GetFileNameWithoutExtension(path);
+
+            String script = Path.Combine(dir, scriptBase + "_proto.cs");
+
+            CodeBuilder code = new CodeBuilder();
+
+            code.AppendLine(
+@"//css_ref syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+");
+            code.Indent(2);
+            code.UnIndent();
+            code.AppendLine("}");
+            code.UnIndent();
+            code.AppendLine("}");
+
+            File.WriteAllText(script, code.ToString());
+        }
         return false;
     }
 

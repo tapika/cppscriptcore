@@ -92,6 +92,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeBuilder.cs" />
     <Compile Include="vsDev.cs" />
     <Compile Include="vsDev2.cs" />
   </ItemGroup>
