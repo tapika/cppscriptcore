@@ -25,31 +25,17 @@ using System.Threading.Tasks;
 
 public class vsDev
 {
+
     public static async void Main( object arg )
     {
+        ScriptHost.exceptionHandler = new VsScriptExceptionHandler();
+
+
         ScriptEnginePackage sepkg = (ScriptEnginePackage)arg;
         DTE2 dte = await sepkg.GetServiceAsync(typeof(DTE)) as DTE2;
         IServiceProvider serviceProvider = sepkg as IServiceProvider;
 
-        //sepkg.vsModule = new vsDev();
-        //Debug.WriteLine("Started ok.");
-        //VsShellUtilities.ShowMessageBox(this, "test 1", "title 1", OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-
-        //OutputWindowPanes panes = dte.ToolWindows.OutputWindow.OutputWindowPanes;
-        //OutputWindowPane pane;
-        //String cppScript = "C++ Script";
-        //try
-        //{
-        //    pane = panes.Item(cppScript);
-        //}
-        //catch (ArgumentException)
-        //{
-        //    pane = panes.Add(cppScript);
-        //}
-
-        //pane.OutputString("Hello world !\n");
-        //pane.Activate();
-        //dte.ToolWindows.OutputWindow.Parent.Activate();
+        Debug.WriteLine("New compilation: " + Assembly.GetExecutingAssembly().FullName);
 
         //ErrorListProvider errorListProvider;
 
@@ -77,9 +63,6 @@ public class vsDev
         //errorListProvider.Tasks.Add(task);
         //errorListProvider.Show();
         //errorListProvider.BringToFront();
-
-        Debug.WriteLine("New compilation: " + Assembly.GetExecutingAssembly().FullName);
-        ScriptHost.exceptionHandler = new VsScriptExceptionHandler();
     }
 
     private static void Task_Navigate(object sender, EventArgs e)
@@ -89,6 +72,9 @@ public class vsDev
 }
 
 
+/// <summary>
+/// Handles errors coming from C# script compilation.
+/// </summary>
 class VsScriptExceptionHandler: ScriptExceptionHandler
 {
     public override async void ReportScriptResult(String file, Exception ex)
@@ -120,6 +106,10 @@ class VsScriptExceptionHandler: ScriptExceptionHandler
 
             // Just in case if developer is intrested to fix this.
             Debug.WriteLine(msg);
+
+            // Bring into front in case of errors, otherwise don't activate window
+            dte.ToolWindows.OutputWindow.Parent.AutoHides = false;
+            dte.ToolWindows.OutputWindow.Parent.Activate();
         }
         else {
             msg = file + "(1): info: compiled / executed successfully\r\n";
