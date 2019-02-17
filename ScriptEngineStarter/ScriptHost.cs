@@ -25,15 +25,55 @@ public enum CodeType
 };
 
 
+/// <summary>
+/// Depending on application itself exception from compilation and execution errors can be handled differently (log, print, display in output panel, etc)
+/// Here is specified base class with initial implementation for console application, override it if necessary
+/// </summary>
+public class ScriptExceptionHandler
+{
+    /// <summary>
+    /// Reports either successful script compilation & execution or reports an exception happening in either compilation or execution of script
+    /// </summary>
+    /// <param name="path">Path to .cs script</param>
+    /// <param name="ex">Exception occurred, null if everything was ok</param>
+    virtual public async void ReportScriptResult(String path, Exception ex)
+    {
+        if (ex == null)
+            return;
+
+        Console.WriteLine(ex.Message);
+        Debug.WriteLine(ex.Message);
+    }
+}
+
 
 public class ScriptHost
 {
+    public static ScriptExceptionHandler exceptionHandler = new ScriptExceptionHandler();
     static String serverSwitch = "/rootsuffix";
 
     /// <summary>
     /// User-defined object just to use a global variable storage between scripts runs
     /// </summary>
     static public List<Object> userObj = new List<object>();
+
+    /// <summary>
+    /// Gets user defined objects from script host.
+    /// </summary>
+    /// <typeparam name="T">Type of specific object</typeparam>
+    /// <param name="args">Additional parameters to constructor in case if object will be created.</param>
+    /// <returns></returns>
+    public static T GetUserObject<T>(params object[] args) where T: class
+    {
+        T t = userObj.Where(x => x is T).FirstOrDefault() as T;
+        if (t == null)
+        {
+            t = Activator.CreateInstance(typeof(T), args) as T;
+            userObj.Add(t);
+        }
+
+        return t;
+    }
 
 
     // Must be here when using EnvDTE
@@ -44,16 +84,10 @@ public class ScriptHost
 
         String hostExePath = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.exe";
         String cmdArgs = "Exp";     // "/rootsuffix Exp" - launch experimental version of visual studio.
-        String csScript = null;
+        List<String> csScripts = new List<string>();
 
         for (int i = 0; i < args.Length; i++)
         {
-            if (csScript == null)
-            {
-                csScript = args[i];
-                continue;
-            }
-        
             if (args[i] == "/exe")
             {
                 hostExePath = args[++i];
@@ -63,10 +97,10 @@ public class ScriptHost
                 continue;
             }
 
-            cmdArgs += " " + args[i];
+            csScripts.Add(args[i]);
         }
 
-        ScriptServer_ConnectDebugger(null, CodeType.Managed, csScript, hostExePath, cmdArgs);
+        ScriptServer_ConnectDebugger(null, CodeType.Managed, csScripts, hostExePath, cmdArgs);
     }
 
     /// <summary>
@@ -84,7 +118,8 @@ public class ScriptHost
         if (args.Contains(serverSwitch))
             return;
 
-        ScriptServer_ConnectDebugger(null, codetype, csScript, hostExePath, additionCommandLineArguments);
+        String[] scripts = new string[] { csScript };
+        ScriptServer_ConnectDebugger(null, codetype, scripts, hostExePath, additionCommandLineArguments);
     }
 
     public static object mainArg = null;
@@ -95,7 +130,7 @@ public class ScriptHost
     /// </summary>
     /// <param name="csScript">C# script</param>
     public static void ScriptServer_ConnectDebugger(
-        Object _mainArg = null, CodeType codetype = CodeType.Managed, String csScript = null, 
+        Object _mainArg = null, CodeType codetype = CodeType.Managed, IEnumerable<String> csScripts = null, 
         String hostExePath = null, String additionCommandLineArguments = "")
     {
         mainArg = _mainArg;
@@ -200,7 +235,10 @@ public class ScriptHost
                         if (dte != null && dte.Debugger.DebuggedProcesses.Count <= 1)
                             process.Attach2(engines);
 
-                        new IpcChannel(process.ProcessID).Send(csScript);
+                        foreach (String csScript in csScripts)
+                        {
+                            new IpcChannel(process.ProcessID).Send(csScript);
+                        }
                         bAttached = true;
                         break;
                     }
@@ -446,6 +484,7 @@ public class ScriptHost
                 //}
 
                 CsScript.RunScript(file, mainArg);
+                exceptionHandler.ReportScriptResult(file, null);
                 break;
             }
             catch (IOException ex)
@@ -467,8 +506,16 @@ public class ScriptHost
         }
 
         if (lastException != null)
-            Console.WriteLine(lastException.Message);
-
+        {
+            try
+            {
+                exceptionHandler.ReportScriptResult(file, lastException);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Exception handler throwed exception by itself: " + ex.Message);
+            }
+        }
     }
 
     [DllImport("ole32.dll")]

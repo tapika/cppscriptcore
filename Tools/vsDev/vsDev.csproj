@@ -93,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="vsDev.cs" />
+    <Compile Include="vsDev2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

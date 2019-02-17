@@ -44,7 +44,7 @@ public class CsScript
 
         String path = Path.GetFullPath(scriptPath);
         if( !File.Exists( path ) )
-            throw new Exception("Error: Could not load file '" + Path.GetFileName(path) + "': File does not exists.");
+            throw new Exception("Error: Could not load file '" + path + "': File does not exists.");
 
         String dllBaseName = Path.GetFileNameWithoutExtension(path) + "_" + loadCounter.ToString();
         String basePath =  Path.Combine(tempDir, dllBaseName);
@@ -113,9 +113,9 @@ public class CsScript
                     // script filename, and first line position. (Not exactly right, but something at least).
 
                     if (error.FileName == "")
-                        sb.Append(Path.GetFileName(filesToCompile[0]));
+                        sb.Append(filesToCompile[0]);
                     else
-                        sb.Append(Path.GetFileName(error.FileName));
+                        sb.Append(error.FileName);
 
                     if (error.Line == 0)
                         // error CS0006: Metadata file 'MystiqueDll.dll' could not be found
@@ -152,10 +152,10 @@ public class CsScript
             }
 
             if (entry == null)
-                throw new Exception(String.Format("{0}(1,1): error: Code does not have 'Main' function\r\n", Path.GetFileName(path)));
+                throw new Exception(String.Format("{0}(1,1): error: Code does not have 'Main' function\r\n", path));
 
             if (entry.GetParameters().Length != 1)
-                throw new Exception(String.Format("{0}(1,1): error: Function '{1}' is not expected to have one input parameter\r\n", Path.GetFileName(path), funcName));
+                throw new Exception(String.Format("{0}(1,1): error: Function '{1}' is not expected to have one input parameter\r\n", path, funcName));
 
             String oldDir = Environment.CurrentDirectory;
             //
