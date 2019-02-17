@@ -81,6 +81,7 @@
     <Compile Include="CsScript.cs" />
     <Compile Include="IpcChannel.cs" />
     <Compile Include="ScriptHost.cs" />
+    <Compile Include="VsScriptExceptionHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -49,7 +49,7 @@ public class ScriptExceptionHandler
 
 public class ScriptHost
 {
-    public static ScriptExceptionHandler exceptionHandler = new ScriptExceptionHandler();
+    public static ScriptExceptionHandler exceptionHandler = new VsScriptExceptionHandler();
     static String serverSwitch = "/rootsuffix";
 
     /// <summary>
