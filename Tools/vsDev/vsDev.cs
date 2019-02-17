@@ -1,14 +1,18 @@
-﻿//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.15.0.15.0.26228\lib\Microsoft.VisualStudio.Shell.15.0.dll
+﻿//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.15.0.15.0.26228\lib\Microsoft.VisualStudio.Shell.15.0.dll
 //css_ref C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies\EnvDTE80.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\bin\Debug\ScriptEngine.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.7.10.6071\lib\Microsoft.VisualStudio.Shell.Interop.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.OLE.Interop.7.10.6071\lib\Microsoft.VisualStudio.OLE.Interop.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.8.0.8.0.50727\lib\Microsoft.VisualStudio.Shell.Interop.8.0.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.9.0.9.0.30729\lib\Microsoft.VisualStudio.Shell.Interop.9.0.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.10.0.10.0.30319\lib\Microsoft.VisualStudio.Shell.Interop.10.0.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime.14.3.25407\lib\Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime.dll
-//css_ref D:\Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Framework.15.0.26228\lib\net45\Microsoft.VisualStudio.Shell.Framework.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\bin\Debug\ScriptEngine.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.7.10.6071\lib\Microsoft.VisualStudio.Shell.Interop.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.OLE.Interop.7.10.6071\lib\Microsoft.VisualStudio.OLE.Interop.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.8.0.8.0.50727\lib\Microsoft.VisualStudio.Shell.Interop.8.0.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.9.0.9.0.30729\lib\Microsoft.VisualStudio.Shell.Interop.9.0.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.10.0.10.0.30319\lib\Microsoft.VisualStudio.Shell.Interop.10.0.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime.14.3.25407\lib\Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime.dll
+//css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Framework.15.0.26228\lib\net45\Microsoft.VisualStudio.Shell.Framework.dll
+//css_ref C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies\EnvDTE.dll
+//css_ref C:\Prototyping\cppscriptcore\bin\ScriptEngineStarter.exe
+using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
 using ScriptEngine;
 using System;
 using System.Collections.Generic;
@@ -21,11 +25,58 @@ using System.Threading.Tasks;
 
 public class vsDev
 {
-    public static void Main( object arg )
+    public static async void Main( object arg )
     {
         ScriptEnginePackage sepkg = (ScriptEnginePackage)arg;
-        sepkg.vsModule = new vsDev();
-        Debug.WriteLine("Started ok.");
+        DTE2 dte = await sepkg.GetServiceAsync(typeof(DTE)) as DTE2;
+        IServiceProvider serviceProvider = sepkg as IServiceProvider;
+
+        //sepkg.vsModule = new vsDev();
+        //Debug.WriteLine("Started ok.");
+        //VsShellUtilities.ShowMessageBox(this, "test 1", "title 1", OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+
+        //OutputWindowPanes panes = dte.ToolWindows.OutputWindow.OutputWindowPanes;
+        //OutputWindowPane pane;
+        //String cppScript = "C++ Script";
+        //try
+        //{
+        //    pane = panes.Item(cppScript);
+        //}
+        //catch (ArgumentException)
+        //{
+        //    pane = panes.Add(cppScript);
+        //}
+
+        //pane.OutputString("Hello world !\n");
+        //pane.Activate();
+        //dte.ToolWindows.OutputWindow.Parent.Activate();
+
+        ErrorListProvider errorListProvider;
+
+        if (ScriptHost.userObj.Count == 0)
+        {
+            errorListProvider = new ErrorListProvider(sepkg);
+            ScriptHost.userObj.Add(errorListProvider);
+        }
+        else
+        {
+            errorListProvider = ScriptHost.userObj[0] as ErrorListProvider;
+        }
+
+        errorListProvider.Tasks.Clear();
+        var task = new ErrorTask
+        {
+            Document = @"C:\Prototyping\cppscriptcore\Tools\vsDev\vsDev.cs",
+            Line = 59,
+            Column = 22,
+            ErrorCategory = TaskErrorCategory.Error,
+            Category = TaskCategory.BuildCompile,
+            Text = "Hello error panel 3"
+        };
+        //task.Navigate += Task_Navigate;
+        errorListProvider.Tasks.Add(task);
+        errorListProvider.Show();
+        errorListProvider.BringToFront();
     }
 }
 

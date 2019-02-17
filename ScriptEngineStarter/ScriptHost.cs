@@ -1,6 +1,7 @@
 ﻿//using csscript;
 //using CSScriptLibrary;
 using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,6 +29,12 @@ public enum CodeType
 public class ScriptHost
 {
     static String serverSwitch = "/rootsuffix";
+
+    /// <summary>
+    /// User-defined object just to use a global variable storage between scripts runs
+    /// </summary>
+    static public List<Object> userObj = new List<object>();
+
 
     // Must be here when using EnvDTE
     [STAThread]
@@ -129,7 +136,7 @@ public class ScriptHost
             }
 
             // Breakpoint will start to work after this point.
-            Task.Run(() => { IpcServerLoop(); });
+            System.Threading.Tasks.Task.Run(() => { IpcServerLoop(); });
             if (dte != null) MessageFilter.Revoke();
             return;
         }
@@ -351,7 +358,14 @@ public class ScriptHost
         FileReload(e.FullPath);
     }
 
-    static void FileReload( String file )
+    static async void FileReload(String file)
+    {
+        AsyncPackage apkg  = mainArg as AsyncPackage;
+        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(apkg.DisposalToken);
+        FileReloadUIThread(file);
+    }
+
+    static void FileReloadUIThread( String file )
     {
         DebugPrint("- File changed '" + file + "'");
 
