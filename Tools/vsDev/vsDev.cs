@@ -9,11 +9,13 @@
 //css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime.14.3.25407\lib\Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime.dll
 //css_ref \Prototyping\cppscriptcore\ScriptEngine\packages\Microsoft.VisualStudio.Shell.Framework.15.0.26228\lib\net45\Microsoft.VisualStudio.Shell.Framework.dll
 //css_ref C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies\EnvDTE.dll
-//css_ref C:\Prototyping\cppscriptcore\bin\ScriptEngineStarter.exe
+//css_ref \Prototyping\cppscriptcore\bin\ScriptEngineStarter.exe
 //css_ref C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll
+//css_ref C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll
 //css_include ..\VSModelSync\CodeBuilder.cs
 using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio.Project.VisualC.VsShell.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.VCProjectEngine;
@@ -85,11 +87,34 @@ class Builder: SolutionProjectBuilder
 
             code.AppendLine("uuid(" + quoted(projectGuid.ToString()) + ");");
 
-            VCProject vcProject = project.Object as VCProject;
-            VCFile[] files = ((IVCCollection)vcProject.Files).Cast<VCFile>().ToArray();
-            String[] paths = files.Select(x => x.RelativePath).ToArray();
 
-                code.AppendLine("files(");
+            String[] paths = null;
+
+            // C++ Project
+            VCProject vcProject = project.Object as VCProject;
+            if (vcProject != null)
+            {
+                VCFile[] files = ((IVCCollection)vcProject.Files).Cast<VCFile>().ToArray();
+                paths = files.Select(x => x.RelativePath).ToArray();
+            }
+
+            // C# Project
+            VSProject2 sharpProject = project.Object as VSProject2;
+            if(sharpProject != null)
+            {
+                ProjectItem[] files = project.ProjectItems.Cast<ProjectItem>().ToArray();
+
+                paths = new string[files.Length];
+                for (int i = 0; i < files.Length; i++)
+                {
+                    Property[] properties = files[i].Properties.Cast<Property>().ToArray();
+                    String[] keys = properties.Select(x => x.Name).ToArray();
+                    paths[i] = properties.Where(x => x.Name == "FileName").Select(x => x.Value.ToString()).FirstOrDefault();
+                }
+            }
+
+
+            code.AppendLine("files(");
                 code.Indent();
                 for(int i = 0; i < paths.Length; i++)
                 {
