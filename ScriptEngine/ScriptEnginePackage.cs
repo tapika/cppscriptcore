@@ -26,6 +26,7 @@ namespace ScriptEngine
 
         public dynamic vsModule;
         public DTE2 dte;
+        public IVsSolution vsSolution;
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -38,7 +39,8 @@ namespace ScriptEngine
         {
             // Switch to main thread
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            dte = await this.GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
+            dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
+            vsSolution = await GetServiceAsync(typeof(IVsSolution)) as IVsSolution;
 
             // Register menu handlers
             OleMenuCommandService commandService = await GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
