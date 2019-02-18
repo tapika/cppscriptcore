@@ -102,7 +102,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeBuilder.cs" />
+    <Compile Include="..\VSModelSync\CodeBuilder.cs">
+      <Link>CodeBuilder.cs</Link>
+    </Compile>
     <Compile Include="vsDev.cs" />
     <Compile Include="vsDev2.cs" />
   </ItemGroup>
