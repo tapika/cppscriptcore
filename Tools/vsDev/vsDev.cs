@@ -79,6 +79,7 @@ class Builder: SolutionProjectBuilder
 
             Configuration[] configurations = project.ConfigurationManager.Cast<Configuration>().ToArray();
             code.AppendLine("configurations(" + String.Join(",", configurations.Select(x => quoted(x.ConfigurationName)).Distinct() ) + ");");
+            code.AppendLine("platforms(" + String.Join(",", configurations.Select(x => quoted(x.PlatformName)).Distinct() ) + ");");
 
             IVsHierarchy hierarchy;
             sepkg.vsSolution.GetProjectOfUniqueName(project.UniqueName, out hierarchy);
