@@ -40,5 +40,10 @@ public:
     // Loads .vcxproj file.
     //
     bool Load(const wchar_t* file);
+
+    //
+    // Saves project file
+    //
+    bool Save(const wchar_t* file);
 };
 

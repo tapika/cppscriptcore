@@ -46,6 +46,9 @@ void Project::AddConfigurations(std::initializer_list<std::string> _configuratio
 }
 
 
+//
+// Loads .vcxproj file.
+//
 bool Project::Load(const wchar_t* file)
 {
     xml_parse_result res = load_file(file, parse_default | parse_declaration | parse_ws_pcdata_single);
@@ -66,4 +69,40 @@ bool Project::Load(const wchar_t* file)
 
     return true;
 }
+
+//
+// Saves project file
+//
+bool Project::Save(const wchar_t* file)
+{
+    xml_node proj = child(L"Project");
+    if (proj.empty())
+        proj = append_child(L"Project");
+    
+    
+    xml_node confs = proj.select_node(L"ItemGroup[@Label='ProjectConfigurations']").node();
+    if (confs.empty())
+    {
+        confs = proj.append_child(L"ItemGroup");
+        confs.append_attribute(L"Label").set_value(L"ProjectConfigurations");
+    }
+
+    if (!configurations.size())
+        AddConfigurations({"Debug", "Release" });
+
+    for (auto n : confs.children()) confs.remove_child(n);
+
+    for( auto p: platforms )
+        for (auto c : configurations)
+        {
+            xml_node n = confs.append_child(L"ProjectConfiguration");
+            n.append_child(L"Configuration").text().set( as_wide(p).c_str() );
+            n.append_child(L"Platform").text().set( as_wide(c).c_str() );
+        }
+
+    bool b  = save_file(file, L"  ", format_indent | format_save_file_text, encoding_utf8);
+    return b;
+}
+
+
 
