@@ -193,8 +193,8 @@ bool Project::Save(const wchar_t* file)
             auto p = as_wide(_p);
             auto c = as_wide(_c);
             n.append_attribute(L"Include").set_value( (c + L"|" + p).c_str() );
-            n.append_child(L"Configuration").text().set( p.c_str() );
-            n.append_child(L"Platform").text().set( c.c_str() );
+            n.append_child(L"Configuration").text().set( c.c_str() );
+            n.append_child(L"Platform").text().set( p.c_str() );
         }
 
     bool b  = save_file(path.c_str(), L"  ", format_indent | format_save_file_text, encoding_utf8);
