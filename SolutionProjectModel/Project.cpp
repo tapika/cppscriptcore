@@ -92,12 +92,15 @@ bool Project::Save(const wchar_t* file)
 
     for (auto n : confs.children()) confs.remove_child(n);
 
-    for( auto p: platforms )
-        for (auto c : configurations)
+    for( auto _p: platforms )
+        for (auto _c : configurations)
         {
             xml_node n = confs.append_child(L"ProjectConfiguration");
-            n.append_child(L"Configuration").text().set( as_wide(p).c_str() );
-            n.append_child(L"Platform").text().set( as_wide(c).c_str() );
+            auto p = as_wide(_p);
+            auto c = as_wide(_c);
+            n.append_attribute(L"Include").set_value( (c + L"|" + p).c_str() );
+            n.append_child(L"Configuration").text().set( p.c_str() );
+            n.append_child(L"Platform").text().set( c.c_str() );
         }
 
     bool b  = save_file(file, L"  ", format_indent | format_save_file_text, encoding_utf8);
