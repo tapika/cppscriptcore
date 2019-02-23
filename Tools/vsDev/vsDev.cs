@@ -101,7 +101,7 @@ class Builder: SolutionProjectBuilder
 
             // C# Project
             VSProject2 sharpProject = project.Object as VSProject2;
-            if(sharpProject != null)
+            if(sharpProject != null && vcProject == null)       //sharpProject gives too generic representation of C++ project, does not list all files
             {
                 ProjectItem[] files = project.ProjectItems.Cast<ProjectItem>().ToArray();
 
