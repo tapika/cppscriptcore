@@ -2,6 +2,7 @@
 #include "../pugixml/pugixml.hpp"
 #include <string>
 #include <vector>
+#include <initializer_list>
 
 #ifdef SPM_EXPORT
 #define SPM_DLLEXPORT __declspec(dllexport)
@@ -15,27 +16,29 @@
 #pragma warning( disable: 4275 )
 
 //---------------------------------------------------------
-//  Project configuration
-//---------------------------------------------------------
-class SPM_DLLEXPORT Configuration
-{
-public:
-    //  "Debug", "Release", user defined
-    std::string ConfigurationName;
-
-    //  "Win32", "х64", ...
-    std::string PlatformName;
-};
-
-
-//---------------------------------------------------------
 //  Project
 //---------------------------------------------------------
 class SPM_DLLEXPORT Project : pugi::xml_document
 {
 public:
-    std::vector<Configuration> Configurations;
+    //  "Win32", "х64", ...
+    std::vector<std::string> platforms;
 
+    //  "Debug", "Release", user defined
+    std::vector<std::string> configurations;
+
+    //
+    // Add support for platform or configuration, if not yet added.
+    //
+    void AddPlatform(const char* platform);
+    void AddPlatforms(std::initializer_list<std::string> _platforms);
+
+    void AddConfiguration(const char* configuration);
+    void AddConfigurations(std::initializer_list<std::string> _configuration);
+
+    //
+    // Loads .vcxproj file.
+    //
     bool Load(const wchar_t* file);
 };
 
