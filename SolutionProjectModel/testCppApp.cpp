@@ -10,8 +10,9 @@ void main(void)
     p.name = L"test1";
     p.AddPlatforms( { "Win32" } );
     p.Save();
-    //p.AddPlatforms({ "x64" });
-    //p.Save(L"test2.vcxproj");
+    
+    p.AddPlatforms({ "x64" });
+    p.Save(L"test2.vcxproj");
 
 
 }

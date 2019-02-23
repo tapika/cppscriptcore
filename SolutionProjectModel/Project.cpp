@@ -3,8 +3,11 @@
 #include <boost/uuid/detail/sha1.hpp>
 #include <cguid.h>                                      //GUID_NULL
 #include <objbase.h>                                    //StringFromCLSID
+#include <filesystem>
+
 using namespace pugi;
 using namespace std;
+using namespace experimental;                           //filesystem
 
 //
 // Expose over .dll boundary
@@ -110,10 +113,12 @@ bool Project::Load(const wchar_t* file)
     return true;
 }
 
-
+//
+//  selects node with specific label attribute or creates required child and set's it's attribute to required value.
+//
 xml_node GetLabelledNode(xml_node node, const wchar_t* elemName, const wchar_t* attrValue)
 {
-    wstring q = wstring(elemName) + L"[@Label=" + attrValue + L"]";
+    wstring q = wstring(elemName) + L"[@Label='" + attrValue + L"']";
     xml_node r = node.select_node(q.c_str()).node();
     if (r.empty())
     {
@@ -125,6 +130,19 @@ xml_node GetLabelledNode(xml_node node, const wchar_t* elemName, const wchar_t* 
 }
 
 //
+//  Selects specific child node or creates it.
+//
+xml_node GetOrCreate(xml_node& node, const wchar_t* name)
+{
+    xml_node r = node.child(name);
+    if (r.empty())
+        r = node.append_child(name);
+
+    return r;
+}
+
+
+//
 // Saves project file
 //
 bool Project::Save(const wchar_t* file)
@@ -132,18 +150,36 @@ bool Project::Save(const wchar_t* file)
     wstring path;
 
     if (file)
+    {
         path = file;
+
+        // Update project name
+        name = filesystem::path(file).stem();
+        guid = GUID_NULL;
+    }
     else
         path = name + L".vcxproj";
 
-    xml_node proj = child(L"Project");
-    if (proj.empty())
-        proj = append_child(L"Project");
-    
+
+    // Specify utf-8 encoding.
+    pugi::xml_node decl;
+
+    for (auto n : children())
+        if (n.type() == pugi::node_declaration)
+            decl = n;
+
+    if (decl.empty())
+    {
+        decl = prepend_child(pugi::node_declaration);
+        decl.append_attribute(L"version") = L"1.0";
+        decl.append_attribute(L"encoding") = L"utf-8";
+    }
+
+    xml_node proj = GetOrCreate(*this, L"Project");
     
     xml_node confs = GetLabelledNode(proj, L"ItemGroup", L"ProjectConfigurations");
     xml_node nGlobals = GetLabelledNode(proj, L"PropertyGroup", L"Globals");
-    nGlobals.append_child(L"ProjectGuid").text().set(GetGuid().c_str());
+    GetOrCreate(nGlobals,L"ProjectGuid").text().set(GetGuid().c_str());
 
     if (!configurations.size())
         AddConfigurations({"Debug", "Release" });
