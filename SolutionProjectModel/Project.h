@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
+#include <guiddef.h>                        //GUID
 
 #ifdef SPM_EXPORT
 #define SPM_DLLEXPORT __declspec(dllexport)
@@ -21,11 +22,22 @@
 class SPM_DLLEXPORT Project : pugi::xml_document
 {
 public:
+    Project();
+
+    // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
+    std::wstring name;
+
     //  "Win32", "х64", ...
     std::vector<std::string> platforms;
 
     //  "Debug", "Release", user defined
     std::vector<std::string> configurations;
+
+    // Project guid
+    GUID guid;
+
+    // Gets project guid, initialized if it's not initialized yet
+    std::wstring GetGuid(void);
 
     //
     // Add support for platform or configuration, if not yet added.
@@ -44,6 +56,6 @@ public:
     //
     // Saves project file
     //
-    bool Save(const wchar_t* file);
+    bool Save(const wchar_t* file = nullptr);
 };
 

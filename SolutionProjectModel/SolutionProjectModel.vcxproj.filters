@@ -28,4 +28,7 @@
       <Filter>pugixml</Filter>
     </Natvis>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

@@ -1,5 +1,8 @@
 #include "Project.h"
 #include <stdio.h>
+#include <boost/uuid/detail/sha1.hpp>
+#include <cguid.h>                                      //GUID_NULL
+#include <objbase.h>                                    //StringFromCLSID
 using namespace pugi;
 using namespace std;
 
@@ -8,6 +11,43 @@ using namespace std;
 //
 template class __declspec(dllexport) std::allocator<char>;
 template class __declspec(dllexport) std::basic_string<char, std::char_traits<char>, std::allocator<char> >;
+
+Project::Project()
+{
+    guid = GUID_NULL;
+}
+
+//
+// Gets project guid, initialized if it's not initialized yet
+//
+wstring Project::GetGuid(void)
+{
+    if (guid == GUID_NULL)
+    {
+        //
+        // Generates Guid based on String. Key assumption for this algorithm is that name is unique (across where it it's being used)
+        // we compute sha - 1 hash from string and then pass it to guid.
+        //
+        boost::uuids::detail::sha1 sha1;
+        auto pname = as_utf8(name);
+        sha1.process_bytes(&pname[0], pname.length());
+        unsigned hash[5] = { 0 };
+        sha1.get_digest(hash);
+
+        // Hash is 20 bytes, but we need 16. We loose some of "uniqueness", but I doubt it will be fatal
+        memcpy(&guid, hash, sizeof(GUID));
+    }
+
+    wchar_t* gs = nullptr;
+    wstring r;
+
+    if( StringFromCLSID(guid, &gs) == S_OK )
+        r = gs;
+
+    CoTaskMemFree(gs);
+    return r;
+}
+
 
 
 template <class T, class I >
@@ -70,22 +110,40 @@ bool Project::Load(const wchar_t* file)
     return true;
 }
 
+
+xml_node GetLabelledNode(xml_node node, const wchar_t* elemName, const wchar_t* attrValue)
+{
+    wstring q = wstring(elemName) + L"[@Label=" + attrValue + L"]";
+    xml_node r = node.select_node(q.c_str()).node();
+    if (r.empty())
+    {
+        r = node.append_child(elemName);
+        r.append_attribute(L"Label").set_value(attrValue);
+    }
+
+    return r;
+}
+
 //
 // Saves project file
 //
 bool Project::Save(const wchar_t* file)
 {
+    wstring path;
+
+    if (file)
+        path = file;
+    else
+        path = name + L".vcxproj";
+
     xml_node proj = child(L"Project");
     if (proj.empty())
         proj = append_child(L"Project");
     
     
-    xml_node confs = proj.select_node(L"ItemGroup[@Label='ProjectConfigurations']").node();
-    if (confs.empty())
-    {
-        confs = proj.append_child(L"ItemGroup");
-        confs.append_attribute(L"Label").set_value(L"ProjectConfigurations");
-    }
+    xml_node confs = GetLabelledNode(proj, L"ItemGroup", L"ProjectConfigurations");
+    xml_node nGlobals = GetLabelledNode(proj, L"PropertyGroup", L"Globals");
+    nGlobals.append_child(L"ProjectGuid").text().set(GetGuid().c_str());
 
     if (!configurations.size())
         AddConfigurations({"Debug", "Release" });
@@ -103,7 +161,7 @@ bool Project::Save(const wchar_t* file)
             n.append_child(L"Platform").text().set( c.c_str() );
         }
 
-    bool b  = save_file(file, L"  ", format_indent | format_save_file_text, encoding_utf8);
+    bool b  = save_file(path.c_str(), L"  ", format_indent | format_save_file_text, encoding_utf8);
     return b;
 }
 
