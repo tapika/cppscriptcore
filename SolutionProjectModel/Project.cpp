@@ -141,6 +141,31 @@ xml_node GetOrCreate(xml_node& node, const wchar_t* name)
     return r;
 }
 
+//
+//  Formats wstring according to format.
+//
+wstring wformat(const wchar_t* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int size = _vsnwprintf(nullptr, 0, format, args);
+    size++; // Zero termination
+    wstring ws;
+    ws.reserve(size);
+    _vsnwprintf(&ws[0], size, format, args);
+    va_end(args);
+    return ws;
+}
+
+void checkImportNode(xml_node& node, const wchar_t* text)
+{
+    xml_node r = node.select_node(wformat(L"Import[@Project='%s']", text).c_str() ).node();
+    if (!r.empty())
+        return;
+
+    node.append_child(L"Import").append_attribute(L"Project").set_value(text);
+}
+
 
 //
 // Saves project file
@@ -180,6 +205,8 @@ bool Project::Save(const wchar_t* file)
     xml_node confs = GetLabelledNode(proj, L"ItemGroup", L"ProjectConfigurations");
     xml_node nGlobals = GetLabelledNode(proj, L"PropertyGroup", L"Globals");
     GetOrCreate(nGlobals,L"ProjectGuid").text().set(GetGuid().c_str());
+
+    checkImportNode(proj, LR"($(VCTargetsPath)\Microsoft.Cpp.Default.props)");
 
     if (!configurations.size())
         AddConfigurations({"Debug", "Release" });
