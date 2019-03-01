@@ -36,6 +36,9 @@ public:
     // Project guid
     GUID guid;
 
+    //  Sets visual studio version, in year. e.g. 2017, 2019, ...
+    void SetVsVersion(int vsVersion);
+
     // Gets project guid, initialized if it's not initialized yet
     std::wstring GetGuid(void);
 
@@ -48,6 +51,15 @@ public:
     void AddConfiguration(const char* configuration);
     void AddConfigurations(std::initializer_list<std::string> _configuration);
 
+    //  Gets list of currently supported configurations, in form "<configuration>|<platform>"
+    std::vector<std::string> GetConfigurations();
+
+    // Platform Toolset, e.g. "v141" (for vs2017), "142" (for vs2019), "Clang_5_0" ...
+    std::string toolset;
+
+    // Queries for currently selected toolset, if none is selected, tries to determine from visual studio format version
+    std::string GetToolset();
+
     //
     // Loads .vcxproj file.
     //
@@ -57,5 +69,17 @@ public:
     // Saves project file
     //
     bool Save(const wchar_t* file = nullptr);
+
+protected:
+    //  Visual studio version, in year. e.g. 2017, 2019, ...
+    int vsVersion;
+    
+    pugi::xml_node project();
+    pugi::xml_node markForPropertyGroup;
+
+    //
+    // Platforms or Configurations arrays updated, bPlatforms == true - platforms false = configurations, bAdd = true - added, bAdd = false - removed.
+    //
+    void PlatformConfigurationsUpdated(std::initializer_list<std::string> items, bool bPlatforms, bool bAdd);
 };
 
