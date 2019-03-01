@@ -275,16 +275,16 @@ std::string Project::GetToolset()
     {
         switch (vsVersion)
         {
-        case 2010: toolset = "v100"; break;
-        case 2012: toolset = "v110"; break;
-        case 2013: toolset = "v120"; break;
-        case 2015: toolset = "v140"; break;
-        case 2017: toolset = "v141"; break;
-        case 2019: toolset = "v142"; break;
-        default:
-            // Try to guess the future. 2021 => "v160" ?
-            toolset = "v" + to_string(((vsVersion - 2021) + 16) * 10);
-            break;
+            case 2010: toolset = "v100"; break;
+            case 2012: toolset = "v110"; break;
+            case 2013: toolset = "v120"; break;
+            case 2015: toolset = "v140"; break;
+            case 2017: toolset = "v141"; break;
+            case 2019: toolset = "v142"; break;
+            default:
+                // Try to guess the future. 2021 => "v160" ?
+                toolset = "v" + to_string(((vsVersion - 2021) + 16) * 10);
+                break;
         }
     }
 
