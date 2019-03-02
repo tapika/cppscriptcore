@@ -20,6 +20,11 @@ Project::Project()
     New();
 }
 
+Project::Project( const wchar_t* _name )
+{
+    New();
+    name = _name;
+}
 
 void Project::SetVsVersion(int _vsVersion)
 {

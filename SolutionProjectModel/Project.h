@@ -23,18 +23,22 @@ class SPM_DLLEXPORT Project : pugi::xml_document
 {
 public:
     Project();
+    Project(const wchar_t* _name);
 
-    // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
-    std::wstring name;
+    //
+    // Clears existing project
+    //
+    void New();
 
-    //  "Win32", "х64", ...
-    std::vector<std::string> platforms;
+    //
+    // Loads .vcxproj file.
+    //
+    bool Load(const wchar_t* file);
 
-    //  "Debug", "Release", user defined
-    std::vector<std::string> configurations;
-
-    // Project guid
-    GUID guid;
+    //
+    // Saves project file
+    //
+    bool Save(const wchar_t* file = nullptr);
 
     //  Sets visual studio version, in year. e.g. 2017, 2019, ...
     void SetVsVersion(int vsVersion);
@@ -54,32 +58,31 @@ public:
     //  Gets list of currently supported configurations, in form "<configuration>|<platform>"
     std::vector<std::string> GetConfigurations();
 
-    // Platform Toolset, e.g. "v141" (for vs2017), "142" (for vs2019), "Clang_5_0" ...
-    std::string toolset;
-
     // Queries for currently selected toolset, if none is selected, tries to determine from visual studio format version
     std::string GetToolset();
 
-    //
-    // Clears existing project
-    //
-    void New();
 
-    //
-    // Loads .vcxproj file.
-    //
-    bool Load(const wchar_t* file);
-
-    //
-    // Saves project file
-    //
-    bool Save(const wchar_t* file = nullptr);
 
 protected:
+    // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
+    std::wstring name;
+
+    //  "Win32", "х64", ...
+    std::vector<std::string> platforms;
+
+    //  "Debug", "Release", user defined
+    std::vector<std::string> configurations;
+
+    // Project guid
+    GUID guid;
+
     //
     //  Visual studio version, in year. e.g. 2017, 2019, ...
     //
     int vsVersion;
+
+    // Platform Toolset, e.g. "v141" (for vs2017), "142" (for vs2019), "Clang_5_0" ...
+    std::string toolset;
 
     //
     //  Typically in .vcxproj this is used to mark where project is targetted upon, e.g. "Win32Proj" - win32 or win64, "Android", "Linux", "Clang",
