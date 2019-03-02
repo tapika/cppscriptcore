@@ -17,8 +17,7 @@ template class __declspec(dllexport) std::basic_string<char, std::char_traits<ch
 
 Project::Project()
 {
-    guid = GUID_NULL;
-    SetVsVersion(2017);     // May change without further notice
+    New();
 }
 
 
@@ -40,7 +39,7 @@ void Project::SetVsVersion(int _vsVersion)
 
     auto proj = project();
     if (toolsVersion)
-        proj.append_attribute(L"ToolsVersion").set_value(toolsVersion);
+        proj.insert_attribute_before(L"ToolsVersion", proj.last_attribute() ).set_value(toolsVersion);
     else
         proj.remove_attribute(L"ToolsVersion");
 
@@ -78,44 +77,24 @@ wstring Project::GetGuid(void)
 }
 
 
-
-template <class T, class I >
-bool vectorContains(const vector<T>& v, I& t)
-{
-    bool found = (std::find(v.begin(), v.end(), t) != v.end());
-    return found;
-}
-
-
 void Project::AddPlatform(const char* platform)
 {
     AddPlatforms({ platform });
-    //if (!vectorContains(platforms, platform))
-    //    platforms.push_back(platform);
 }
-
 
 void Project::AddPlatforms(initializer_list<string> _platforms)
 {
     PlatformConfigurationsUpdated(_platforms, true, true);
-    //platforms.reserve(_platforms.size());
-    //for (initializer_list<string>::iterator i = _platforms.begin(); i != _platforms.end(); i++)
-    //    AddPlatform(i->c_str());
 }
 
 void Project::AddConfiguration(const char* configuration)
 {
     AddConfigurations( { configuration } );
-    //if (!vectorContains(configurations, configuration))
-    //    configurations.push_back(configuration);
 }
 
 void Project::AddConfigurations(std::initializer_list<std::string> _configurations)
 {
     PlatformConfigurationsUpdated(_configurations, false, true);
-    //configurations.reserve(_configurations.size());
-    //for (initializer_list<string>::iterator i = _configurations.begin(); i != _configurations.end(); i++)
-    //    AddConfiguration(i->c_str());
 }
 
 const wchar_t* PropertyGroup = L"PropertyGroup";
@@ -238,7 +217,12 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
 
                 pg.append_attribute(L"Condition").set_value((wstring(L"'$(Configuration)|$(Platform)'=='") + platformConfiguration + L"'").c_str());
                 pg.append_attribute(L"Label").set_value(L"Configuration");
-                pg.append_child(L"PlatformToolset").text().set(as_wide(GetToolset()).c_str());
+                
+                const wchar_t* xmltag[] = { L"PlatformToolset" , L"Keyword", L"WindowsTargetPlatformVersion" };
+                string (Project::*func[])() = { &Project::GetToolset, &Project::GetKeyword, &Project::GetWindowsSDKVersion };
+
+                for (int i = 0; i < _countof(xmltag); i++)
+                    pg.append_child(xmltag[i]).text().set(as_wide( (this->*func[i])() ).c_str());
             }
             else
             {
@@ -292,10 +276,25 @@ std::string Project::GetToolset()
 }
 
 //
+// Clears existing project
+//
+void Project::New()
+{
+    // Reset parsing variables.
+    markForPropertyGroup = projectGlobals = xml_node();
+    
+    pugi::xml_document::reset();
+    guid = GUID_NULL;
+    SetVsVersion(2017);     // May change without further notice
+}
+
+
+//
 // Loads .vcxproj file.
 //
 bool Project::Load(const wchar_t* file)
 {
+    New();
     xml_parse_result res = load_file(file, parse_default | parse_declaration | parse_ws_pcdata_single);
 
     if (res.status != status_ok)
@@ -316,34 +315,6 @@ bool Project::Load(const wchar_t* file)
 }
 
 //
-//  selects node with specific label attribute or creates required child and set's it's attribute to required value.
-//
-xml_node GetLabelledNode(xml_node node, const wchar_t* elemName, const wchar_t* attrValue)
-{
-    wstring q = wstring(elemName) + L"[@Label='" + attrValue + L"']";
-    xml_node r = node.select_node(q.c_str()).node();
-    if (r.empty())
-    {
-        r = node.append_child(elemName);
-        r.append_attribute(L"Label").set_value(attrValue);
-    }
-
-    return r;
-}
-
-//
-//  Selects specific child node or creates it.
-//
-xml_node GetOrCreate(xml_node& node, const wchar_t* name)
-{
-    xml_node r = node.child(name);
-    if (r.empty())
-        r = node.append_child(name);
-
-    return r;
-}
-
-//
 //  Formats wstring according to format.
 //
 wstring wformat(const wchar_t* format, ...)
@@ -357,6 +328,19 @@ wstring wformat(const wchar_t* format, ...)
     _vsnwprintf(&ws[0], size, format, args);
     va_end(args);
     return ws;
+}
+
+string Project::GetKeyword()
+{
+    if (Keyword.empty())
+        return "Win32Proj";     //Windows project (32 or 64 bit)
+
+    return Keyword;
+}
+
+string Project::GetWindowsSDKVersion()
+{
+    return "10.0.17134.0";      // Hardcoded - fixme
 }
 
 //
@@ -384,20 +368,37 @@ pugi::xml_node Project::project()
     if (proj.empty())
     {
         proj = append_child(L"Project");
+        proj.append_attribute(L"xmlns").set_value(L"http://schemas.microsoft.com/developer/msbuild/2003");
+    }
 
-        // Project configurations
-        xml_node itemGroup = proj.append_child(L"ItemGroup");
+    // Project configurations
+    xml_node itemGroup = proj.first_child();
+    if (itemGroup.empty())
+    {
+        itemGroup = proj.append_child(L"ItemGroup");
         itemGroup.append_attribute(L"Label").set_value(L"ProjectConfigurations");
+    }
 
-        // Project globals (Guid, etc...)
-        xml_node propertyGroup = proj.append_child(PropertyGroup);
-        propertyGroup.append_attribute(L"Label").set_value(L"Globals");
-        propertyGroup.append_child(L"ProjectGuid");
+    // Project globals.
+    if (projectGlobals.empty())
+    {
+        projectGlobals = itemGroup.next_sibling();
+        if (projectGlobals.empty())
+        {
+            // Project globals (Guid, etc...)
+            projectGlobals = proj.insert_child_after(PropertyGroup, itemGroup);
+            projectGlobals.append_attribute(L"Label").set_value(L"Globals");
+            projectGlobals.append_child(L"ProjectGuid");
+        }
+    }
 
-        // Magical xml imports.
+    // Magical xml imports.
+    if (markForPropertyGroup.empty())
+    {
         markForPropertyGroup = proj.append_child(L"Import");
         markForPropertyGroup.append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.Default.props)");
-     
+
+        proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.props)");
         proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.targets)");
     }
 
@@ -422,8 +423,9 @@ bool Project::Save(const wchar_t* file)
     else
         path = name + L".vcxproj";
 
-    select_node(L"/Project/PropertyGroup[@Label='Globals']/ProjectGuid").node().text().set(GetGuid().c_str());
-
+    project();
+    projectGlobals.child(L"ProjectGuid").text().set(GetGuid().c_str());
+    
     bool b  = save_file(path.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
     return b;
 }

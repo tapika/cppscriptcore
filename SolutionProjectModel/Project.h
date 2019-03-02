@@ -61,6 +61,11 @@ public:
     std::string GetToolset();
 
     //
+    // Clears existing project
+    //
+    void New();
+
+    //
     // Loads .vcxproj file.
     //
     bool Load(const wchar_t* file);
@@ -73,8 +78,19 @@ public:
 protected:
     //  Visual studio version, in year. e.g. 2017, 2019, ...
     int vsVersion;
-    
-    pugi::xml_node project();
+
+    //
+    //  Typically in .vcxproj this is used to park where project is targetted upon, e.g. "Win32Proj" - win32 or win64, "Android", "Linux", "Clang",
+    //  but division of whether it's os, compiler or just .dll inside VS is not so clear. Keeping as string for timebeing.
+    //
+    std::string Keyword;
+
+    std::string GetKeyword();
+    std::string GetWindowsSDKVersion();
+
+
+    pugi::xml_node project( );
+    pugi::xml_node projectGlobals;
     pugi::xml_node markForPropertyGroup;
 
     //
