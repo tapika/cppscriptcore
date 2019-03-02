@@ -1,15 +1,9 @@
 ﻿#pragma once
-#include "../pugixml/pugixml.hpp"
+#include "ProjectFile.h"
 #include <string>
 #include <vector>
 #include <initializer_list>
 #include <guiddef.h>                        //GUID
-
-#ifdef SPM_EXPORT
-#define SPM_DLLEXPORT __declspec(dllexport)
-#else
-#define SPM_DLLEXPORT __declspec(dllimport)
-#endif
 
 // warning C4251: ... needs to have dll-interface to be used by clients of class ...
 #pragma warning( disable: 4251 )
@@ -26,6 +20,16 @@ public:
     Project(const wchar_t* _name);
 
     //
+    //  It's good to set save directory before adding files to project, as all paths will be relative to project.
+    //
+    void SetSaveDirectory(const wchar_t* dir);
+
+    //
+    //  Gets project save directory.
+    //
+    std::wstring GetSaveDirectory();
+
+    //
     // Clears existing project
     //
     void New();
@@ -40,10 +44,14 @@ public:
     //
     bool Save(const wchar_t* file = nullptr);
 
+    //
     //  Sets visual studio version, in year. e.g. 2017, 2019, ...
+    //
     void SetVsVersion(int vsVersion);
 
+    //
     // Gets project guid, initialized if it's not initialized yet
+    //
     std::wstring GetGuid(void);
 
     //
@@ -55,17 +63,28 @@ public:
     void AddConfiguration(const char* configuration);
     void AddConfigurations(std::initializer_list<std::string> _configuration);
 
+    //
     //  Gets list of currently supported configurations, in form "<configuration>|<platform>"
+    //
     std::vector<std::string> GetConfigurations();
 
+    //
     // Queries for currently selected toolset, if none is selected, tries to determine from visual studio format version
+    //
     std::string GetToolset();
 
+    //
+    //  Adds files to the project.
+    //
+    void AddFiles(std::initializer_list<std::string> fileList);
 
 
 protected:
     // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
     std::wstring name;
+
+    // Directory where project shall be saved.
+    std::wstring saveDir;
 
     //  "Win32", "х64", ...
     std::vector<std::string> platforms;

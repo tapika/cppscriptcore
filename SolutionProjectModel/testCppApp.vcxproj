@@ -89,6 +89,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -98,6 +99,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,6 +110,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +121,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,26 +130,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="testCppApp.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="testCppApp.cs">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;syncproj.exe&quot; $(ProjectDir)testCppApp.cs
-echo 1&gt;$(IntermediateOutputPath)testCppApp_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)testCppApp_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;syncproj.exe&quot; $(ProjectDir)testCppApp.cs
-echo 1&gt;$(IntermediateOutputPath)testCppApp_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)testCppApp_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">&quot;syncproj.exe&quot; $(ProjectDir)testCppApp.cs
-echo 1&gt;$(IntermediateOutputPath)testCppApp_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntermediateOutputPath)testCppApp_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">&quot;syncproj.exe&quot; $(ProjectDir)testCppApp.cs
-echo 1&gt;$(IntermediateOutputPath)testCppApp_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntermediateOutputPath)testCppApp_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'"></Message>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="SolutionProjectModel.vcxproj">

@@ -3,7 +3,4 @@
   <ItemGroup>
     <ClCompile Include="testCppApp.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="testCppApp.cs" />
-  </ItemGroup>
 </Project>

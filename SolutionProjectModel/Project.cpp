@@ -7,7 +7,8 @@
 
 using namespace pugi;
 using namespace std;
-using namespace experimental;                           //filesystem
+//using namespace experimental;                           //filesystem
+using namespace filesystem;
 
 //
 // Expose over .dll boundary
@@ -25,6 +26,25 @@ Project::Project( const wchar_t* _name )
     New();
     name = _name;
 }
+
+void Project::SetSaveDirectory(const wchar_t* dir)
+{
+    saveDir = dir;
+}
+
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
+wstring Project::GetSaveDirectory()
+{
+    if (!saveDir.empty())
+        return saveDir;
+
+    wchar_t dir[MAX_PATH] = { 0 };
+    GetModuleFileNameW((HINSTANCE)&__ImageBase, dir, _countof(dir));
+    *wcsrchr(dir, '\\') = 0;
+    return dir;
+}
+
 
 void Project::SetVsVersion(int _vsVersion)
 {
@@ -281,6 +301,28 @@ std::string Project::GetToolset()
 }
 
 //
+//  Adds files to the project.
+//
+void Project::AddFiles(std::initializer_list<std::string> fileList)
+{
+    wstring projDir = GetSaveDirectory();
+    path pprojDir(projDir);
+    error_code ec;
+
+    for (auto f : fileList)
+    {
+        path fp(f);
+        if (!fp.is_absolute())
+            fp = path(projDir).append(f);
+
+        fp = canonical(fp);
+
+        wstring relativePath = relative(fp, pprojDir);
+    }
+}
+
+
+//
 // Clears existing project
 //
 void Project::New()
@@ -415,23 +457,23 @@ pugi::xml_node Project::project()
 //
 bool Project::Save(const wchar_t* file)
 {
-    wstring path;
+    wstring fpath;
 
     if (file)
     {
-        path = file;
+        fpath = file;
 
         // Update project name
-        name = filesystem::path(file).stem();
+        name = path(file).stem();
         guid = GUID_NULL;
     }
     else
-        path = name + L".vcxproj";
+        fpath = name + L".vcxproj";
 
     project();
     projectGlobals.child(L"ProjectGuid").text().set(GetGuid().c_str());
     
-    bool b  = save_file(path.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
+    bool b  = save_file(fpath.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
     return b;
 }
 
