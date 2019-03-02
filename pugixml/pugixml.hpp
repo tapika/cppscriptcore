@@ -632,7 +632,7 @@ namespace pugi
 
 	#ifndef PUGIXML_NO_STL
 		// Get the absolute node path from root as a text string.
-		string_t path(char_t delimiter = '/') const;
+		string_t xmlpath(char_t delimiter = '/') const;
 	#endif
 
 		// Search for a node by path consisting of node names and . or .. elements.

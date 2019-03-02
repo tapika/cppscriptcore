@@ -6127,7 +6127,7 @@ namespace pugi
 	}
 
 #ifndef PUGIXML_NO_STL
-	PUGI__FN string_t xml_node::path(char_t delimiter) const
+	PUGI__FN string_t xml_node::xmlpath(char_t delimiter) const
 	{
 		if (!_root) return string_t();
 
