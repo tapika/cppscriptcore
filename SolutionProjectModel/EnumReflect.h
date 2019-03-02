@@ -5,7 +5,7 @@ template <class Enum>
 class EnumReflect
 {
 public:
-    static char* getEnums() { return ""; }
+    static const char* getEnums() { return ""; }
 };
 
 #define DECLARE_ENUM(name, ...)                                         \
@@ -13,7 +13,7 @@ public:
     template <>                                                         \
     class EnumReflect<##name> {                                         \
     public:                                                             \
-        static char* getEnums() { return #__VA_ARGS__; }                \
+        static const char* getEnums() { return #__VA_ARGS__; }          \
     };
 
 /*
@@ -53,8 +53,8 @@ DECLARE_ENUM( enumName,
 template <class T>
 std::string EnumToString(T t)
 {
-    char* enums = EnumReflect<T>::getEnums();
-    char *token, *next = enums - 1;
+    const char* enums = EnumReflect<T>::getEnums();
+    const char *token, *next = enums - 1;
     int id = (int)t;
 
     do
@@ -69,7 +69,7 @@ std::string EnumToString(T t)
         id--;
     } while (*next != 0);
 
-    return string();
+    return std::string();
 }
 
 //
@@ -78,8 +78,8 @@ std::string EnumToString(T t)
 template <class T>
 bool StringToEnum(const char* enumName, T& t)
 {
-    char* enums = EnumReflect<T>::getEnums();
-    char *token, *next = enums - 1;
+    const char* enums = EnumReflect<T>::getEnums();
+    const char *token, *next = enums - 1;
     int id = 0;
 
     do
