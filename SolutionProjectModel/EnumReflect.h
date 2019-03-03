@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <map>
+#include <regex>
 
 template <class Enum>
 class EnumReflect
@@ -8,13 +10,58 @@ public:
     static const char* getEnums() { return ""; }
 };
 
+//
+//  Just a container for each enumeration type.
+//
+template <class Enum>
+class EnumReflectBase
+{
+public:
+    static std::map<std::string, int> enum2int;
+    static std::map<int, std::string> int2enum;
+
+    static void EnsureEnumMapReady( const char* enumsInfo )
+    {
+        if (*enumsInfo == 0 || enum2int.size() != 0 )
+            return;
+
+        // Should be called once per each enumeration.
+        std::string senumsInfo(enumsInfo);
+        std::regex re("^([a-zA-Z_][a-zA-Z0-9_]+) *=? *([^,]*)(,|$) *");     // C++ identifier to optional " = <value>"
+        std::smatch sm;
+        int value = 0;
+
+        for (; regex_search(senumsInfo, sm, re); senumsInfo = sm.suffix(), value++)
+        {
+            string enumName = sm[1].str();
+            string enumValue = sm[2].str();
+
+            if (enumValue.length() != 0)
+                value = atoi(enumValue.c_str());
+
+            enum2int[enumName] = value;
+            int2enum[value] = enumName;
+        }
+    }
+};
+
+template <class Enum>
+std::map<std::string, int> EnumReflectBase<Enum>::enum2int;
+
+template <class Enum>
+std::map<int, std::string> EnumReflectBase<Enum>::int2enum;
+
+
 #define DECLARE_ENUM(name, ...)                                         \
     enum name { __VA_ARGS__ };                                          \
     template <>                                                         \
-    class EnumReflect<##name> {                                         \
+    class EnumReflect<##name>: public EnumReflectBase<##name> {         \
     public:                                                             \
         static const char* getEnums() { return #__VA_ARGS__; }          \
     };
+
+
+
 
 /*
     Basic usage:
@@ -25,7 +72,7 @@ DECLARE_ENUM( enumName,
 
     enumValue1,
     enumValue2,
-    enumValue3,
+    enumValue3 = 5,
 
     // comment
     enumValue4
@@ -43,8 +90,6 @@ DECLARE_ENUM( enumName,
 
        if( !StringToEnum("enumValue4", value) )
             printf("Conversion failed...");
-
-    WARNING: At the moment assigning enum value to specific number is not supported.
 */
 
 //
@@ -53,23 +98,14 @@ DECLARE_ENUM( enumName,
 template <class T>
 std::string EnumToString(T t)
 {
-    const char* enums = EnumReflect<T>::getEnums();
-    const char *token, *next = enums - 1;
-    int id = (int)t;
+    EnumReflect<T>::EnsureEnumMapReady(EnumReflect<T>::getEnums());
+    auto& int2enum = EnumReflect<T>::int2enum;
+    auto it = int2enum.find(t);
+    
+    if (it == int2enum.end())
+        return "";
 
-    do
-    {
-        token = next + 1;
-        if (*token == ' ') token++;
-        next = strchr(token, ',');
-        if (!next) next = token + strlen(token);
-
-        if (id == 0)
-            return std::string(token, next);
-        id--;
-    } while (*next != 0);
-
-    return std::string();
+    return it->second;
 }
 
 //
@@ -78,27 +114,15 @@ std::string EnumToString(T t)
 template <class T>
 bool StringToEnum(const char* enumName, T& t)
 {
-    const char* enums = EnumReflect<T>::getEnums();
-    const char *token, *next = enums - 1;
-    int id = 0;
+    EnumReflect<T>::EnsureEnumMapReady(EnumReflect<T>::getEnums());
+    auto& enum2int = EnumReflect<T>::enum2int;
+    auto it = enum2int.find(enumName);
 
-    do
-    {
-        token = next + 1;
-        if (*token == ' ') token++;
-        next = strchr(token, ',');
-        if (!next) next = token + strlen(token);
+    if (it == enum2int.end())
+        return false;
 
-        if (strncmp(token, enumName, next - token) == 0)
-        {
-            t = (T)id;
-            return true;
-        }
-
-        id++;
-    } while (*next != 0);
-
-    return false;
+    t = (T) it->second;
+    return true;
 }
 
 
