@@ -33,8 +33,8 @@ public:
 
         for (; regex_search(senumsInfo, sm, re); senumsInfo = sm.suffix(), value++)
         {
-            string enumName = sm[1].str();
-            string enumValue = sm[2].str();
+            std::string enumName = sm[1].str();
+            std::string enumValue = sm[2].str();
 
             if (enumValue.length() != 0)
                 value = atoi(enumValue.c_str());
