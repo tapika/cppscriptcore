@@ -78,7 +78,12 @@ DECLARE_ENUM(ItemType,
     /// <summary>
     /// .java - source codes to compile
     /// </summary>
-    JavaCompile
+    JavaCompile,
+
+    //
+    //  Native Visualization files (*.natvis)
+    //
+    Natvis
 );
 
 

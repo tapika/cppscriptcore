@@ -35,9 +35,11 @@ ItemType ProjectFile::GetFromPath(const wchar_t* file)
         {"rc", ResourceCompile},
         {"ico", Image},
         {"txt", Text},
+        {"natvis", Natvis},
         {"?", None}
     };
 
     TypeInfoStr* end = types + _countof(types) - 1;
     return find_if(types, end, [ext](TypeInfoStr& ti) { return ti.ext == ext; } )->type;
 }
+
