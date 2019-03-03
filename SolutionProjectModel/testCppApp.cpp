@@ -14,8 +14,8 @@ void main(void)
     //printf("%s", p.configurations[0].c_str());
 
     p.AddPlatforms( { "Win32" } );
-    p.AddFiles({ "Solution.h" });
-    p.AddFiles({ path(p.GetSaveDirectory()).append("Solution.cpp").string() });
+    p.AddFiles({ L"Solution.h" });
+    p.AddFiles({ path(p.GetSaveDirectory()).append(L"Solution.cpp").wstring() });
     p.Save();
     
     p.AddPlatforms({ "x64" });

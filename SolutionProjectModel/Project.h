@@ -2,13 +2,9 @@
 #include "ProjectFile.h"
 #include <string>
 #include <vector>
+#include <list>
 #include <initializer_list>
 #include <guiddef.h>                        //GUID
-
-// warning C4251: ... needs to have dll-interface to be used by clients of class ...
-#pragma warning( disable: 4251 )
-// warning C4275: non dll-interface class 'pugi::xml_document' used as base for dll-interface class 'Solution'
-#pragma warning( disable: 4275 )
 
 //---------------------------------------------------------
 //  Project
@@ -76,7 +72,8 @@ public:
     //
     //  Adds files to the project.
     //
-    void AddFiles(std::initializer_list<std::string> fileList);
+    void AddFiles(std::initializer_list<std::wstring> fileList);
+    void AddFile(const wchar_t* file);
 
 
 protected:
@@ -91,6 +88,9 @@ protected:
 
     //  "Debug", "Release", user defined
     std::vector<std::string> configurations;
+
+    //  List of files within a project.
+    std::list<ProjectFile>  files;
 
     // Project guid
     GUID guid;

@@ -19,6 +19,8 @@
       <Filter>pugixml</Filter>
     </ClInclude>
     <ClInclude Include="ProjectFile.h" />
+    <ClInclude Include="EnumReflect.h" />
+    <ClInclude Include="ProjectFileTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">

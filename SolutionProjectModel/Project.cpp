@@ -303,22 +303,63 @@ std::string Project::GetToolset()
 //
 //  Adds files to the project.
 //
-void Project::AddFiles(std::initializer_list<std::string> fileList)
+void Project::AddFiles(std::initializer_list<std::wstring> fileList)
 {
-    wstring projDir = GetSaveDirectory();
-    path pprojDir(projDir);
-    error_code ec;
+    for (wstring f : fileList)
+        AddFile(f.c_str());
+}
 
-    for (auto f : fileList)
+void Project::AddFile(const wchar_t* file)
+{
+    wstring projectDir = GetSaveDirectory();
+    path pathFile(file);
+    if( !pathFile.is_absolute() )
+        pathFile = path(projectDir).append(file);
+
+    pathFile = weakly_canonical(pathFile);
+    wstring relativePath = relative(pathFile, projectDir);
+
+    auto it = find_if(files.begin(), files.end(), [relativePath](ProjectFile& f) { return f.relativePath == relativePath; } );
+    if( it != files.end() )
+        return;
+
+    xml_node proj = project();
+    xml_node markInsert = markForPropertyGroup;
+    wstring name;
+
+    while( (name = markInsert.next_sibling().name()) == L"Import" || name == L"PropertyGroup" || name == L"PropertyGroup" || name == L"ItemDefinitionGroup")
+        markInsert = markInsert.next_sibling();
+
+    ItemType newType = ProjectFile::GetFromPath(relativePath.c_str());
+    xml_node itemGroup;
+
+    for(xml_node next = markInsert.next_sibling() ; (name = next.name() ) == L"ItemGroup"; )
     {
-        path fp(f);
-        if (!fp.is_absolute())
-            fp = path(projDir).append(f);
+        ItemType type;
 
-        fp = canonical(fp);
+        if( StringToEnum( as_utf8(next.first_child().name()).c_str() , type))
+        {
+            if(newType > type)
+            {
+                markInsert = next; next = next.next_sibling();
+                continue;
+            }
 
-        wstring relativePath = relative(fp, pprojDir);
+            if(type == newType)
+                itemGroup = next;
+        }
+
+        break;
     }
+
+    if(itemGroup.empty())
+        itemGroup = proj.insert_child_after(L"ItemGroup", markInsert);
+
+    ProjectFile p;
+    p.relativePath = relativePath;
+    p.node = itemGroup.append_child(as_wide(EnumToString(newType)).c_str());
+    p.node.append_attribute(L"Include").set_value(relativePath.c_str());
+    files.push_back(p);
 }
 
 
@@ -398,9 +439,9 @@ pugi::xml_node Project::project()
     // Specify utf-8 encoding.
     pugi::xml_node decl;
 
-    for (auto n : children())
-        if (n.type() == pugi::node_declaration)
-            decl = n;
+    for (auto markInsert : children())
+        if (markInsert.type() == pugi::node_declaration)
+            decl = markInsert;
 
     // Xml declaration
     if (decl.empty())
