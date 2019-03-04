@@ -324,10 +324,10 @@ void Project::AddFile(const wchar_t* file)
         return;
 
     xml_node proj = project();
-    xml_node markInsert = markForPropertyGroup;
+    xml_node markInsert = markForPropertyGroup.next_sibling();
     wstring name;
 
-    while( (name = markInsert.next_sibling().name()) == L"Import" || name == L"PropertyGroup" || name == L"PropertyGroup" || name == L"ItemDefinitionGroup")
+    while( (name = markInsert.name()) == L"PropertyGroup" || name == L"PropertyGroup" || name == L"ItemDefinitionGroup")
         markInsert = markInsert.next_sibling();
 
     ItemType newType = ProjectFile::GetFromPath(relativePath.c_str());
