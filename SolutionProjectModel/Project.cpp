@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Project.h"
 #include <stdio.h>
 #include <boost/uuid/detail/sha1.hpp>

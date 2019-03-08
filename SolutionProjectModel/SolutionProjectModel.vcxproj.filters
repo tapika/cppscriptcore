@@ -8,6 +8,8 @@
       <Filter>pugixml</Filter>
     </ClCompile>
     <ClCompile Include="ProjectFile.cpp" />
+    <ClCompile Include="CppReflect.cpp" />
+    <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solution.h" />
@@ -21,6 +23,10 @@
     <ClInclude Include="ProjectFile.h" />
     <ClInclude Include="EnumReflect.h" />
     <ClInclude Include="ProjectFileTypes.h" />
+    <ClInclude Include="CppReflect.h" />
+    <ClInclude Include="MacroHelpers.h" />
+    <ClInclude Include="TypeTraits.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">

@@ -1,4 +1,4 @@
-#pragma once
+#include "pch.h"
 #include "ProjectFile.h"
 #include <filesystem>
 #include <algorithm>

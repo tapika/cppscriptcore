@@ -1,5 +1,13 @@
 #pragma once
 #include "EnumReflect.h"
+#include "CppReflect.h"
+
+#ifdef SPM_EXPORT
+#define SPM_DLLEXPORT __declspec(dllexport)
+#else
+#define SPM_DLLEXPORT __declspec(dllimport)
+#endif
+
 
 /// <summary>
 /// Defines what needs to be done with given item. Not all project types support all enumerations - for example
@@ -7,7 +15,7 @@
 /// 
 /// Order of ItemType must be the same as appear in .vcxproj (first comes first)
 /// </summary>
-DECLARE_ENUM(ItemType,
+DECLARE_ENUM(ItemType, "",
 
     /// <summary>
     /// C# references to .net assemblies
@@ -86,4 +94,45 @@ DECLARE_ENUM(ItemType,
     Natvis
 );
 
+class SPM_DLLEXPORT CCppConfiguration
+{
+public:
+
+
+};
+
+//
+// Binary image format / target
+//
+DECLARE_ENUM(ESubSystem, "subsystem_",
+    //
+    // Not specified
+    //
+    subsystem_NotSet,
+
+    //
+    // <summary>
+    //
+    subsystem_Windows,
+
+    //
+    // Console application
+    //
+    subsystem_Console,
+    subsystem_Native,
+    subsystem_EFI_Application,
+    subsystem_EFI_Boot_Service_Driver,
+    subsystem_EFI_ROM,
+    subsystem_EFI_Runtime,
+    subsystem_POSIX
+);
+
+
+class SPM_DLLEXPORT LinkerConfiguration
+{
+public:
+    REFLECTABLE(LinkerConfiguration,
+        (ESubSystem) SubSystem
+    );
+};
 

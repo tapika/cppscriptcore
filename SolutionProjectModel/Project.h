@@ -9,7 +9,9 @@
 //---------------------------------------------------------
 //  Project
 //---------------------------------------------------------
-class SPM_DLLEXPORT Project : pugi::xml_document
+class SPM_DLLEXPORT Project : 
+    pugi::xml_document,
+    LinkerConfiguration
 {
 public:
     Project();
@@ -75,6 +77,13 @@ public:
     void AddFiles(std::initializer_list<std::wstring> fileList);
     void AddFile(const wchar_t* file);
 
+
+    LinkerConfiguration& GetLinker()
+    {
+        return *this;
+    }
+
+    __declspec(property(get = GetLinker)) LinkerConfiguration& linker;
 
 protected:
     // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
