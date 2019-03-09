@@ -51,13 +51,14 @@ Also if your field does not needs to be serialized, declare it outside
 of REFLECTABLE define.
 
 While declaring REFLECTABLE(className, 
-                    (fieldType) fieldName
-                               ^ keep a space in between
-fieldType <> fieldName otherwise intellisense might not work.
+                    (fieldType)fieldName
+                              ^ no space in between, otherwise
+defines wont expand correctly.
 */
 #define REFLECTABLE(className, ...)                             \
-    /* Dump field types and names */                            \
+    /* Dump field types and names with underscore */            \
     DOFOREACH_SEMICOLON(ARGPAIR_FIELD_UNDERSCORED,__VA_ARGS__)  \
+    /* Dump accessor functions (Get/Set<field name> */          \
     DOFOREACH_SEMICOLON(ARGPAIR_ACCESSOR,__VA_ARGS__)           \
     /* typedef is accessable from PUSH_FIELD_INFO define */     \
     typedef className _className;                               \
