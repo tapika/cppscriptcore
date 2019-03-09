@@ -35,7 +35,7 @@ public:
 
 #define PUSH_FIELD_INFO(x)                                      \
     fi.SetName( ARGNAME_AS_STRING(x) );                         \
-    fi.offset = offsetof(_className, ARGNAME(x));               \
+    fi.offset = offsetof(_className, ARGNAME_UNDERSCORE(x));    \
     fi.fieldType.reset(new TypeTraitsT< ARGTYPE(x) >());        \
     t.fields.push_back(fi);                                     \
 
@@ -57,7 +57,8 @@ fieldType <> fieldName otherwise intellisense might not work.
 */
 #define REFLECTABLE(className, ...)                             \
     /* Dump field types and names */                            \
-    DOFOREACH_SEMICOLON(ARGPAIR,__VA_ARGS__)                    \
+    DOFOREACH_SEMICOLON(ARGPAIR_FIELD_UNDERSCORED,__VA_ARGS__)  \
+    DOFOREACH_SEMICOLON(ARGPAIR_ACCESSOR,__VA_ARGS__)           \
     /* typedef is accessable from PUSH_FIELD_INFO define */     \
     typedef className _className;                               \
                                                                 \

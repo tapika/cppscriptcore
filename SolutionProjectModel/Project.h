@@ -11,7 +11,7 @@
 //---------------------------------------------------------
 class SPM_DLLEXPORT Project : 
     pugi::xml_document,
-    LinkerConfiguration
+    LinkerConf
 {
 public:
     Project();
@@ -78,12 +78,11 @@ public:
     void AddFile(const wchar_t* file);
 
 
-    LinkerConfiguration& GetLinker()
-    {
+    LinkerConf& GetLinker() {
         return *this;
     }
 
-    __declspec(property(get = GetLinker)) LinkerConfiguration& linker;
+    __declspec(property(get = GetLinker)) LinkerConf& linker;
 
 protected:
     // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.

@@ -1,5 +1,14 @@
 #pragma once
+/*
+    If you ever need to debug define macro expansion, you can set in c/c++ options, 
 
+    All Options > Additional options >
+        /P /Fi"%(FullPath).proprocessed"
+
+    (For clang it's "-E" and object filename)
+
+    Produced file will show you preprocessed file after all defines are expanded and file will be passed to compiler.
+*/
 //
 // Retrieve the type
 //
@@ -17,7 +26,7 @@
 //
 #define ARGTYPE_PASS2(...) ARGTYPE_PASS3((__VA_ARGS__))
 //
-//      => ARGTYPE_PASS2(( (ArgType), argName,))
+//      => ARGTYPE_PASS3(( (ArgType), argName,))
 //
 #define ARGTYPE_PASS3(x)   ARGTYPE_PASS4 x
 //
@@ -30,6 +39,23 @@
 #define REM(...) __VA_ARGS__
 //
 //      => ArgType
+//
+
+//
+// Expand "ArgType argName" from "(ArgType)argName"
+// (space separated)
+//
+#define ARGPAIR(x) ARGPAIR_PASS2(ARGPAIR_PASS1 x)
+#define ARGPAIR_PASS1(...) (__VA_ARGS__),
+#define ARGPAIR_PASS2(...) ARGPAIR_PASS3((__VA_ARGS__))
+#define ARGPAIR_PASS3(x)   ARGPAIR_PASS4 x
+//
+//      => ARGPAIR_PASS4 ( (ArgType), argName)
+//
+#define ARGPAIR_PASS4(x, y) REM x y
+//
+//      => REM (ArgType) argName
+//      => ArgType argName
 //
 
 //
@@ -59,18 +85,36 @@
 //  => 2
 //
 
+//
+// Type & field with underscore in front. Sets protected visibility so cannot be modified directly by end-user.
+//
+//  ARGPAIR_FIELD_UNDERSCORED( (ArgType1)argName1 )                         => ArgType1 _argName1
+//
+#define ARGPAIR_FIELD_UNDERSCORED(x)                                                    \
+    protected:                                                                          \
+    ARGTYPE(x)  ARGNAME_UNDERSCORE(x)
+
+#define GET_PREFIXED(op) Get ## op
+#define SET_PREFIXED(op) Set ## op
 
 //
-// Show the type without parenthesis
+//  Creates accessor functions Get & Set<Field name> respectively.
 //
-//  ARGPAIR( (ArgType1) argName1 )                         => ArgType1 argName1
-//
-#define ARGPAIR(x) REM x
-//
-//  => REM (ArgType1) argName1
-//
-//  => ArgType1 argName1
-//
+#define ARGPAIR_ACCESSOR(x)                                                             \
+    public:                                                                             \
+        ARGTYPE(x) GET_PREFIXED ARGNAME_BRACKETED(x) ()                                 \
+        {                                                                               \
+            return ARGNAME_UNDERSCORE(x);                                               \
+        }                                                                               \
+                                                                                        \
+        void SET_PREFIXED ARGNAME_BRACKETED(x) ( ARGTYPE(x) v )                         \
+        {                                                                               \
+            ARGNAME_UNDERSCORE(x) = v;                                                  \
+        }                                                                               \
+                                                                                        \
+        __declspec(property(get = GET_PREFIXED ARGNAME_BRACKETED(x),                    \
+                            put = SET_PREFIXED ARGNAME_BRACKETED(x) )) ARGPAIR(x)
+
 
 //
 // Show the type without parenthesis
@@ -112,6 +156,32 @@
 #define TOSTRING2(x)  #x
 #define TOSTRING(x)   TOSTRING2(x)
 
+//
+// Strip off the type and add underscore in front of field name.
+//
+//  ARGNAME( (ArgType1) argName1 )                      => _argName1
+//
+#define ARGNAME_UNDERSCORE(x)           ARGNAME_UNDERSCORE_PASS1(EAT x)
+#define ARGNAME_UNDERSCORE_PASS2(x)     _##x
+#define ARGNAME_UNDERSCORE_PASS1(x)     ARGNAME_UNDERSCORE_PASS2(x)
+
+//
+// Returns argName with brackets for further macro expansion.
+//
+//  ARGNAME( (ArgType1) argName1 )                      => ( argName1 )
+//
+#define ARGNAME_BRACKETED(x)            ARGNAME_BRACKETED_PASS1(EAT x)
+//
+//      => ARGNAME_BRACKETED_PASS1(EAT (ArgType1) argName1)
+//
+#define ARGNAME_BRACKETED_PASS1(x)      ARGNAME_BRACKETED_PASS2(x)
+//
+//      => ARGNAME_BRACKETED_PASS2(argName1)
+//
+#define ARGNAME_BRACKETED_PASS2(x)      ( x )
+//
+//      => ( argName1 )
+//
 
 //
 // This will call a macro on each argument passed in

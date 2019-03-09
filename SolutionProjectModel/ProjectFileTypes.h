@@ -128,11 +128,20 @@ DECLARE_ENUM(ESubSystem, "subsystem_",
 );
 
 
-class SPM_DLLEXPORT LinkerConfiguration
+class SPM_DLLEXPORT LinkerSystemConf
 {
 public:
-    REFLECTABLE(LinkerConfiguration,
-        (ESubSystem) SubSystem
+    REFLECTABLE(LinkerSystemConf,
+        (ESubSystem)SubSystem
+    );
+};
+
+
+class SPM_DLLEXPORT LinkerConf
+{
+public:
+    REFLECTABLE(LinkerConf,
+        (LinkerSystemConf)System
     );
 };
 

@@ -12,9 +12,8 @@ void main(void)
 
     //p.Load(L"testCppApp.vcxproj");
     //printf("%s", p.configurations[0].c_str());
-
-    p.linker.SubSystem = subsystem_Windows;
-    //string  s = EnumToString(subsystem_Windows);
+    p.linker.System.SubSystem = subsystem_Windows;
+    p.linker.System.SubSystem = subsystem_Console;
 
     p.AddPlatforms( { "Win32" } );
     p.AddFiles({ L"Solution.h" });
