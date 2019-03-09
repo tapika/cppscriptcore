@@ -12,8 +12,6 @@ void main(void)
 
     //p.Load(L"testCppApp.vcxproj");
     //printf("%s", p.configurations[0].c_str());
-    p.linker.System.SubSystem = subsystem_Windows;
-    p.linker.System.SubSystem = subsystem_Console;
 
     p.AddPlatforms( { "Win32" } );
     p.AddFiles({ L"Solution.h" });
@@ -21,6 +19,15 @@ void main(void)
     p.Save();
     
     p.AddPlatforms({ "x64" });
+
+    p.VisitConfigurations( 
+        [](VCConfiguration& c)
+        {
+            c.Linker.System.SubSystem = subsystem_Console;
+        }
+    );
+
+
     p.Save(L"test2.vcxproj");
 
 

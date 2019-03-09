@@ -126,28 +126,35 @@ void Project::AddConfigurations(std::initializer_list<std::string> _configuratio
 const wchar_t* PropertyGroup = L"PropertyGroup";
 
 
-void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool bPlatforms, bool bAdd)
+vector<string>& Project::GetConfigurationNames()
 {
-    vector<string>* pConfigurations = &configurations;
-
-    if (configurations.size() == 0)
+    if (configurationNames.size() == 0)
     {
         static vector<string> dummyDefaults;
 
-        if (bPlatforms)
+        if (dummyDefaults.size() == 0)
         {
-            if (dummyDefaults.size() == 0)
-            {
-                dummyDefaults.push_back("Debug");
-                dummyDefaults.push_back("Release");
-            }
+            dummyDefaults.push_back("Debug");
+            dummyDefaults.push_back("Release");
+        }
 
-            pConfigurations = &dummyDefaults;
-        }
+        return dummyDefaults;
+    }
+
+    return configurationNames;
+}
+
+
+void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool bPlatforms, bool bAdd)
+{
+    vector<string>* pConfigurations = &configurationNames;
+
+    if (configurationNames.size() == 0)
+    {
+        if (bPlatforms)
+            pConfigurations = &GetConfigurationNames();
         else
-        {
             PlatformConfigurationsUpdated({ "Debug" , "Release" }, false, false);
-        }
     }
     
     vector<string>* listMain = (bPlatforms) ? &platforms : pConfigurations;
@@ -181,7 +188,7 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
 
         for (int j = from; j != to; j += inc)
         {
-            int to;
+            int to;         // Index where to insert / from where to remove within single configuration array
             string platform;
             string configuration;
 
@@ -198,7 +205,15 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 configuration = name;
             }
 
-            if (bAdd) to--;
+            wstring platformConfiguration = as_wide(configuration + "|" + platform);
+
+            if (bAdd)
+            {
+                VCConfiguration conf;
+                conf.ConfigurationPlatfom = platformConfiguration;
+                configurations.insert(configurations.begin() + to, conf);
+                to--;   //Xml node backshift - previous node after which to insert.
+            }
 
             //
             //  <ItemGroup Label="ProjectConfigurations">
@@ -210,8 +225,6 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
 
             if(to != -1)
                 c = itemGroup.select_nodes(ProjectConfiguration)[to].node();
-            
-            wstring platformConfiguration = as_wide(configuration + "|" + platform);
             
             if (bAdd)
             {
@@ -264,18 +277,6 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
     } //for
 } //PlatformConfigurationsUpdated
 
-
-//  Gets list of currently supported configurations, in form "<configuration>|<platform>"
-vector<string> Project::GetConfigurations()
-{
-    vector<string> confs;
-
-    for (auto p : platforms)
-        for (auto c : configurations)
-            confs.push_back(c + "|" + p);
-
-    return confs;
-}
 
 // Queries for currently selected toolset, if none is selected, tries to determine from visual studio format version
 std::string Project::GetToolset()
@@ -361,6 +362,26 @@ void Project::AddFile(const wchar_t* file)
     p.node = itemGroup.append_child(as_wide(EnumToString(newType)).c_str());
     p.node.append_attribute(L"Include").set_value(relativePath.c_str());
     files.push_back(p);
+}
+
+//
+// Visits each project configuration, if configurationName & platformName - uses additional filtering, otherwise visits all configurations.
+//
+void Project::VisitConfigurations(std::function<void (VCConfiguration&)> visitConf, const char* configurationName, const char* platformName)
+{
+    vector<string>& confNames = GetConfigurationNames();
+    for (size_t p = 0; p < platforms.size(); p++)
+        for( size_t c = 0; c < confNames.size(); c++)
+        {
+            if(configurationName != nullptr && confNames[c] != configurationName)
+                continue;
+
+            if(platformName != nullptr && platforms[p] != platformName)
+                continue;
+
+            size_t i = platforms.size() * p + c;
+            visitConf(configurations[i]);
+        }
 }
 
 

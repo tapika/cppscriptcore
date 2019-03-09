@@ -10,6 +10,7 @@
     <ClCompile Include="ProjectFile.cpp" />
     <ClCompile Include="CppReflect.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="ProjectFileTypes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solution.h" />

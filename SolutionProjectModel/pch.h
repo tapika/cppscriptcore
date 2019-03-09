@@ -9,4 +9,5 @@
 #include <memory>
 #include <vector>
 #include <guiddef.h>
+#include <functional>
 

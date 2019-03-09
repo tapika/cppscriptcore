@@ -183,6 +183,7 @@
     </ClCompile>
     <ClCompile Include="Project.cpp" />
     <ClCompile Include="ProjectFile.cpp" />
+    <ClCompile Include="ProjectFileTypes.cpp" />
     <ClCompile Include="Solution.cpp" />
   </ItemGroup>
   <ItemGroup>

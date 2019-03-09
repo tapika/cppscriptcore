@@ -4,14 +4,28 @@
 #include <vector>
 #include <list>
 #include <initializer_list>
+#include <functional>                       //std::functional
 #include <guiddef.h>                        //GUID
+
+class SPM_DLLEXPORT VCConfiguration
+{
+public:
+    // Configuration name, for example L"Debug|x64"
+    std::wstring ConfigurationPlatfom;
+ 
+    //
+    // Individual tools settings, depending on project type (static library, dynamic library) individual tool configuration is not necessarily used.
+    //
+    REFLECTABLE(VCConfiguration,
+        (LinkerConf)Linker
+    );
+};
 
 //---------------------------------------------------------
 //  Project
 //---------------------------------------------------------
 class SPM_DLLEXPORT Project : 
-    pugi::xml_document,
-    LinkerConf
+    pugi::xml_document
 {
 public:
     Project();
@@ -62,11 +76,6 @@ public:
     void AddConfigurations(std::initializer_list<std::string> _configuration);
 
     //
-    //  Gets list of currently supported configurations, in form "<configuration>|<platform>"
-    //
-    std::vector<std::string> GetConfigurations();
-
-    //
     // Queries for currently selected toolset, if none is selected, tries to determine from visual studio format version
     //
     std::string GetToolset();
@@ -77,12 +86,11 @@ public:
     void AddFiles(std::initializer_list<std::wstring> fileList);
     void AddFile(const wchar_t* file);
 
+    //
+    // Visits each project configuration, if configurationName & platformName - uses additional filtering, otherwise visits all configurations.
+    //
+    void VisitConfigurations( std::function<void (VCConfiguration&)> visitConf, const char* configurationName = nullptr, const char* platformName = nullptr );
 
-    LinkerConf& GetLinker() {
-        return *this;
-    }
-
-    __declspec(property(get = GetLinker)) LinkerConf& linker;
 
 protected:
     // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
@@ -95,7 +103,15 @@ protected:
     std::vector<std::string> platforms;
 
     //  "Debug", "Release", user defined
-    std::vector<std::string> configurations;
+    std::vector<std::string> configurationNames;
+
+    //
+    //  Gets current configuration names, if not initialized yet, returns default "Debug" / "Release" set.
+    //
+    std::vector<std::string>& GetConfigurationNames();
+
+    // Project settings
+    std::vector<VCConfiguration> configurations;
 
     //  List of files within a project.
     std::list<ProjectFile>  files;
