@@ -162,11 +162,6 @@ void ReflectPath::Init(ReflectClass* instance)
     fields.resize(1);
 }
 
-
-//ReflectClass::ReflectClass() : _parent(nullptr)
-//{
-//}
-
 ReflectClass::ReflectClass(ReflectClass* parent, const char* fieldName) : _parent(parent)
 {
     _fieldName = fieldName;
