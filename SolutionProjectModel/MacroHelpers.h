@@ -102,7 +102,7 @@
 //
 #define ARGPAIR_ACCESSOR(x)                                                             \
     public:                                                                             \
-        ARGTYPE(x) GET_PREFIXED ARGNAME_BRACKETED(x) ()                                 \
+        ARGTYPE(x)& GET_PREFIXED ARGNAME_BRACKETED(x) ()                                \
         {                                                                               \
             static ReflectPath path(GetType(), ARGNAME_AS_STRING(x));                   \
             path.Init(this);                                                            \

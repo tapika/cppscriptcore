@@ -1,17 +1,30 @@
 #pragma once
 #include <vector>
 #include <string>                       //std::vector
+#include "EnumReflect.h"                //EnumToString
 
 #pragma warning(push)
 #pragma warning(disable: 4100)          // Unreferenced parameter
 
 class CppTypeInfo;
-//
+class ReflectClass;
+
+    //
 //  Base class for performing field conversion to string / from string.
 //
 class TypeTraits
 {
 public:
+    virtual bool IsReflectClassDerived()
+    {
+        return false;
+    }
+
+    virtual ReflectClass* ReflectClassPtr( void* p )
+    {
+        return nullptr;
+    }
+
     virtual bool GetArrayElementType( CppTypeInfo*& type )
     {
         // Not array type
@@ -62,7 +75,30 @@ template <class T>
 class TypeTraitsT : public TypeTraits
 {
 public:
-    virtual CStringW ToString( void* pField ) { return CStringW(); }
+    virtual bool IsReflectClassDerived()
+    {
+        return std::is_base_of<ReflectClass, T>::value;
+    }
+
+    virtual ReflectClass* ReflectClassPtr( void* p )
+    {
+// warning C4540: dynamic_cast used to convert to inaccessible or ambiguous base
+#pragma warning(push)
+#pragma warning(disable: 4540)
+        if constexpr (std::is_base_of<ReflectClass, T>::value )
+            return dynamic_cast<ReflectClass*> ( (T*) p );
+        else
+            return nullptr;
+#pragma warning(pop)
+    }
+
+    virtual CStringW ToString( void* p )
+    { 
+        if constexpr ( std::is_enum<T>::value )
+            return EnumToString( *((T*)p) ).c_str();
+        else
+            return CStringW(); 
+    }
 };
 
 template <>

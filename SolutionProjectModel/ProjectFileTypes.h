@@ -145,7 +145,8 @@ class SPM_DLLEXPORT LinkerConf: ReflectClassT<LinkerConf>
 {
 public:
     LinkerConf(ReflectClass* parent, const char* field): 
-        ReflectClassT<LinkerConf>(parent, field), _System(this)
+        ReflectClassT<LinkerConf>(parent, field),
+        _System(this)
     {
     }
 

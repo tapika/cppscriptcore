@@ -17,9 +17,43 @@ using namespace filesystem;
 template class __declspec(dllexport) std::allocator<char>;
 template class __declspec(dllexport) std::basic_string<char, std::char_traits<char>, std::allocator<char> >;
 
+
+//
+//  Formats wstring according to format.
+//
+wstring wformat(const wchar_t* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int size = _vsnwprintf(nullptr, 0, format, args);
+    size++; // Zero termination
+    wstring ws;
+    ws.resize(size);
+    _vsnwprintf(&ws[0], size, format, args);
+    va_end(args);
+    return ws;
+}
+
+
 void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
 {
+    if(confNode.empty())
+        confNode = project->selectProjectNodes(L"ItemDefinitionGroup", L"", configurationName.c_str(), platform.c_str());
 
+    xml_node current = confNode;
+    for( size_t i = path.types.size(); i-- > 0;  )
+    {
+        wstring name = as_wide(path.fields[i]);
+        xml_node next = current.child(name.c_str());
+        if(next.empty())
+            next = current.append_child(name.c_str());
+
+        current = next;
+    }
+
+    FieldInfo* fi = path.types[0].GetField(path.fields[0]);
+    CStringW value = fi->fieldType->ToString( (char*)path.instances[0]->ReflectGetInstance() + fi->offset );
+    current.text().set(value);
 }
 
 
@@ -151,6 +185,70 @@ vector<string>& Project::GetConfigurationNames()
 }
 
 
+pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wchar_t* _label, const wchar_t* confName, const wchar_t* platform)
+{
+    xml_node next, current = project().first_child();
+    wstring name2select = _name2select;
+    wstring label;
+
+    if(_label)
+        label = _label;
+
+    wstring name;
+    xml_node selected;
+
+    // Locate target point where nodes should be
+    for(next = current.next_sibling(); !next.empty(); current = next, next = next.next_sibling())
+    {
+        name = next.name();
+        if( name == L"ItemGroup" || name == L"PropertyGroup" )
+            continue;
+
+        if (name == L"Import" )
+            continue;
+
+        break;
+    }
+    
+    // Locate node if exists
+    for (next = current.next_sibling(); !next.empty(); current = next, next = next.next_sibling())
+    {
+        name = next.name();
+        if( name != name2select )
+            break;
+
+        auto attr = next.attribute(L"Label");
+        if( label != attr.value() )
+            break;
+
+        attr = next.attribute(L"Condition");
+        if( attr.empty() )
+        {
+            selected = next;
+            break;
+        }
+
+        static wregex reEqual(L"'(.*?)'=='(.*)'");
+        wstring attrValue(attr.value());
+        wsmatch sm;
+        if( !regex_search(attrValue, sm, reEqual) )
+            continue;
+    }
+
+    // Insert new node if does not exists already.
+    if( selected.empty() )
+    {
+        selected = current.parent().insert_child_after(_name2select, current);
+        selected.append_attribute(L"Condition").set_value(wformat(L"$(Configuration)|$(Platform)'=='%s|%s'", confName, platform).c_str());
+        if( label.length() )
+            selected.append_attribute(L"Label").set_value(_label);
+    }
+
+    return selected;
+}
+
+
+
 void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool bPlatforms, bool bAdd)
 {
     vector<string>* pConfigurations = &configurationNames;
@@ -211,12 +309,16 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 configuration = name;
             }
 
+            wstring wConfigurationName = as_wide(configuration);
+            wstring wPlatform = as_wide(platform);
             wstring platformConfiguration = as_wide(configuration + "|" + platform);
 
             if (bAdd)
             {
                 VCConfiguration conf;
-                conf.ConfigurationPlatfom = platformConfiguration;
+                conf.project = this;
+                conf.configurationName = wConfigurationName;
+                conf.platform = wPlatform;
                 configurations.insert(configurations.begin() + to, conf);
                 to--;   //Xml node backshift - previous node after which to insert.
             }
@@ -428,22 +530,6 @@ bool Project::Load(const wchar_t* file)
     }
 
     return true;
-}
-
-//
-//  Formats wstring according to format.
-//
-wstring wformat(const wchar_t* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    int size = _vsnwprintf(nullptr, 0, format, args);
-    size++; // Zero termination
-    wstring ws;
-    ws.resize(size);
-    _vsnwprintf(&ws[0], size, format, args);
-    va_end(args);
-    return ws;
 }
 
 string Project::GetKeyword()

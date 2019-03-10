@@ -4,6 +4,17 @@
 
 using namespace pugi;
 
+
+FieldInfo* CppTypeInfo::GetField(const char* name)
+{
+    for( auto& f: fields )
+        if(f.name == name)
+            return &f;
+
+    return nullptr;
+}
+
+
 //
 //  Serializes class instance to xml node.
 //
@@ -162,7 +173,8 @@ void ReflectPath::Init(ReflectClass* instance)
     fields.resize(1);
 }
 
-ReflectClass::ReflectClass(ReflectClass* parent, const char* fieldName) : _parent(parent)
+ReflectClass::ReflectClass(ReflectClass* parent, const char* fieldName) : 
+    _parent(parent)
 {
     _fieldName = fieldName;
 }
@@ -170,6 +182,7 @@ ReflectClass::ReflectClass(ReflectClass* parent, const char* fieldName) : _paren
 ReflectClass::ReflectClass(const ReflectClass& clone) : 
     _parent(clone._parent)
 {
+    _fieldName = clone._fieldName;
 }
 
 

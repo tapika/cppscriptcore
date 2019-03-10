@@ -7,24 +7,34 @@
 #include <functional>                       //std::functional
 #include <guiddef.h>                        //GUID
 
+class Project;
+
+
 class SPM_DLLEXPORT VCConfiguration: ReflectClassT<VCConfiguration>
 {
 public:
-    VCConfiguration(): 
+    Project* project;
+    pugi::xml_node confNode;
+
+    VCConfiguration():
+        project(nullptr),
         _Linker(this, "Link")
     {
     }
 
     VCConfiguration(const VCConfiguration& clone) :
+        project(clone.project),
+        configurationName(clone.configurationName),
+        platform(clone.platform),
         _Linker(this, "Link")
     {
     }
 
     virtual void OnAfterSetProperty(ReflectPath& path);
 
-
-    // Configuration name, for example L"Debug|x64"
-    std::wstring ConfigurationPlatfom;
+    // Configuration name / platform of specific configuration
+    std::wstring configurationName;
+    std::wstring platform;
  
     //
     // Individual tools settings, depending on project type (static library, dynamic library) individual tool configuration is not necessarily used.
@@ -154,6 +164,13 @@ protected:
     pugi::xml_node projectGlobals;
     pugi::xml_node markForPropertyGroup;
 
+public:
+    //
+    // Selects project node with specific name / label, of specific confName/platform, creates if does not exists
+    //
+    pugi::xml_node selectProjectNodes(const wchar_t* name, const wchar_t* label, const wchar_t* confName, const wchar_t* platform);
+
+protected:
     //
     // Platforms or Configurations arrays updated, bPlatforms == true - platforms false = configurations, bAdd = true - added, bAdd = false - removed.
     //

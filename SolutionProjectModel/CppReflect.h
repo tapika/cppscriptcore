@@ -13,6 +13,11 @@ public:
     //  Type (class) name
     CStringA name;
     std::vector<FieldInfo> fields;
+
+    //
+    // Gets field by name, nullptr if not found.
+    //
+    FieldInfo* GetField(const char* name);
 };
 
 
