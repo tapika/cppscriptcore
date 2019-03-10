@@ -17,6 +17,8 @@ using namespace filesystem;
 template class __declspec(dllexport) std::allocator<char>;
 template class __declspec(dllexport) std::basic_string<char, std::char_traits<char>, std::allocator<char> >;
 
+const wchar_t* Microsoft_Cpp_Default_props = LR"($(VCTargetsPath)\Microsoft.Cpp.Default.props)";
+
 
 //
 //  Formats wstring according to format.
@@ -204,7 +206,7 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
         if( name == L"ItemGroup" || name == L"PropertyGroup" )
             continue;
 
-        if (name == L"Import" )
+        if (name == L"Import" && wcscmp(next.attribute(L"Project").value(),Microsoft_Cpp_Default_props) == 0 )
             continue;
 
         break;
@@ -239,7 +241,7 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
     if( selected.empty() )
     {
         selected = current.parent().insert_child_after(_name2select, current);
-        selected.append_attribute(L"Condition").set_value(wformat(L"$(Configuration)|$(Platform)'=='%s|%s'", confName, platform).c_str());
+        selected.append_attribute(L"Condition").set_value(wformat(L"'$(Configuration)|$(Platform)'=='%s|%s'", confName, platform).c_str());
         if( label.length() )
             selected.append_attribute(L"Label").set_value(_label);
     }
@@ -598,7 +600,7 @@ pugi::xml_node Project::project()
     if (markForPropertyGroup.empty())
     {
         markForPropertyGroup = proj.append_child(L"Import");
-        markForPropertyGroup.append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.Default.props)");
+        markForPropertyGroup.append_attribute(L"Project").set_value(Microsoft_Cpp_Default_props);
 
         proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.props)");
         proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.targets)");
