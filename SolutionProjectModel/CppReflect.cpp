@@ -144,3 +144,73 @@ bool FromXml( void* pclass, CppTypeInfo& type, const wchar_t* xml, CStringW& err
     return NodeToData( doc2.first_child(), pclass, type, error );
 }
 
+
+ReflectPath::ReflectPath(CppTypeInfo& type, const char* field)
+{
+    // Doubt that class hierarchy is more complex than 5 levels, but increase this size if it's.
+    types.reserve(5);
+    fields.reserve(5);
+    types.push_back(type);
+    fields.push_back(field);
+}
+
+void ReflectPath::Init(ReflectClass* instance)
+{
+    instances.clear();
+    instances.push_back(instance);
+    types.resize(1);
+    fields.resize(1);
+}
+
+
+//ReflectClass::ReflectClass() : _parent(nullptr)
+//{
+//}
+
+ReflectClass::ReflectClass(ReflectClass* parent, const char* fieldName) : _parent(parent)
+{
+    _fieldName = fieldName;
+}
+
+ReflectClass::ReflectClass(const ReflectClass& clone) : 
+    _parent(clone._parent)
+{
+}
+
+
+void ReflectClass::OnBeforeGetProperty(ReflectPath& path)
+{
+    if(!_parent)
+        return;
+
+    // Anonymous fields can be skipped (Not intrested in their path)
+    if (_fieldName.length() != 0)
+    {
+        path.types.push_back(GetType());
+        path.fields.push_back(_fieldName.c_str());
+        path.instances.push_back(this);
+    }
+
+    _parent->OnBeforeGetProperty(path);
+}
+
+void ReflectClass::OnAfterSetProperty(ReflectPath& path)
+{
+    if (!_parent)
+        return;
+
+    // Anonymous fields can be skipped (Not intrested in their path)
+    if( _fieldName.length() != 0 )
+    {
+        path.types.push_back(GetType());
+        path.fields.push_back(_fieldName.c_str());
+        path.instances.push_back(this);
+    }
+
+    _parent->OnAfterSetProperty(path);
+}
+
+
+
+
+

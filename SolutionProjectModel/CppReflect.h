@@ -106,4 +106,83 @@ bool FromXml( T* pclass, const wchar_t* xml, CStringW& error )
     return FromXml(pclass, type, xml, error);
 }
 
+class ReflectClass;
+
+//
+//  Path to highlight property set / get.
+//
+//  instances collects <this> pointers converted to ReflectClass. Restore original pointer by calling instance[x]->ReflectGetInstance(). 
+//  fields collects field names
+//  types collects class Types.
+//
+class ReflectPath
+{
+public:
+    ReflectPath(CppTypeInfo& type, const char* field);
+
+    void Init(ReflectClass* instance);
+
+    std::vector<ReflectClass*>  instances;
+    std::vector<const char*>    fields;
+    std::vector<CppTypeInfo>    types;
+};
+
+
+//
+//  All classes which use C++ reflection should inherit from this base class.
+//
+class ReflectClass
+{
+protected:
+    // Parent class, nullptr if don't have parent class.
+    ReflectClass*   _parent;
+
+    // Field name under assignment.
+    std::string     _fieldName;
+
+public:
+    // Default constructor - this class does not have parent class.
+    ReflectClass():
+        ReflectClass(nullptr)
+    {
+    }
+
+    ReflectClass(ReflectClass* parent, const char* fieldName = "");
+    ReflectClass(const ReflectClass& clone);
+
+    virtual CppTypeInfo& GetType() = 0;
+    virtual void* ReflectGetInstance() = 0;
+
+    //  By default set / get property rebroadcats event to parent class
+    virtual void OnBeforeGetProperty(ReflectPath& path);
+    virtual void OnAfterSetProperty(ReflectPath& path);
+    
+private:    
+};
+
+template <class T>
+class ReflectClassT : public ReflectClass
+{
+public:
+    // Default constructor - this class does not have parent class.
+    ReflectClassT() :
+        ReflectClassT(nullptr)
+    {
+    }
+
+    ReflectClassT(ReflectClass* parent, const char* fieldName = "") :
+        ReflectClass(parent, fieldName)
+    {
+    }
+
+    virtual CppTypeInfo& GetType()
+    {
+        return T::GetType();
+    }
+
+    virtual void* ReflectGetInstance()
+    {
+        return (T*) this;
+    }
+};
 

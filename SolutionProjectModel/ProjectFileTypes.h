@@ -128,18 +128,27 @@ DECLARE_ENUM(ESubSystem, "subsystem_",
 );
 
 
-class SPM_DLLEXPORT LinkerSystemConf
+class SPM_DLLEXPORT LinkerSystemConf: ReflectClassT<LinkerSystemConf>
 {
 public:
+    LinkerSystemConf(ReflectClass* parent) : ReflectClassT<LinkerSystemConf>(parent)
+    {
+    }
+
     REFLECTABLE(LinkerSystemConf,
         (ESubSystem)SubSystem
     );
 };
 
 
-class SPM_DLLEXPORT LinkerConf
+class SPM_DLLEXPORT LinkerConf: ReflectClassT<LinkerConf>
 {
 public:
+    LinkerConf(ReflectClass* parent, const char* field): 
+        ReflectClassT<LinkerConf>(parent, field), _System(this)
+    {
+    }
+
     REFLECTABLE(LinkerConf,
         (LinkerSystemConf)System
     );

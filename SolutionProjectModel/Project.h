@@ -7,9 +7,22 @@
 #include <functional>                       //std::functional
 #include <guiddef.h>                        //GUID
 
-class SPM_DLLEXPORT VCConfiguration
+class SPM_DLLEXPORT VCConfiguration: ReflectClassT<VCConfiguration>
 {
 public:
+    VCConfiguration(): 
+        _Linker(this, "Link")
+    {
+    }
+
+    VCConfiguration(const VCConfiguration& clone) :
+        _Linker(this, "Link")
+    {
+    }
+
+    virtual void OnAfterSetProperty(ReflectPath& path);
+
+
     // Configuration name, for example L"Debug|x64"
     std::wstring ConfigurationPlatfom;
  

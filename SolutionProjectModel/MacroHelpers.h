@@ -104,12 +104,18 @@
     public:                                                                             \
         ARGTYPE(x) GET_PREFIXED ARGNAME_BRACKETED(x) ()                                 \
         {                                                                               \
+            static ReflectPath path(GetType(), ARGNAME_AS_STRING(x));                   \
+            path.Init(this);                                                            \
+            OnBeforeGetProperty(path);                                                  \
             return ARGNAME_UNDERSCORE(x);                                               \
         }                                                                               \
                                                                                         \
         void SET_PREFIXED ARGNAME_BRACKETED(x) ( ARGTYPE(x) v )                         \
         {                                                                               \
             ARGNAME_UNDERSCORE(x) = v;                                                  \
+            static ReflectPath path(GetType(), ARGNAME_AS_STRING(x));                   \
+            path.Init(this);                                                            \
+            OnAfterSetProperty(path);                                                   \
         }                                                                               \
                                                                                         \
         __declspec(property(get = GET_PREFIXED ARGNAME_BRACKETED(x),                    \
