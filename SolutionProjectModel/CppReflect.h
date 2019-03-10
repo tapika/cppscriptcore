@@ -142,18 +142,17 @@ protected:
     // Parent class, nullptr if don't have parent class.
     ReflectClass*   _parent;
 
-    // Field name under assignment.
-    std::string     _fieldName;
-
 public:
-    // Default constructor - this class does not have parent class.
-    ReflectClass():
-        ReflectClass(nullptr)
-    {
-    }
+    // Field name under assignment.
+    std::string  fieldName;
 
-    ReflectClass(ReflectClass* parent, const char* fieldName = "");
-    ReflectClass(const ReflectClass& clone);
+    ReflectClass();
+
+    //
+    //  Use current class instance provided as parent to replicate <_parent> pointer
+    //  of all children, recursively. parent can be also nullptr if topmost class,
+    //
+    void ReflectConnectChildren(ReflectClass* parent);
 
     virtual CppTypeInfo& GetType() = 0;
     virtual void* ReflectGetInstance() = 0;
@@ -161,25 +160,12 @@ public:
     //  By default set / get property rebroadcats event to parent class
     virtual void OnBeforeGetProperty(ReflectPath& path);
     virtual void OnAfterSetProperty(ReflectPath& path);
-    
-private:    
 };
 
 template <class T>
 class ReflectClassT : public ReflectClass
 {
 public:
-    // Default constructor - this class does not have parent class.
-    ReflectClassT() :
-        ReflectClassT(nullptr)
-    {
-    }
-
-    ReflectClassT(ReflectClass* parent, const char* fieldName = "") :
-        ReflectClass(parent, fieldName)
-    {
-    }
-
     virtual CppTypeInfo& GetType()
     {
         return T::GetType();

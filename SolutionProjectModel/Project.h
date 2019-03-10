@@ -17,17 +17,19 @@ public:
     pugi::xml_node confNode;
 
     VCConfiguration():
-        project(nullptr),
-        _Linker(this, "Link")
+        project(nullptr)
     {
+        ReflectConnectChildren(nullptr);
+        Linker.fieldName = "Link";
     }
 
     VCConfiguration(const VCConfiguration& clone) :
         project(clone.project),
         configurationName(clone.configurationName),
-        platform(clone.platform),
-        _Linker(this, "Link")
+        platform(clone.platform)
     {
+        ReflectConnectChildren(nullptr);
+        Linker.fieldName = "Link";
     }
 
     virtual void OnAfterSetProperty(ReflectPath& path);

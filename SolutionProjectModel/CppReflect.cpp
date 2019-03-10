@@ -173,16 +173,30 @@ void ReflectPath::Init(ReflectClass* instance)
     fields.resize(1);
 }
 
-ReflectClass::ReflectClass(ReflectClass* parent, const char* fieldName) : 
-    _parent(parent)
+ReflectClass::ReflectClass():
+    _parent(nullptr)
 {
-    _fieldName = fieldName;
 }
 
-ReflectClass::ReflectClass(const ReflectClass& clone) : 
-    _parent(clone._parent)
+void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
 {
-    _fieldName = clone._fieldName;
+    CppTypeInfo& typeinfo = GetType();
+    char* inst = nullptr;
+
+    for( auto& fi: typeinfo.fields )
+    {
+        if( !fi.fieldType->IsReflectClassDerived() )
+            continue;
+
+        if( !inst )
+            inst = (char*)ReflectGetInstance();
+
+        ReflectClass* child = fi.fieldType->ReflectClassPtr(inst + fi.offset);
+        child->_parent = this;
+
+        // Reconnect children as well recursively.
+        child->ReflectConnectChildren(this);
+    }
 }
 
 
@@ -192,10 +206,10 @@ void ReflectClass::OnBeforeGetProperty(ReflectPath& path)
         return;
 
     // Anonymous fields can be skipped (Not intrested in their path)
-    if (_fieldName.length() != 0)
+    if (fieldName.length() != 0)
     {
         path.types.push_back(GetType());
-        path.fields.push_back(_fieldName.c_str());
+        path.fields.push_back(fieldName.c_str());
         path.instances.push_back(this);
     }
 
@@ -208,10 +222,10 @@ void ReflectClass::OnAfterSetProperty(ReflectPath& path)
         return;
 
     // Anonymous fields can be skipped (Not intrested in their path)
-    if( _fieldName.length() != 0 )
+    if( fieldName.length() != 0 )
     {
         path.types.push_back(GetType());
-        path.fields.push_back(_fieldName.c_str());
+        path.fields.push_back(fieldName.c_str());
         path.instances.push_back(this);
     }
 

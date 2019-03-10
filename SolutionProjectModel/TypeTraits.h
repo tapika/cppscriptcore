@@ -15,11 +15,17 @@ class ReflectClass;
 class TypeTraits
 {
 public:
+    //
+    //  Returns true if field type is derived from ReflectClass.
+    //
     virtual bool IsReflectClassDerived()
     {
         return false;
     }
 
+    //
+    // Converts instance pointers to ReflectClass*.
+    //
     virtual ReflectClass* ReflectClassPtr( void* p )
     {
         return nullptr;
@@ -82,14 +88,11 @@ public:
 
     virtual ReflectClass* ReflectClassPtr( void* p )
     {
-// warning C4540: dynamic_cast used to convert to inaccessible or ambiguous base
-#pragma warning(push)
-#pragma warning(disable: 4540)
         if constexpr (std::is_base_of<ReflectClass, T>::value )
-            return dynamic_cast<ReflectClass*> ( (T*) p );
+            // Works without dynamic_cast, compiler does not likes dynamic_cast in here.
+            return (ReflectClass*)(T*)p;
         else
             return nullptr;
-#pragma warning(pop)
     }
 
     virtual CStringW ToString( void* p )

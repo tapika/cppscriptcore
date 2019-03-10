@@ -154,15 +154,9 @@ DECLARE_ENUM(EGenerateDebugInformation, "debuginfo_",
 );
 
 
-
 class SPM_DLLEXPORT LinkerSystemConf: ReflectClassT<LinkerSystemConf>
 {
 public:
-    LinkerSystemConf(ReflectClass* parent):
-        ReflectClassT<LinkerSystemConf>(parent)
-    {
-    }
-
     REFLECTABLE(LinkerSystemConf,
         (ESubSystem)SubSystem
     );
@@ -171,11 +165,6 @@ public:
 class SPM_DLLEXPORT LinkerDebuggingConf : ReflectClassT<LinkerDebuggingConf>
 {
 public:
-    LinkerDebuggingConf(ReflectClass* parent):
-        ReflectClassT<LinkerDebuggingConf>(parent)
-    {
-    }
-
     REFLECTABLE(LinkerDebuggingConf,
         (EGenerateDebugInformation)GenerateDebugInformation
     );
@@ -183,16 +172,9 @@ public:
 
 
 
-class SPM_DLLEXPORT LinkerConf: ReflectClassT<LinkerConf>
+class SPM_DLLEXPORT LinkerConf: public ReflectClassT<LinkerConf>
 {
 public:
-    LinkerConf(ReflectClass* parent, const char* field): 
-        ReflectClassT<LinkerConf>(parent, field),
-        _System(this),
-        _Debugging(this)
-    {
-    }
-
     REFLECTABLE(LinkerConf,
         (LinkerSystemConf)System,
         (LinkerDebuggingConf)Debugging
