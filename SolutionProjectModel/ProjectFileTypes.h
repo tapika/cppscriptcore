@@ -170,6 +170,22 @@ public:
     );
 };
 
+class SPM_DLLEXPORT GeneralConf : public ReflectClassT<GeneralConf>
+{
+public:
+    REFLECTABLE(GeneralConf,
+        //
+        // Output directory
+        //
+        (CStringW)OutDir,
+        //
+        // Intermediate Directory
+        //
+        (CStringW)IntDir,
+        (CStringW)TargetName,
+        (CStringW)TargetExt
+    );
+};
 
 
 class SPM_DLLEXPORT LinkerConf: public ReflectClassT<LinkerConf>

@@ -114,22 +114,39 @@ bool FromXml( T* pclass, const wchar_t* xml, CStringW& error )
 class ReflectClass;
 
 //
-//  Path to highlight property set / get.
+//  One step in whole <main class, sub-class, sub-class, ....> scenario
 //
-//  instances collects <this> pointers converted to ReflectClass. Restore original pointer by calling instance[x]->ReflectGetInstance(). 
-//  fields collects field names
-//  types collects class Types.
+class ReflectPathStep
+{
+public:
+    //
+    //  reflectable class <this> pointer converted to ReflectClass. Restore original pointer by calling instance[x]->ReflectGetInstance(). 
+    //
+    ReflectClass* instance;
+
+    //
+    // Field name
+    //
+    const char*   field;
+
+    //
+    // Type information of instance
+    //
+    CppTypeInfo*  typeInfo;
+};
+
+
+//
+//  Path to highlight property set / get.
 //
 class ReflectPath
 {
 public:
     ReflectPath(CppTypeInfo& type, const char* field);
-
+    
     void Init(ReflectClass* instance);
-
-    std::vector<ReflectClass*>  instances;
-    std::vector<const char*>    fields;
-    std::vector<CppTypeInfo>    types;
+    
+    std::vector<ReflectPathStep>  steps;
 };
 
 
@@ -158,6 +175,7 @@ public:
     virtual void* ReflectGetInstance() = 0;
 
     //  By default set / get property rebroadcats event to parent class
+    void PushPathStep(ReflectPath& path);
     virtual void OnBeforeGetProperty(ReflectPath& path);
     virtual void OnAfterSetProperty(ReflectPath& path);
 };

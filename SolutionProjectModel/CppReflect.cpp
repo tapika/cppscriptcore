@@ -159,18 +159,18 @@ bool FromXml( void* pclass, CppTypeInfo& type, const wchar_t* xml, CStringW& err
 ReflectPath::ReflectPath(CppTypeInfo& type, const char* field)
 {
     // Doubt that class hierarchy is more complex than 5 levels, but increase this size if it's.
-    types.reserve(5);
-    fields.reserve(5);
-    types.push_back(type);
-    fields.push_back(field);
+    steps.reserve(5);
+    ReflectPathStep step;
+    step.typeInfo = &type;
+    step.field = field;
+    step.instance = nullptr;
+    steps.push_back(step);
 }
 
 void ReflectPath::Init(ReflectClass* instance)
 {
-    instances.clear();
-    instances.push_back(instance);
-    types.resize(1);
-    fields.resize(1);
+    steps.resize(1);
+    steps[0].instance = instance;
 }
 
 ReflectClass::ReflectClass():
@@ -199,20 +199,28 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
     }
 }
 
+//
+//  Pushes information about current path step
+//
+void ReflectClass::PushPathStep(ReflectPath& path)
+{
+    // Anonymous fields can be skipped (Not intrested in their path)
+    if (fieldName.length() == 0)
+        return;
+
+    ReflectPathStep step;
+    step.typeInfo = &GetType();
+    step.field = fieldName.c_str();
+    step.instance = this;
+    path.steps.push_back(step);
+}
 
 void ReflectClass::OnBeforeGetProperty(ReflectPath& path)
 {
     if(!_parent)
         return;
 
-    // Anonymous fields can be skipped (Not intrested in their path)
-    if (fieldName.length() != 0)
-    {
-        path.types.push_back(GetType());
-        path.fields.push_back(fieldName.c_str());
-        path.instances.push_back(this);
-    }
-
+    PushPathStep(path);
     _parent->OnBeforeGetProperty(path);
 }
 
@@ -221,14 +229,7 @@ void ReflectClass::OnAfterSetProperty(ReflectPath& path)
     if (!_parent)
         return;
 
-    // Anonymous fields can be skipped (Not intrested in their path)
-    if( fieldName.length() != 0 )
-    {
-        path.types.push_back(GetType());
-        path.fields.push_back(fieldName.c_str());
-        path.instances.push_back(this);
-    }
-
+    PushPathStep(path);
     _parent->OnAfterSetProperty(path);
 }
 

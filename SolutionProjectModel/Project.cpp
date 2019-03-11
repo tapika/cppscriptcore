@@ -16,6 +16,7 @@ using namespace filesystem;
 //
 template class __declspec(dllexport) std::allocator<char>;
 template class __declspec(dllexport) std::basic_string<char, std::char_traits<char>, std::allocator<char> >;
+template class __declspec(dllexport) std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>;
 
 const wchar_t* Microsoft_Cpp_Default_props = LR"($(VCTargetsPath)\Microsoft.Cpp.Default.props)";
 
@@ -39,13 +40,26 @@ wstring wformat(const wchar_t* format, ...)
 
 void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
 {
-    if(confNode.empty())
-        confNode = project->selectProjectNodes(L"ItemDefinitionGroup", L"", configurationName.c_str(), platform.c_str());
-
-    xml_node current = confNode;
-    for( size_t i = path.types.size(); i-- > 0;  )
+    xml_node current;
+    
+    if( path.steps.back().typeInfo->name == "GeneralConf" )
     {
-        wstring name = as_wide(path.fields[i]);
+        if (pgConfNode.empty())
+            pgConfNode = project->selectProjectNodes(L"PropertyGroup", L"", configurationName.c_str(), platform.c_str());
+
+        current = pgConfNode;
+    }
+    else 
+    {
+        if (idgConfNode.empty())
+            idgConfNode = project->selectProjectNodes(L"ItemDefinitionGroup", L"", configurationName.c_str(), platform.c_str());
+
+        current = idgConfNode;
+    }
+
+    for( size_t i = path.steps.size(); i-- > 0;  )
+    {
+        wstring name = as_wide(path.steps[i].field);
         xml_node next = current.child(name.c_str());
         if(next.empty())
             next = current.append_child(name.c_str());
@@ -53,8 +67,8 @@ void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
         current = next;
     }
 
-    FieldInfo* fi = path.types[0].GetField(path.fields[0]);
-    CStringW value = fi->fieldType->ToString( (char*)path.instances[0]->ReflectGetInstance() + fi->offset );
+    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].field);
+    CStringW value = fi->fieldType->ToString( (char*)path.steps[0].instance->ReflectGetInstance() + fi->offset );
     current.text().set(value);
 }
 
@@ -572,6 +586,7 @@ pugi::xml_node Project::project()
     if (proj.empty())
     {
         proj = append_child(L"Project");
+        proj.append_attribute(L"DefaultTargets").set_value(L"Build");
         proj.append_attribute(L"xmlns").set_value(L"http://schemas.microsoft.com/developer/msbuild/2003");
     }
 

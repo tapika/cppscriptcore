@@ -3,9 +3,6 @@
 #include <string>
 #include "ProjectFileTypes.h"
 
-// warning C4251: ... needs to have dll-interface to be used by clients of class ...
-#pragma warning( disable: 4251 )
-
 //
 // Information about that particular file.
 //

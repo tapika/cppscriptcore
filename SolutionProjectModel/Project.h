@@ -14,13 +14,13 @@ class SPM_DLLEXPORT VCConfiguration: ReflectClassT<VCConfiguration>
 {
 public:
     Project* project;
-    pugi::xml_node confNode;
+    pugi::xml_node idgConfNode;
+    pugi::xml_node pgConfNode;
 
     VCConfiguration():
         project(nullptr)
     {
-        ReflectConnectChildren(nullptr);
-        Linker.fieldName = "Link";
+        Init();
     }
 
     VCConfiguration(const VCConfiguration& clone) :
@@ -28,9 +28,16 @@ public:
         configurationName(clone.configurationName),
         platform(clone.platform)
     {
-        ReflectConnectChildren(nullptr);
-        Linker.fieldName = "Link";
+        Init();
     }
+
+    void Init()
+    {
+        // Define configuration "category" (will be used when serializing / restoring)
+        Linker.fieldName = "Link";
+        ReflectConnectChildren(nullptr);
+    }
+
 
     virtual void OnAfterSetProperty(ReflectPath& path);
 
@@ -42,6 +49,7 @@ public:
     // Individual tools settings, depending on project type (static library, dynamic library) individual tool configuration is not necessarily used.
     //
     REFLECTABLE(VCConfiguration,
+        (GeneralConf)General,
         (LinkerConf)Linker
     );
 };
