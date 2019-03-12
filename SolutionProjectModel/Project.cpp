@@ -19,6 +19,7 @@ template class __declspec(dllexport) std::basic_string<char, std::char_traits<ch
 template class __declspec(dllexport) std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>;
 
 const wchar_t* Microsoft_Cpp_Default_props = LR"($(VCTargetsPath)\Microsoft.Cpp.Default.props)";
+const wchar_t* Microsoft_Cpp_props = LR"($(VCTargetsPath)\Microsoft.Cpp.props)";
 
 
 //
@@ -37,17 +38,46 @@ wstring wformat(const wchar_t* format, ...)
     return ws;
 }
 
+//
+//  Reconstructs xml path from our class structure to xml nodes.
+//
+void ReflectCopy(ReflectPath& path, xml_node toNode )
+{
+    xml_node current = toNode;
+
+    for (size_t i = path.steps.size(); i-- > 0; )
+    {
+        wstring name = as_wide(path.steps[i].field);
+        xml_node next = current.child(name.c_str());
+        if (next.empty())
+            next = current.append_child(name.c_str());
+
+        current = next;
+    }
+
+    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].field);
+    CStringW value = fi->fieldType->ToString((char*)path.steps[0].instance->ReflectGetInstance() + fi->offset);
+    current.text().set(value);
+}
 
 void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
 {
     xml_node current;
-    
-    if( path.steps.back().typeInfo->name == "GeneralConf" )
-    {
-        if (pgConfNode.empty())
-            pgConfNode = project->selectProjectNodes(L"PropertyGroup", L"", configurationName.c_str(), platform.c_str());
+    ReflectPathStep& lastStep = path.steps.back();
 
-        current = pgConfNode;
+    if( lastStep.typeInfo->name == "GeneralConf" )
+    {
+        if( lastStep.typeInfo->GetField(lastStep.field) - lastStep.typeInfo->GetField("ConfigurationType") >= 0 )
+        {
+            current = pgConfigurationNode;
+        } 
+        else
+        {
+            if (pgNode.empty())
+                pgNode = project->selectProjectNodes(L"PropertyGroup", L"", configurationName.c_str(), platform.c_str());
+
+            current = pgNode;
+        }
     }
     else 
     {
@@ -57,19 +87,7 @@ void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
         current = idgConfNode;
     }
 
-    for( size_t i = path.steps.size(); i-- > 0;  )
-    {
-        wstring name = as_wide(path.steps[i].field);
-        xml_node next = current.child(name.c_str());
-        if(next.empty())
-            next = current.append_child(name.c_str());
-
-        current = next;
-    }
-
-    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].field);
-    CStringW value = fi->fieldType->ToString( (char*)path.steps[0].instance->ReflectGetInstance() + fi->offset );
-    current.text().set(value);
+    ReflectCopy(path, current);
 }
 
 
@@ -223,6 +241,9 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
         if (name == L"Import" && wcscmp(next.attribute(L"Project").value(),Microsoft_Cpp_Default_props) == 0 )
             continue;
 
+        if (name == L"Import" && *_label == 0 && wcscmp(next.attribute(L"Project").value(), Microsoft_Cpp_props) == 0)
+            continue;
+        
         break;
     }
     
@@ -328,14 +349,15 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
             wstring wConfigurationName = as_wide(configuration);
             wstring wPlatform = as_wide(platform);
             wstring platformConfiguration = as_wide(configuration + "|" + platform);
+            VCConfiguration* conf = nullptr;
 
             if (bAdd)
             {
-                VCConfiguration conf;
-                conf.project = this;
-                conf.configurationName = wConfigurationName;
-                conf.platform = wPlatform;
-                configurations.insert(configurations.begin() + to, conf);
+                configurations.insert(configurations.begin() + to, VCConfiguration());
+                conf = &configurations[to];
+                conf->project = this;
+                conf->configurationName = wConfigurationName;
+                conf->platform = wPlatform;
                 to--;   //Xml node backshift - previous node after which to insert.
             }
 
@@ -366,30 +388,16 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
             else
                 itemGroup.remove_child(c);
 
-            c = xml_node();
-            if (to != -1)
-                c = select_nodes(L"/Project/PropertyGroup[@Label='Configuration']")[to].node();
+            xml_node node = selectProjectNodes(L"PropertyGroup", L"Configuration", wConfigurationName.c_str(), wPlatform.c_str());
 
-            if (bAdd)
+            if( bAdd )
             {
-                xml_node pg;
-                if (!c.empty())
-                    pg = proj.insert_child_after(PropertyGroup, c);
-                else
-                    pg = proj.insert_child_after(PropertyGroup, markForPropertyGroup);
-
-                pg.append_attribute(L"Condition").set_value((wstring(L"'$(Configuration)|$(Platform)'=='") + platformConfiguration + L"'").c_str());
-                pg.append_attribute(L"Label").set_value(L"Configuration");
-                
-                const wchar_t* xmltag[] = { L"PlatformToolset" , L"Keyword", L"WindowsTargetPlatformVersion" };
-                string (Project::*func[])() = { &Project::GetToolset, &Project::GetKeyword, &Project::GetWindowsSDKVersion };
-
-                for (int i = 0; i < _countof(xmltag); i++)
-                    pg.append_child(xmltag[i]).text().set(as_wide( (this->*func[i])() ).c_str());
-            }
-            else
-            {
-                proj.remove_child(c);
+                conf->pgConfigurationNode = node;
+                // New configuration defaults
+                auto& general = conf->General;
+                general.ConfigurationType = conftype_Application;
+                general.PlatformToolset = GetToolset().c_str();
+                general.CharacterSet = charset_Unicode;
             }
         }
 
@@ -399,6 +407,7 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
             listMain->erase(it);
 
     } //for
+
 } //PlatformConfigurationsUpdated
 
 
@@ -520,6 +529,10 @@ void Project::New()
     pugi::xml_document::reset();
     guid = GUID_NULL;
     SetVsVersion(2017);     // May change without further notice
+
+    ReflectConnectChildren(nullptr);
+    Globals.Keyword = projecttype_Win32Proj;
+    Globals.WindowsTargetPlatformVersion = "10.0.17134.0";
 }
 
 
@@ -546,19 +559,6 @@ bool Project::Load(const wchar_t* file)
     }
 
     return true;
-}
-
-string Project::GetKeyword()
-{
-    if (Keyword.empty())
-        return "Win32Proj";     //Windows project (32 or 64 bit)
-
-    return Keyword;
-}
-
-string Project::GetWindowsSDKVersion()
-{
-    return "10.0.17134.0";      // Hardcoded - fixme
 }
 
 //
@@ -617,7 +617,7 @@ pugi::xml_node Project::project()
         markForPropertyGroup = proj.append_child(L"Import");
         markForPropertyGroup.append_attribute(L"Project").set_value(Microsoft_Cpp_Default_props);
 
-        proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.props)");
+        proj.append_child(L"Import").append_attribute(L"Project").set_value(Microsoft_Cpp_props);
         proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.targets)");
     }
 
@@ -649,5 +649,8 @@ bool Project::Save(const wchar_t* file)
     return b;
 }
 
-
+void Project::OnAfterSetProperty(ReflectPath& path)
+{
+    ReflectCopy(path, projectGlobals);
+}
 

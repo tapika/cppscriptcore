@@ -15,7 +15,8 @@ class SPM_DLLEXPORT VCConfiguration: ReflectClassT<VCConfiguration>
 public:
     Project* project;
     pugi::xml_node idgConfNode;
-    pugi::xml_node pgConfNode;
+    pugi::xml_node pgNode;
+    pugi::xml_node pgConfigurationNode;
 
     VCConfiguration():
         project(nullptr)
@@ -35,6 +36,7 @@ public:
     {
         // Define configuration "category" (will be used when serializing / restoring)
         Linker.fieldName = "Link";
+        CCpp.fieldName = "ClCompile";
         ReflectConnectChildren(nullptr);
     }
 
@@ -50,6 +52,7 @@ public:
     //
     REFLECTABLE(VCConfiguration,
         (GeneralConf)General,
+        (CCppConf)CCpp,
         (LinkerConf)Linker
     );
 };
@@ -57,7 +60,8 @@ public:
 //---------------------------------------------------------
 //  Project
 //---------------------------------------------------------
-class SPM_DLLEXPORT Project : 
+class SPM_DLLEXPORT Project :
+    ReflectClassT<Project>,
     pugi::xml_document
 {
 public:
@@ -88,6 +92,12 @@ public:
     // Saves project file
     //
     bool Save(const wchar_t* file = nullptr);
+
+    virtual void OnAfterSetProperty(ReflectPath& path);
+
+    REFLECTABLE(Project,
+        (ProjectGlobalConf)Globals
+    );
 
     //
     //  Sets visual studio version, in year. e.g. 2017, 2019, ...
@@ -159,16 +169,6 @@ protected:
 
     // Platform Toolset, e.g. "v141" (for vs2017), "142" (for vs2019), "Clang_5_0" ...
     std::string toolset;
-
-    //
-    //  Typically in .vcxproj this is used to mark where project is targetted upon, e.g. "Win32Proj" - win32 or win64, "Android", "Linux", "Clang",
-    //  but division of whether it's os, compiler or just .dll inside VS is not so clear. Keeping as string for timebeing.
-    //
-    std::string Keyword;
-
-    std::string GetKeyword();
-    std::string GetWindowsSDKVersion();
-
 
     pugi::xml_node project( );
     pugi::xml_node projectGlobals;

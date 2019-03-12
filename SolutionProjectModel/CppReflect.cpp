@@ -14,6 +14,14 @@ FieldInfo* CppTypeInfo::GetField(const char* name)
     return nullptr;
 }
 
+int CppTypeInfo::GetFieldIndex(const char* name)
+{
+    for( size_t i = 0; i < fields.size(); i++ )
+        if (fields[i].name == name )
+            return (int)i;
+
+    return -1;
+}
 
 //
 //  Serializes class instance to xml node.

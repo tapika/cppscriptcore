@@ -18,6 +18,11 @@ public:
     // Gets field by name, nullptr if not found.
     //
     FieldInfo* GetField(const char* name);
+
+    //
+    // Get field index, -1 if not found.
+    //
+    int GetFieldIndex(const char* name);
 };
 
 

@@ -17,44 +17,44 @@
 /// </summary>
 DECLARE_ENUM(ItemType, "",
 
-    /// <summary>
-    /// C# references to .net assemblies
-    /// </summary>
+    //
+    // C# references to .net assemblies
+    //
     Reference,
 
-    /// <summary>
-    /// Header file (.h)
-    /// </summary>
+    //
+    // Header file (.h)
+    //
     ClInclude,
 
-    /// <summary>
-    /// Source codes (.cpp) files
-    /// </summary>
+    //
+    // Source codes (.cpp) files
+    //
     ClCompile,
 
-    /// <summary>
-    /// .rc / resource files.
-    /// </summary>
+    //
+    // .rc / resource files.
+    //
     ResourceCompile,
 
-    /// <summary>
-    /// Any custom file with custom build step
-    /// </summary>
+    //
+    // Any custom file with custom build step
+    //
     CustomBuild,
 
-    /// <summary>
-    /// .def / .bat
-    /// </summary>
+    //
+    // .def / .bat
+    //
     None,
 
-    /// <summary>
-    /// .ico files.
-    /// </summary>
+    //
+    // .ico files.
+    //
     Image,
 
-    /// <summary>
-    /// .txt files.
-    /// </summary>
+    //
+    // .txt files.
+    //
     Text,
 
     // Following enumerations are used in android packaging project (.androidproj)
@@ -63,29 +63,29 @@ DECLARE_ENUM(ItemType, "",
     AndroidManifest,
     AntProjectPropertiesFile,
 
-    /// <summary>
-    /// For Android package project: Reference to another project, which needs to be included into package.
-    /// </summary>
+    //
+    // For Android package project: Reference to another project, which needs to be included into package.
+    //
     ProjectReference,
 
-    /// <summary>
-    /// Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
-    /// </summary>
+    //
+    // Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
+    //
     Invalid,
 
-    /// <summary>
-    /// C# - source codes to compile
-    /// </summary>
+    //
+    // C# - source codes to compile
+    //
     Compile,
 
-    /// <summary>
-    /// Android / Gradle project, *.template files.
-    /// </summary>
+    //
+    // Android / Gradle project, *.template files.
+    //
     GradleTemplate,
 
-    /// <summary>
-    /// .java - source codes to compile
-    /// </summary>
+    //
+    // .java - source codes to compile
+    //
     JavaCompile,
 
     //
@@ -94,12 +94,93 @@ DECLARE_ENUM(ItemType, "",
     Natvis
 );
 
-class SPM_DLLEXPORT CCppConfiguration
+//
+//  Visual Studio project tagging.
+//
+DECLARE_ENUM(EKeyword, "projecttype_",
+    //
+    // For sub-folders for example (Also default value). Also for utility projects.
+    //
+    projecttype_None = 0,
+
+    //
+    // Windows project (32 or 64 bit)
+    //
+    projecttype_Win32Proj,
+
+    //
+    // Same as Win32Proj, for some reason exists as separate value
+    //
+    projecttype_ManagedCProj,
+
+    //
+    // Android project
+    //
+    projecttype_Android,
+
+    //
+    // Windows application with MFC support
+    //
+    projecttype_MFCProj,
+
+    //
+    // Android packaging project (does not exists on file format level)
+    //
+    projecttype_AntPackage,
+
+    /// <summary>
+    /// Typically set for Android packaging project. (does not exists on file format level)
+    /// </summary>
+    projecttype_GradlePackage
+);
+
+class SPM_DLLEXPORT ProjectGlobalConf : ReflectClassT<ProjectGlobalConf>
 {
 public:
-
-
+    REFLECTABLE(ProjectGlobalConf,
+        // This is typically non-configurable by end-user.
+        (EKeyword)Keyword,
+        (CStringW)WindowsTargetPlatformVersion
+    );
 };
+
+
+//
+// Project type
+//
+DECLARE_ENUM(EConfigurationType, "conftype_",
+    //
+    // .exe
+    //
+    conftype_Application = 0,
+
+    //
+    // .dll
+    //
+    conftype_DynamicLibrary,
+
+    //
+    // .lib or .a
+    //
+    conftype_StaticLibrary,
+
+    //
+    // Android gradle project: Library (.aar/.jar)
+    //
+    conftype_Library,
+
+    //
+    // Utility project
+    //
+    conftype_Utility,
+
+    //
+    // This value does not physically exists in serialized form in .vcxproj, used only for generation of C# script.
+    //
+    conftype_ConsoleApplication
+);
+
+
 
 //
 // Binary image format / target
@@ -170,6 +251,68 @@ public:
     );
 };
 
+//
+// Character set - unicode MBCS.
+//
+DECLARE_ENUM(ECharacterSet, "charset_",
+    //
+    // Unicode
+    //
+    charset_Unicode = 0,
+
+    //
+    // Ansi
+    //
+    charset_MultiByte
+);
+
+
+//
+// How to optimize code ?
+//
+DECLARE_ENUM(EOptimization, "optimization_",
+    optimization_Custom,
+
+    //
+    // No optimizations
+    //
+    optimization_Disabled,
+
+    //
+    // Minimize Size, in Windows projects
+    //
+    optimization_MinSpace,
+
+    //
+    // Minimize Size, In Android projects
+    //
+    optimization_MinSize,
+
+    //
+    // Maximize Speed
+    //
+    optimization_MaxSpeed,
+
+    //
+    // Full Optimization
+    //
+    optimization_Full,
+
+    //
+    // Not available in project file, but this is something we indicate that we haven't set value
+    //
+    optimization_ProjectDefault
+);
+
+class SPM_DLLEXPORT CCppConf: public ReflectClassT<CCppConf>
+{
+public:
+    REFLECTABLE(CCppConf,
+        (EOptimization)Optimization
+    );
+};
+
+
 class SPM_DLLEXPORT GeneralConf : public ReflectClassT<GeneralConf>
 {
 public:
@@ -183,7 +326,19 @@ public:
         //
         (CStringW)IntDir,
         (CStringW)TargetName,
-        (CStringW)TargetExt
+        (CStringW)TargetExt,
+
+        (EConfigurationType)ConfigurationType,
+
+        //
+        // For example:
+        //     'Clang_3_8'     - Clang 3.8
+        //     'v141'          - for Visual Studio 2017.
+        //     'v140'          - for Visual Studio 2015.
+        //     'v120'          - for Visual Studio 2013.
+        //
+        (CStringW)PlatformToolset,
+        (ECharacterSet)CharacterSet
     );
 };
 
