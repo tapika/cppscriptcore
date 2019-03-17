@@ -478,40 +478,6 @@ namespace boolinq
             return result;
         } 
 
-        template<typename TRet>
-        T max(std::function<TRet(T)> transform) const
-        {
-            return elect([=](T a, T b){return transform(a) < transform(b) ? b : a;});
-        }
-
-        template<typename TFunc>
-        T max(TFunc transform) const
-        {
-            return max<decltype(get_return_type<TFunc,T>())>(transform);
-        }
-
-        T max() const
-        {
-            return max<T>([](T a){return a;});
-        }
-
-        template<typename TRet>
-        T min(std::function<TRet(T)> transform) const
-        {
-            return elect([=](T a, T b){return transform(a) < transform(b) ? a : b;});
-        }
-
-        template<typename TFunc>
-        T min(TFunc transform) const
-        {
-            return min<decltype(get_return_type<TFunc,T>())>(transform);
-        }
-
-        T min() const
-        {
-            return min<T>([](T a){return a;});
-        }
-
         // Single object returners
 
         T elementAt(int index) const
