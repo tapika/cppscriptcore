@@ -47,10 +47,38 @@ void ReflectCopy(ReflectPath& path, xml_node toNode )
 
     for (size_t i = path.steps.size(); i-- > 0; )
     {
-        wstring name = as_wide(path.steps[i].field);
+        ReflectPathStep& step = path.steps[i];
+
+        // Field map, which specified in which order fields should be. 0,1 ... and so on.
+        auto&& mapFields = step.instance->mapFieldToIndex;
+
+        if( step.instance->fieldName.length() == 0 && step.instance->GetParent() != nullptr )
+            mapFields = step.instance->GetParent()->mapFieldToIndex;
+
+        wstring name = as_wide(step.field);
         xml_node next = current.child(name.c_str());
         if (next.empty())
-            next = current.append_child(name.c_str());
+        {
+            int newNodeFieldIndex = mapFields[step.field];
+            xml_node node = current.first_child();
+            xml_node insertBefore;
+        
+            for( ; !node.empty() ; node = node.next_sibling() )
+            {
+                int currentNodeFieldIndex = mapFields[ as_utf8(node.name()).c_str() ];
+
+                if(newNodeFieldIndex > currentNodeFieldIndex)
+                    break;
+
+                insertBefore = node;
+                break;
+            }
+        
+            if(insertBefore.empty())
+                next = current.append_child(name.c_str());
+            else
+                next = current.insert_child_before(name.c_str(), insertBefore);
+        }
 
         current = next;
     }
@@ -349,12 +377,12 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
             wstring wConfigurationName = as_wide(configuration);
             wstring wPlatform = as_wide(platform);
             wstring platformConfiguration = as_wide(configuration + "|" + platform);
-            VCConfiguration* conf = nullptr;
+            shared_ptr<VCConfiguration> conf = nullptr;
 
             if (bAdd)
             {
-                configurations.insert(configurations.begin() + to, VCConfiguration());
-                conf = &configurations[to];
+                conf.reset(new VCConfiguration());
+                configurations.insert(configurations.begin() + to, conf);
                 conf->project = this;
                 conf->configurationName = wConfigurationName;
                 conf->platform = wPlatform;
@@ -513,7 +541,7 @@ void Project::VisitConfigurations(std::function<void (VCConfiguration&)> visitCo
                 continue;
 
             size_t i = platforms.size() * p + c;
-            visitConf(configurations[i]);
+            visitConf(*configurations[i]);
         }
 }
 
@@ -607,7 +635,6 @@ pugi::xml_node Project::project()
             // Project globals (Guid, etc...)
             projectGlobals = proj.insert_child_after(PropertyGroup, itemGroup);
             projectGlobals.append_attribute(L"Label").set_value(L"Globals");
-            projectGlobals.append_child(L"ProjectGuid");
         }
     }
 
@@ -643,7 +670,7 @@ bool Project::Save(const wchar_t* file)
         fpath = name + L".vcxproj";
 
     project();
-    projectGlobals.child(L"ProjectGuid").text().set(GetGuid().c_str());
+    Globals.ProjectGuid = GetGuid().c_str();
     
     bool b  = save_file(fpath.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
     return b;

@@ -16,11 +16,20 @@ class TypeTraits
 {
 public:
     //
-    //  Returns true if field type is derived from ReflectClass.
+    //  Returns true if field type is primitive (int, string, etc...) - so all types which are not complex.
+    //  Complex class type is derived from ReflectClass - so ReflectClassPtr() & GetType() returns non-null
     //
-    virtual bool IsReflectClassDerived()
+    virtual bool IsPrimitiveType()
     {
-        return false;
+        return true;
+    }
+
+    //
+    //  Gets field complex type()
+    //
+    virtual CppTypeInfo* GetFieldType()
+    {
+        return nullptr;
     }
 
     //
@@ -81,9 +90,19 @@ template <class T>
 class TypeTraitsT : public TypeTraits
 {
 public:
-    virtual bool IsReflectClassDerived()
+    virtual bool IsPrimitiveType()
     {
-        return std::is_base_of<ReflectClass, T>::value;
+        return ! std::is_base_of<ReflectClass, T>::value;
+    }
+
+    CppTypeInfo* GetFieldType()
+    {
+        __if_exists(T::GetType)
+        {
+            return &T::GetType();
+        }
+
+        return nullptr;
     }
 
     virtual ReflectClass* ReflectClassPtr( void* p )
@@ -105,7 +124,7 @@ public:
 };
 
 template <>
-class TypeTraitsT<CString> : public TypeTraits
+class TypeTraitsT<CStringW> : public TypeTraits
 {
 public:
     virtual CStringW ToString( void* pField )
@@ -120,6 +139,24 @@ public:
         *s = value;
     }
 };
+
+template <>
+class TypeTraitsT<CStringA> : public TypeTraits
+{
+public:
+    virtual CStringW ToString(void* pField)
+    {
+        CStringA* s = (CStringA*)pField;
+        return CStringW(*s);
+    }
+
+    virtual void FromString(void* pField, const wchar_t* value)
+    {
+        CStringA* s = (CStringA*)pField;
+        *s = value;
+    }
+};
+
 
 template <>
 class TypeTraitsT<int> : public TypeTraits

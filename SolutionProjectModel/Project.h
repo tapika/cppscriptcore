@@ -154,7 +154,7 @@ protected:
     std::vector<std::string>& GetConfigurationNames();
 
     // Project settings
-    std::vector<VCConfiguration> configurations;
+    std::vector< std::shared_ptr<VCConfiguration> > configurations;
 
     //  List of files within a project.
     std::list<ProjectFile>  files;

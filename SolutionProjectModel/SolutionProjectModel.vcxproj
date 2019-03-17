@@ -189,6 +189,7 @@
   <ItemGroup>
     <ClInclude Include="..\pugixml\pugiconfig.hpp" />
     <ClInclude Include="..\pugixml\pugixml.hpp" />
+    <ClInclude Include="boolinq.h" />
     <ClInclude Include="CppReflect.h" />
     <ClInclude Include="EnumReflect.h" />
     <ClInclude Include="MacroHelpers.h" />

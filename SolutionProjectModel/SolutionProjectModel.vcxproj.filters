@@ -28,6 +28,7 @@
     <ClInclude Include="MacroHelpers.h" />
     <ClInclude Include="TypeTraits.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="boolinq.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">

@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "CppReflect.h"
 #include "../pugixml/pugixml.hpp"          //pugi::xml_node
+#include "boolinq.h"
 
 using namespace pugi;
+using namespace boolinq;
 
 
 FieldInfo* CppTypeInfo::GetField(const char* name)
@@ -190,10 +192,13 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
 {
     CppTypeInfo& typeinfo = GetType();
     char* inst = nullptr;
-
+    int idx = 0;
+    
     for( auto& fi: typeinfo.fields )
     {
-        if( !fi.fieldType->IsReflectClassDerived() )
+        mapFieldToIndex[fi.name] = idx;
+
+        if( fi.fieldType->IsPrimitiveType() )
             continue;
 
         if( !inst )
@@ -204,6 +209,21 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
 
         // Reconnect children as well recursively.
         child->ReflectConnectChildren(this);
+
+        if( child->fieldName.length() != 0 )
+            mapFieldToIndex[child->fieldName.c_str()] = idx;
+
+        idx++;
+
+        if (child->fieldName.length() == 0)
+        {
+            from( child->GetType().fields ).foreach( [&](FieldInfo fi) 
+                {
+                    mapFieldToIndex[fi.name] = idx++;
+                }
+            );
+        }
+
     }
 }
 
@@ -212,14 +232,13 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
 //
 void ReflectClass::PushPathStep(ReflectPath& path)
 {
-    // Anonymous fields can be skipped (Not intrested in their path)
     if (fieldName.length() == 0)
         return;
 
     ReflectPathStep step;
-    step.typeInfo = &GetType();
+    step.typeInfo = &_parent->GetType();
     step.field = fieldName.c_str();
-    step.instance = this;
+    step.instance = _parent;
     path.steps.push_back(step);
 }
 
