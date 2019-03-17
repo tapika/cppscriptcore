@@ -258,22 +258,39 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
 
     wstring name;
     xml_node selected;
+    bool bLabelAfterCondition = false;
 
-    // Locate target point where nodes should be
-    for(next = current.next_sibling(); !next.empty(); current = next, next = next.next_sibling())
+
+    if( name2select == L"ImportGroup")
     {
-        name = next.name();
-        if( name == L"ItemGroup" || name == L"PropertyGroup" )
-            continue;
-
-        if (name == L"Import" && wcscmp(next.attribute(L"Project").value(),Microsoft_Cpp_Default_props) == 0 )
-            continue;
-
-        if (name == L"Import" && *_label == 0 && wcscmp(next.attribute(L"Project").value(), Microsoft_Cpp_props) == 0)
-            continue;
-        
-        break;
+        current = select_node(L"/Project/ImportGroup[@Label='ExtensionSettings']").node();
+        bLabelAfterCondition = true;
     }
+    else
+    {
+        // Locate target point where nodes should be
+        for (next = current.next_sibling(); !next.empty(); current = next, next = next.next_sibling())
+        {
+            name = next.name();
+            if (name == L"ItemGroup" && !next.attribute(L"Label").empty())
+                continue;
+
+            if (name == L"ImportGroup")
+                continue;
+
+            if (name == L"PropertyGroup")
+                continue;
+
+            if (name == L"Import" && wcscmp(next.attribute(L"Project").value(), Microsoft_Cpp_Default_props) == 0)
+                continue;
+
+            if (name == L"Import" && *_label == 0 && wcscmp(next.attribute(L"Project").value(), Microsoft_Cpp_props) == 0)
+                continue;
+
+            break;
+        }
+    }
+
     
     // Locate node if exists
     for (next = current.next_sibling(); !next.empty(); current = next, next = next.next_sibling())
@@ -305,8 +322,14 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
     {
         selected = current.parent().insert_child_after(_name2select, current);
         selected.append_attribute(L"Condition").set_value(wformat(L"'$(Configuration)|$(Platform)'=='%s|%s'", confName, platform).c_str());
+
         if( label.length() )
-            selected.append_attribute(L"Label").set_value(_label);
+        {
+            if (bLabelAfterCondition)
+                selected.prepend_attribute(L"Label").set_value(_label);
+            else
+                selected.append_attribute(L"Label").set_value(_label);
+        }
     }
 
     return selected;
@@ -427,6 +450,17 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 general.PlatformToolset = GetToolset().c_str();
                 general.CharacterSet = charset_Unicode;
             }
+
+            node = selectProjectNodes(L"ImportGroup", L"PropertySheets", wConfigurationName.c_str(), wPlatform.c_str());
+
+            if (bAdd)
+            {
+                xml_node impNode;
+                impNode = node.append_child(L"Import");
+                impNode.append_attribute(L"Project").set_value(LR"($(UserRootDir)\Microsoft.Cpp.$(Platform).user.props)");
+                impNode.append_attribute(L"Condition").set_value(LR"(exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props'))");
+                impNode.append_attribute(L"Label").set_value(L"LocalAppDataPlatform");
+            }
         }
 
         if (bAdd)
@@ -487,11 +521,19 @@ void Project::AddFile(const wchar_t* file)
         return;
 
     xml_node proj = project();
-    xml_node markInsert = markForPropertyGroup.next_sibling();
+    xml_node markInsert = markForPropertyGroup;
+    xml_node next;
     wstring name;
 
-    while( (name = markInsert.name()) == L"PropertyGroup" || name == L"PropertyGroup" || name == L"ItemDefinitionGroup")
-        markInsert = markInsert.next_sibling();
+    // Skip nodes with specific names.
+    for (next = markForPropertyGroup.next_sibling(); !next.empty(); markInsert = next, next = next.next_sibling())
+    {
+        name = next.name();
+        if( name == L"PropertyGroup" || name == L"PropertyGroup" || name == L"ItemDefinitionGroup")
+            continue;
+
+        break;
+    }
 
     ItemType newType = ProjectFile::GetFromPath(relativePath.c_str());
     xml_node itemGroup;
@@ -641,11 +683,20 @@ pugi::xml_node Project::project()
     // Magical xml imports.
     if (markForPropertyGroup.empty())
     {
-        markForPropertyGroup = proj.append_child(L"Import");
-        markForPropertyGroup.append_attribute(L"Project").set_value(Microsoft_Cpp_Default_props);
-
+        proj.append_child(L"Import").append_attribute(L"Project").set_value(Microsoft_Cpp_Default_props);
         proj.append_child(L"Import").append_attribute(L"Project").set_value(Microsoft_Cpp_props);
+
+        auto addImportGroup = [&](auto label)
+        {
+            xml_node impGroup;
+            (impGroup = proj.append_child(L"ImportGroup")).append_attribute(L"Label").set_value(label);
+            impGroup.text().set(L"\r\n  ");
+        };
+
+        addImportGroup(L"ExtensionSettings");
+        (markForPropertyGroup = proj.append_child(L"PropertyGroup")).append_attribute(L"Label").set_value(L"UserMacros");
         proj.append_child(L"Import").append_attribute(L"Project").set_value(LR"($(VCTargetsPath)\Microsoft.Cpp.targets)");
+        addImportGroup(L"ExtensionTargets");
     }
 
     return proj;
