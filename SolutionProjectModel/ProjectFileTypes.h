@@ -332,6 +332,11 @@ public:
         (EConfigurationType)ConfigurationType,
 
         //
+        // Mysterious flag, which cannot be set from Visual studio properties, but it affects to some parameter's default values.
+        //
+        (bool)UseDebugLibraries,
+
+        //
         // For example:
         //     'Clang_3_8'     - Clang 3.8
         //     'v141'          - for Visual Studio 2017.

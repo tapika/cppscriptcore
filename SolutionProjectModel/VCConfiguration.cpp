@@ -35,7 +35,7 @@ void ReflectCopy(ReflectPath& path, xml_node toNode)
                 int currentNodeFieldIndex = mapFields[as_utf8(node.name()).c_str()];
 
                 if (newNodeFieldIndex > currentNodeFieldIndex)
-                    break;
+                    continue;
 
                 insertBefore = node;
                 break;

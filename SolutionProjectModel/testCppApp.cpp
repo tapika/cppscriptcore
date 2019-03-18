@@ -26,6 +26,7 @@ void main(void)
             c.General.OutDir = LR"(bin\$(Configuration)_$(Platform)\)";
             //c.General.TargetName = L"$(ProjectName)";
             //c.General.TargetExt = ".dll";
+            c.General.UseDebugLibraries = true;
 
             c.CCpp.Optimization = optimization_Disabled;
 
