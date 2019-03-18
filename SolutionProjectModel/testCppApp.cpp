@@ -27,6 +27,7 @@ void main(void)
             //c.General.TargetName = L"$(ProjectName)";
             //c.General.TargetExt = ".dll";
             c.General.UseDebugLibraries = true;
+            c.General.LinkIncremental = true;
 
             c.CCpp.Optimization = optimization_Disabled;
 

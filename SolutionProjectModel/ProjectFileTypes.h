@@ -318,6 +318,7 @@ class SPM_DLLEXPORT GeneralConf : public ReflectClassT<GeneralConf>
 {
 public:
     REFLECTABLE(GeneralConf,
+        (bool)LinkIncremental,
         //
         // Output directory
         //
