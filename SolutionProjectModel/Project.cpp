@@ -38,86 +38,6 @@ wstring wformat(const wchar_t* format, ...)
     return ws;
 }
 
-//
-//  Reconstructs xml path from our class structure to xml nodes.
-//
-void ReflectCopy(ReflectPath& path, xml_node toNode )
-{
-    xml_node current = toNode;
-
-    for (size_t i = path.steps.size(); i-- > 0; )
-    {
-        ReflectPathStep& step = path.steps[i];
-
-        // Field map, which specified in which order fields should be. 0,1 ... and so on.
-        auto&& mapFields = step.instance->mapFieldToIndex;
-
-        if( step.instance->fieldName.length() == 0 && step.instance->GetParent() != nullptr )
-            mapFields = step.instance->GetParent()->mapFieldToIndex;
-
-        wstring name = as_wide(step.field);
-        xml_node next = current.child(name.c_str());
-        if (next.empty())
-        {
-            int newNodeFieldIndex = mapFields[step.field];
-            xml_node node = current.first_child();
-            xml_node insertBefore;
-        
-            for( ; !node.empty() ; node = node.next_sibling() )
-            {
-                int currentNodeFieldIndex = mapFields[ as_utf8(node.name()).c_str() ];
-
-                if(newNodeFieldIndex > currentNodeFieldIndex)
-                    break;
-
-                insertBefore = node;
-                break;
-            }
-        
-            if(insertBefore.empty())
-                next = current.append_child(name.c_str());
-            else
-                next = current.insert_child_before(name.c_str(), insertBefore);
-        }
-
-        current = next;
-    }
-
-    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].field);
-    CStringW value = fi->fieldType->ToString((char*)path.steps[0].instance->ReflectGetInstance() + fi->offset);
-    current.text().set(value);
-}
-
-void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
-{
-    xml_node current;
-    ReflectPathStep& lastStep = path.steps.back();
-
-    if( lastStep.typeInfo->name == "GeneralConf" )
-    {
-        if( lastStep.typeInfo->GetField(lastStep.field) - lastStep.typeInfo->GetField("ConfigurationType") >= 0 )
-        {
-            current = pgConfigurationNode;
-        } 
-        else
-        {
-            if (pgNode.empty())
-                pgNode = project->selectProjectNodes(L"PropertyGroup", L"", configurationName.c_str(), platform.c_str());
-
-            current = pgNode;
-        }
-    }
-    else 
-    {
-        if (idgConfNode.empty())
-            idgConfNode = project->selectProjectNodes(L"ItemDefinitionGroup", L"", configurationName.c_str(), platform.c_str());
-
-        current = idgConfNode;
-    }
-
-    ReflectCopy(path, current);
-}
-
 
 Project::Project()
 {
@@ -723,6 +643,9 @@ bool Project::Save(const wchar_t* file)
     project();
     Globals.ProjectGuid = GetGuid().c_str();
     
+    if(filesystem::exists(fpath))
+        copy(fpath, path(fpath + L".bkp"), copy_options::overwrite_existing);
+
     bool b  = save_file(fpath.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
     return b;
 }

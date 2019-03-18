@@ -185,6 +185,7 @@
     <ClCompile Include="ProjectFile.cpp" />
     <ClCompile Include="ProjectFileTypes.cpp" />
     <ClCompile Include="Solution.cpp" />
+    <ClCompile Include="VCConfiguration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pugixml\pugiconfig.hpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="Solution.h" />
     <ClInclude Include="ProjectFileTypes.h" />
     <ClInclude Include="TypeTraits.h" />
+    <ClInclude Include="VCConfiguration.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\pugixml\pugixml.natvis" />
