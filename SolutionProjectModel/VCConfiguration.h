@@ -31,8 +31,8 @@ public:
     void Init()
     {
         // Define configuration "category" (will be used when serializing / restoring)
-        Linker.fieldName = "Link";
-        CCpp.fieldName = "ClCompile";
+        Linker.propertyName = "Link";
+        CCpp.propertyName = "ClCompile";
         ReflectConnectChildren(nullptr);
     }
 

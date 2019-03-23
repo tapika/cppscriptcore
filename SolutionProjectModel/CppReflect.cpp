@@ -166,13 +166,13 @@ bool FromXml( void* pclass, CppTypeInfo& type, const wchar_t* xml, CStringW& err
 }
 
 
-ReflectPath::ReflectPath(CppTypeInfo& type, const char* field)
+ReflectPath::ReflectPath(CppTypeInfo& type, const char* _propertyName)
 {
     // Doubt that class hierarchy is more complex than 5 levels, but increase this size if it's.
     steps.reserve(5);
     ReflectPathStep step;
     step.typeInfo = &type;
-    step.field = field;
+    step.propertyName = _propertyName;
     step.instance = nullptr;
     steps.push_back(step);
 }
@@ -210,12 +210,12 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
         // Reconnect children as well recursively.
         child->ReflectConnectChildren(this);
 
-        if( child->fieldName.length() != 0 )
-            mapFieldToIndex[child->fieldName.c_str()] = idx;
+        if( child->propertyName.length() != 0 )
+            mapFieldToIndex[child->propertyName.c_str()] = idx;
 
         idx++;
 
-        if (child->fieldName.length() == 0)
+        if (child->propertyName.length() == 0)
         {
             from( child->GetType().fields ).foreach( [&](FieldInfo fi) 
                 {
@@ -232,12 +232,12 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
 //
 void ReflectClass::PushPathStep(ReflectPath& path)
 {
-    if (fieldName.length() == 0)
+    if (propertyName.length() == 0)
         return;
 
     ReflectPathStep step;
     step.typeInfo = &_parent->GetType();
-    step.field = fieldName.c_str();
+    step.propertyName = propertyName.c_str();
     step.instance = _parent;
     path.steps.push_back(step);
 }

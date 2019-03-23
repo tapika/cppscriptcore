@@ -19,14 +19,14 @@ void ReflectCopy(ReflectPath& path, xml_node toNode)
         // Field map, which specified in which order fields should be. 0,1 ... and so on.
         auto&& mapFields = step.instance->mapFieldToIndex;
 
-        if (step.instance->fieldName.length() == 0 && step.instance->GetParent() != nullptr)
+        if (step.instance->propertyName.length() == 0 && step.instance->GetParent() != nullptr)
             mapFields = step.instance->GetParent()->mapFieldToIndex;
 
-        wstring name = as_wide(step.field);
+        wstring name = as_wide(step.propertyName);
         xml_node next = current.child(name.c_str());
         if (next.empty())
         {
-            int newNodeFieldIndex = mapFields[step.field];
+            int newNodeFieldIndex = mapFields[step.propertyName];
             xml_node node = current.first_child();
             xml_node insertBefore;
 
@@ -50,7 +50,7 @@ void ReflectCopy(ReflectPath& path, xml_node toNode)
         current = next;
     }
 
-    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].field);
+    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].propertyName);
     CStringW value = fi->fieldType->ToString((char*)path.steps[0].instance->ReflectGetInstance() + fi->offset);
     current.text().set(value);
 }
@@ -62,7 +62,7 @@ void VCConfiguration::OnAfterSetProperty(ReflectPath& path)
 
     if (lastStep.typeInfo->name == "GeneralConf")
     {
-        if (lastStep.typeInfo->GetField(lastStep.field) - lastStep.typeInfo->GetField("ConfigurationType") >= 0)
+        if (lastStep.typeInfo->GetField(lastStep.propertyName) - lastStep.typeInfo->GetField("ConfigurationType") >= 0)
         {
             current = pgConfigurationNode;
         }

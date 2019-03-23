@@ -130,9 +130,9 @@ public:
     ReflectClass* instance;
 
     //
-    // Field name
+    // Property name
     //
-    const char*   field;
+    const char*   propertyName;
 
     //
     // Type information of instance
@@ -147,7 +147,7 @@ public:
 class ReflectPath
 {
 public:
-    ReflectPath(CppTypeInfo& type, const char* field);
+    ReflectPath(CppTypeInfo& type, const char* propertyName);
     
     void Init(ReflectClass* instance);
     
@@ -165,9 +165,9 @@ protected:
     ReflectClass*   _parent;
 
 public:
-    // Field name under assignment. If empty - can be used to bypass structure (exists on API level, does not exists in file format level), if non-empty -
+    // Property name under assignment. If empty - can be used to bypass structure (exists on API level, does not exists in file format level), if non-empty -
     // specifies fieldname to be registered on parent.
-    std::string  fieldName;
+    std::string  propertyName;
 
     // Map field name to index (used when sorting fields)
     std::map<CStringA, int> mapFieldToIndex;
