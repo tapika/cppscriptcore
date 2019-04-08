@@ -643,6 +643,8 @@ bool Project::Save(const wchar_t* file)
     project();
     Globals.ProjectGuid = GetGuid().c_str();
     
+    fpath = GetSaveDirectory() + L"\\" + fpath;
+
     if(filesystem::exists(fpath))
         copy(fpath, path(fpath + L".bkp"), copy_options::overwrite_existing);
 

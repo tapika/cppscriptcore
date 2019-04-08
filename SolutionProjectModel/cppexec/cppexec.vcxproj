@@ -21,6 +21,12 @@
   <ItemGroup>
     <ClCompile Include="cppexec.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SolutionProjectModel.vcxproj">
+      <Project>{d44945d6-4ded-4434-91d7-2b812537df6e}</Project>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{DB52F66D-D0A9-4A5F-9EA4-9F08CEA33BD7}</ProjectGuid>

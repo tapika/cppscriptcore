@@ -24,6 +24,11 @@ public:
         return true;
     }
 
+    virtual const char* name()
+    {
+        return "";
+    }
+
     //
     //  Gets field complex type()
     //
@@ -95,6 +100,11 @@ public:
         return ! std::is_base_of<ReflectClass, T>::value;
     }
 
+    virtual const char* name()
+    {
+        return typeid(T).name();
+    }
+
     CppTypeInfo* GetFieldType()
     {
         __if_exists(T::GetType)
@@ -127,6 +137,8 @@ template <>
 class TypeTraitsT<CStringW> : public TypeTraits
 {
 public:
+    virtual const char* name() { return "CStringW"; }
+
     virtual CStringW ToString( void* pField )
     { 
         CString* s = (CString*)pField;
@@ -144,6 +156,8 @@ template <>
 class TypeTraitsT<CStringA> : public TypeTraits
 {
 public:
+    virtual const char* name() { return "CStringA"; }
+
     virtual CStringW ToString(void* pField)
     {
         CStringA* s = (CStringA*)pField;
@@ -162,6 +176,8 @@ template <>
 class TypeTraitsT<int> : public TypeTraits
 {
 public:
+    virtual const char* name() { return "int"; }
+
     virtual CStringW ToString( void* pField )
     {
         int* p = (int*) pField;
@@ -182,6 +198,8 @@ template <>
 class TypeTraitsT<bool> : public TypeTraits
 {
 public:
+    virtual const char* name() { return "bool"; }
+
     virtual CStringW ToString( void* p )
     {
         if( *(bool*)p )
@@ -207,6 +225,8 @@ template <class E>
 class TypeTraitsT< std::vector<E> > : public TypeTraits
 {
 public:
+    virtual const char* name() { return typeid(std::vector<E>).name(); }
+    
     virtual bool GetArrayElementType( CppTypeInfo*& type )
     {
         __if_exists(E::GetType)
@@ -272,6 +292,7 @@ template <>
 class TypeTraitsT<ColorRef> : public TypeTraits
 {
 public:
+    virtual const char* name() { return "ColorRef"; }
 
     virtual CStringW ToString( void* pField )
     {
