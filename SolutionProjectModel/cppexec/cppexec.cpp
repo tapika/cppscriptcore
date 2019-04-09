@@ -22,10 +22,10 @@ public:
 int wmain(int argc, wchar_t** argv)
 {
     path exePath(argv[0]);
-    auto dir = weakly_canonical(exePath).parent_path();
+    auto exeDir = weakly_canonical(exePath).parent_path();
     path scriptToRun;
 
-    for (auto& pit : directory_iterator(dir))
+    for (auto& pit : directory_iterator(exeDir))
     {
         auto& filePath = pit.path();
         auto ext = filePath.extension();
@@ -104,13 +104,15 @@ int wmain(int argc, wchar_t** argv)
         p.AddFile(scriptToRun.c_str());
 
         p.VisitConfigurations(
-            [](VCConfiguration& c)
+            [&](VCConfiguration& c)
             {
                 c.General.IntDir = LR"(obj\$(ProjectName)_$(Configuration)_$(Platform)\)";
                 c.General.OutDir = LR"(.\)";
                 c.General.UseDebugLibraries = true;
                 c.General.LinkIncremental = true;
-                c.CCpp.Optimization = optimization_Disabled;
+                c.CCpp.Optimization.Optimization = optimization_Disabled;
+                c.CCpp.General.AdditionalIncludeDirectories = exeDir.append("SolutionProjectModel").c_str();
+                c.CCpp.Language.LanguageStandard = cpplang_stdcpp17;
                 c.Linker.System.SubSystem = subsystem_Windows;
                 c.Linker.Debugging.GenerateDebugInformation = debuginfo_true;
             }

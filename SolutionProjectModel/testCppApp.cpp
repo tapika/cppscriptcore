@@ -19,7 +19,7 @@ void main(void)
             c.General.OutDir = LR"(bin\$(Configuration)_$(Platform)\)";
             c.General.UseDebugLibraries = true;
             c.General.LinkIncremental = true;
-            c.CCpp.Optimization = optimization_Disabled;
+            c.CCpp.Optimization.Optimization = optimization_Disabled;
             c.Linker.System.SubSystem = subsystem_Console;
             c.Linker.Debugging.GenerateDebugInformation = debuginfo_true;
         }

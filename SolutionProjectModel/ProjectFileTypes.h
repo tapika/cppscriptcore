@@ -298,11 +298,55 @@ DECLARE_ENUM(EOptimization, "optimization_",
     optimization_ProjectDefault
 );
 
+
+DECLARE_ENUM(ELanguageStandard, "cpplang_",
+
+    // ISO C++14 Standard (/std:c++14)
+    cpplang_stdcpp14,
+
+    // ISO C++17 Standard (/std:c++17)
+    cpplang_stdcpp17,
+
+    // ISO C++ Latest Draft Standard (/std:c++latest)
+    cpplang_stdcpplatest
+);
+
+
+
+class SPM_DLLEXPORT CCppGeneralConf : public ReflectClassT<CCppGeneralConf>
+{
+public:
+    REFLECTABLE(CCppGeneralConf,
+
+        // Additional Include Directories, ';' separated list.
+        (CStringW)AdditionalIncludeDirectories
+    );
+};
+
+class SPM_DLLEXPORT CCppOptimizationConf : public ReflectClassT<CCppOptimizationConf>
+{
+public:
+    REFLECTABLE(CCppOptimizationConf,
+        (EOptimization)Optimization
+    );
+};
+
+class SPM_DLLEXPORT CCppLanguageConf : public ReflectClassT<CCppLanguageConf>
+{
+public:
+    REFLECTABLE(CCppLanguageConf,
+        (ELanguageStandard)LanguageStandard
+    );
+};
+
+
 class SPM_DLLEXPORT CCppConf: public ReflectClassT<CCppConf>
 {
 public:
     REFLECTABLE(CCppConf,
-        (EOptimization)Optimization
+        (CCppGeneralConf)General,
+        (CCppOptimizationConf)Optimization,
+        (CCppLanguageConf)Language
     );
 };
 
