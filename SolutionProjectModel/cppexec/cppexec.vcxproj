@@ -20,12 +20,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cppexec.cpp" />
+    <ClCompile Include="expdef.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SolutionProjectModel.vcxproj">
       <Project>{d44945d6-4ded-4434-91d7-2b812537df6e}</Project>
       <Private>false</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="expdef.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

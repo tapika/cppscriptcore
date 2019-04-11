@@ -2,5 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="cppexec.cpp" />
+    <ClCompile Include="expdef.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="expdef.h" />
   </ItemGroup>
 </Project>
