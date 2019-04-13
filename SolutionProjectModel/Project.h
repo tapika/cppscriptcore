@@ -75,7 +75,11 @@ public:
     //  Adds files to the project.
     //
     void AddFiles(std::initializer_list<std::wstring> fileList);
-    void AddFile(const wchar_t* file);
+
+    //
+    //  Queries if project contains given file, adds it if add is true
+    //
+    ProjectFile* File(const wchar_t* file, bool add);
 
     //
     // Visits each project configuration, if configurationName & platformName - uses additional filtering, otherwise visits all configurations.
@@ -105,7 +109,7 @@ protected:
     std::vector< std::shared_ptr<VCConfiguration> > configurations;
 
     //  List of files within a project.
-    std::list<ProjectFile>  files;
+    std::list< std::shared_ptr<ProjectFile> >  files;
 
     // Project guid
     GUID guid;

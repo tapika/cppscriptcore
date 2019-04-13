@@ -423,10 +423,10 @@ std::string Project::GetToolset()
 void Project::AddFiles(std::initializer_list<std::wstring> fileList)
 {
     for (wstring f : fileList)
-        AddFile(f.c_str());
+        File(f.c_str(), true);
 }
 
-void Project::AddFile(const wchar_t* file)
+ProjectFile* Project::File(const wchar_t* file, bool add)
 {
     wstring projectDir = GetSaveDirectory();
     path pathFile(file);
@@ -436,9 +436,12 @@ void Project::AddFile(const wchar_t* file)
     pathFile = weakly_canonical(pathFile);
     wstring relativePath = relative(pathFile, projectDir);
 
-    auto it = find_if(files.begin(), files.end(), [relativePath](ProjectFile& f) { return f.relativePath == relativePath; } );
+    auto it = find_if(files.begin(), files.end(), [relativePath](auto& f) { return f->relativePath == relativePath; } );
     if( it != files.end() )
-        return;
+        return it->get();
+
+    if( !add )
+        return nullptr;
 
     xml_node proj = project();
     xml_node markInsert = markForPropertyGroup;
@@ -455,12 +458,12 @@ void Project::AddFile(const wchar_t* file)
         break;
     }
 
-    ItemType newType = ProjectFile::GetFromPath(relativePath.c_str());
+    EItemType newType = ProjectFile::GetFromPath(relativePath.c_str());
     xml_node itemGroup;
 
     for(xml_node next = markInsert.next_sibling() ; (name = next.name() ) == L"ItemGroup"; )
     {
-        ItemType type;
+        EItemType type;
 
         if( StringToEnum( as_utf8(next.first_child().name()).c_str() , type))
         {
@@ -480,11 +483,12 @@ void Project::AddFile(const wchar_t* file)
     if(itemGroup.empty())
         itemGroup = proj.insert_child_after(L"ItemGroup", markInsert);
 
-    ProjectFile p;
-    p.relativePath = relativePath;
-    p.node = itemGroup.append_child(as_wide(EnumToString(newType)).c_str());
-    p.node.append_attribute(L"Include").set_value(relativePath.c_str());
+    shared_ptr<ProjectFile> p(new ProjectFile());
+    p->relativePath = relativePath;
+    p->node = itemGroup.append_child(as_wide(EnumToString(newType)).c_str());
+    p->node.append_attribute(L"Include").set_value(relativePath.c_str());
     files.push_back(p);
+    return p.get();
 }
 
 //

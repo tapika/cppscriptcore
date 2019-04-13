@@ -6,9 +6,9 @@
 /// Defines what needs to be done with given item. Not all project types support all enumerations - for example
 /// packaging projects / C# projects does not support CustomBuild.
 /// 
-/// Order of ItemType must be the same as appear in .vcxproj (first comes first)
+/// Order of EItemType must be the same as appear in .vcxproj (first comes first)
 /// </summary>
-DECLARE_ENUM(ItemType, "",
+DECLARE_ENUM(EItemType, "",
 
     //
     // C# references to .net assemblies
@@ -86,6 +86,16 @@ DECLARE_ENUM(ItemType, "",
     //
     Natvis
 );
+
+class SPM_DLLEXPORT ProjectItemGeneralConf : ReflectClassT<ProjectItemGeneralConf>
+{
+public:
+    REFLECTABLE(ProjectItemGeneralConf,
+        (EItemType)ItemType
+    );
+};
+
+
 
 //
 //  Visual Studio project tagging.
