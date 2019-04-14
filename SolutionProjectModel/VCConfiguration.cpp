@@ -6,6 +6,17 @@ using namespace pugi;
 using namespace std;
 
 //
+//  Copies value from path first step to xml node.
+//
+void ReflectCopyValue(ReflectPath& path, xml_node node)
+{
+    ReflectPathStep& step = path.steps[0];
+    FieldInfo* fi = step.typeInfo->GetField(step.propertyName);
+    CStringW value = fi->fieldType->ToString((char*)step.instance->ReflectGetInstance() + fi->offset);
+    node.text().set(value);
+}
+
+//
 //  Reconstructs xml path from our class structure to xml nodes.
 //
 void ReflectCopy(ReflectPath& path, xml_node toNode)
@@ -50,9 +61,7 @@ void ReflectCopy(ReflectPath& path, xml_node toNode)
         current = next;
     }
 
-    FieldInfo* fi = path.steps[0].typeInfo->GetField(path.steps[0].propertyName);
-    CStringW value = fi->fieldType->ToString((char*)path.steps[0].instance->ReflectGetInstance() + fi->offset);
-    current.text().set(value);
+    ReflectCopyValue(path, current);
 }
 
 void VCConfiguration::OnAfterSetProperty(ReflectPath& path)

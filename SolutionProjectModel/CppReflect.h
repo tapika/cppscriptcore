@@ -58,10 +58,13 @@ public:
     }
 };
 
-class ReflectRegisterClassInfo
+class SPM_DLLEXPORT ReflectClassTypeNameInfo
 {
 public:
-    ReflectRegisterClassInfo( const char* className, pfuncGetClassInfo func);
+    const char* ClassTypeName;
+
+    // Intellisense does work fully with __if_exists, adding nullptr initialization to get it working.
+    ReflectClassTypeNameInfo( pfuncGetClassInfo func, const char* className = nullptr );
 };
 
 template <class T>
@@ -125,7 +128,7 @@ defines wont expand correctly.
     {                                                           \
         static CppTypeInfoT<className> t;                       \
         if( t.name.GetLength() ) return t;                      \
-        t.name = #className;                                    \
+        t.name = classTypeNameInfo.ClassTypeName;               \
         FieldInfo fi;                                           \
         /* Dump offsets and field names */                      \
         DOFOREACH_SEMICOLON(PUSH_FIELD_INFO,__VA_ARGS__)        \
@@ -257,9 +260,18 @@ public:
         return (T*) this;
     }
 
-    static ReflectRegisterClassInfo _registerClassInfo;
+    static ReflectClassTypeNameInfo classTypeNameInfo;
 };
 
 template <class T>
-ReflectRegisterClassInfo ReflectClassT<T>::_registerClassInfo (typeid(T).name(), &T::GetType);
-
+ReflectClassTypeNameInfo ReflectClassT<T>::classTypeNameInfo(
+    &T::GetType
+    __if_exists(T::ClassTypeName)
+    {
+        ,T::ClassTypeName
+    }
+    __if_not_exists(T::ClassTypeName)
+    {
+        ,typeid(T).name()
+    }
+);

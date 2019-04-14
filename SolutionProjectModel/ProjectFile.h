@@ -18,7 +18,7 @@ public:
     );
 
     void VisitTool(
-        std::function<void(PlatformConfigurationProperties&)> visitConf, 
+        std::function<void(PlatformConfigurationProperties*)> visitConf, 
         CppTypeInfo* confType,      // Type to create, null if just to locate
         const wchar_t* configurationName = nullptr, 
         const wchar_t* platform = nullptr

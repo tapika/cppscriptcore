@@ -240,23 +240,35 @@ DECLARE_ENUM(EGenerateDebugInformation, "debuginfo_",
 );
 
 
+class ProjectFile;
+
 class SPM_DLLEXPORT PlatformConfigurationProperties
 {
 public:
+    ProjectFile* projectFile;
+
     // So can safely delete by base pointer.
     virtual ~PlatformConfigurationProperties() { }
 
     // Configuration name / platform of specific configuration
     std::wstring configurationName;
     std::wstring platform;
-
-    pugi::xml_node node;
-
 };
 
-class SPM_DLLEXPORT CustomBuildToolProperties : public PlatformConfigurationProperties, public ReflectClassT<CustomBuildToolProperties>
+
+class SPM_DLLEXPORT ProjectToolProperties : public PlatformConfigurationProperties
 {
 public:
+    virtual void OnAfterSetProperty(ReflectPath& path);
+};
+
+class SPM_DLLEXPORT CustomBuildToolProperties : public ProjectToolProperties, public ReflectClassT<CustomBuildToolProperties>
+{
+public:
+    inline static const char* ClassTypeName = "CustomBuild";
+
+    using ProjectToolProperties::OnAfterSetProperty;
+
     REFLECTABLE(CustomBuildToolProperties,
         // Command line
         (CStringW)Command,

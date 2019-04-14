@@ -20,7 +20,7 @@ ProjectFile::ProjectFile()
 }
 
 void ProjectFile::VisitTool(
-    std::function<void(PlatformConfigurationProperties&)> visitConf, 
+    std::function<void(PlatformConfigurationProperties*)> visitConf, 
     CppTypeInfo* confType,
     const wchar_t* _configurationName, const wchar_t* _platform)
 {
@@ -33,7 +33,7 @@ void ProjectFile::VisitTool(
         if (it != tools.end())
         {
             if(visitConf)
-                visitConf(**it);
+                visitConf((*it).get());
 
             return;
         }
@@ -43,11 +43,13 @@ void ProjectFile::VisitTool(
 
         shared_ptr<PlatformConfigurationProperties> props;
         confType->ReflectCreateInstance(props);
-        props->node = LocateInsert(node, true, as_wide(confType->name).c_str(), configurationName, platform);
+        props->platform = platform;
+        props->configurationName = configurationName;
+        props->projectFile = this;
         tools.push_back(props);
 
         if (visitConf)
-            visitConf(*props);
+            visitConf(props.get());
     };
 
     if (_configurationName == nullptr || _platform == nullptr)
@@ -56,7 +58,7 @@ void ProjectFile::VisitTool(
         (
             [&](VCConfiguration& c)
             {
-                visitTool(c.platform.c_str(), c.configurationName.c_str());
+                visitTool(c.configurationName.c_str(), c.platform.c_str());
             },
             _configurationName, _platform
         );

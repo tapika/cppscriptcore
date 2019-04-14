@@ -36,4 +36,6 @@ public:
 };
 
 void ReflectCopy(ReflectPath& path, pugi::xml_node toNode);
+void ReflectCopyValue(ReflectPath& path, pugi::xml_node node);
+
 

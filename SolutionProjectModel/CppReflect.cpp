@@ -1,11 +1,12 @@
 #include "pch.h"
+#include <regex>
 #include "CppReflect.h"
 #include "../pugixml/pugixml.hpp"          //pugi::xml_node
 #include "boolinq.h"
 
 using namespace pugi;
 using namespace boolinq;
-
+using namespace std;
 
 std::map< std::string, pfuncGetClassInfo > CppTypeInfo::classNameToClassInfo;
 
@@ -28,12 +29,12 @@ int CppTypeInfo::GetFieldIndex(const char* name)
     return -1;
 }
 
-
-ReflectRegisterClassInfo::ReflectRegisterClassInfo(const char* className, pfuncGetClassInfo func)
+ReflectClassTypeNameInfo::ReflectClassTypeNameInfo(pfuncGetClassInfo func, const char* className)
 {
     if (strncmp(className, "class ", 6) == 0)
         className += 6;
 
+    ClassTypeName = className;
     CppTypeInfo::classNameToClassInfo[className] = func;
 }
 
