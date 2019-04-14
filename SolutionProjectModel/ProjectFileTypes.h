@@ -239,6 +239,30 @@ DECLARE_ENUM(EGenerateDebugInformation, "debuginfo_",
 );
 
 
+class SPM_DLLEXPORT BuildToolProperties
+{
+};
+
+class SPM_DLLEXPORT CustomBuildToolProperties : BuildToolProperties, ReflectClassT<CustomBuildToolProperties>
+{
+public:
+    REFLECTABLE(CustomBuildToolProperties,
+        // Command line
+        (CStringW)Command,
+        // Description. Use empty string to supress message printing.
+        (CStringW)Message,
+        // Outputs
+        (CStringW)Outputs,
+        // Additional dependencies
+        (CStringW)AdditionalInputs,
+        // Specify whether the inputs and outputs files with specific extension are passed to linker.
+        (bool)LinkObjects,
+        (bool)ExcludedFromBuild
+    );
+};
+
+
+
 class SPM_DLLEXPORT LinkerSystemConf: ReflectClassT<LinkerSystemConf>
 {
 public:

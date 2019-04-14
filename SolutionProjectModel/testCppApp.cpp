@@ -9,7 +9,7 @@ void main(void)
     Project p(L"HelloWorld");
 
     p.SetSaveDirectory(L".");
-    p.AddPlatform("x64");
+    p.AddPlatform(L"x64");
     p.AddFiles({ L"helloWorld.cpp" });
 
     p.VisitConfigurations( 

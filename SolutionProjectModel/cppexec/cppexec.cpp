@@ -121,7 +121,7 @@ int _wmain(int argc, wchar_t** argv)
 
     Project p(scriptToRun.stem().c_str());
     p.SetSaveDirectory(projectDir.c_str());
-    p.AddPlatform("x64");
+    p.AddPlatform(L"x64");
     p.File(scriptToRun.c_str(), true);
 
     p.VisitConfigurations(

@@ -60,11 +60,11 @@ public:
     //
     // Add support for platform or configuration, if not yet added.
     //
-    void AddPlatform(const char* platform);
-    void AddPlatforms(std::initializer_list<std::string> _platforms);
+    void AddPlatform(const wchar_t* platform);
+    void AddPlatforms(std::initializer_list<std::wstring> _platforms);
 
-    void AddConfiguration(const char* configuration);
-    void AddConfigurations(std::initializer_list<std::string> _configuration);
+    void AddConfiguration(const wchar_t* configuration);
+    void AddConfigurations(std::initializer_list<std::wstring> _configuration);
 
     //
     // Queries for currently selected toolset, if none is selected, tries to determine from visual studio format version
@@ -84,7 +84,7 @@ public:
     //
     // Visits each project configuration, if configurationName & platformName - uses additional filtering, otherwise visits all configurations.
     //
-    void VisitConfigurations( std::function<void (VCConfiguration&)> visitConf, const char* configurationName = nullptr, const char* platformName = nullptr );
+    void VisitConfigurations( std::function<void (VCConfiguration&)> visitConf, const wchar_t* configurationName = nullptr, const wchar_t* platformName = nullptr );
 
 
 protected:
@@ -95,15 +95,15 @@ protected:
     std::wstring saveDir;
 
     //  "Win32", "х64", ...
-    std::vector<std::string> platforms;
+    std::vector<std::wstring> platforms;
 
     //  "Debug", "Release", user defined
-    std::vector<std::string> configurationNames;
+    std::vector<std::wstring> configurationNames;
 
     //
     //  Gets current configuration names, if not initialized yet, returns default "Debug" / "Release" set.
     //
-    std::vector<std::string>& GetConfigurationNames();
+    std::vector<std::wstring>& GetConfigurationNames();
 
     // Project settings
     std::vector< std::shared_ptr<VCConfiguration> > configurations;
@@ -136,6 +136,10 @@ protected:
     //
     // Platforms or Configurations arrays updated, bPlatforms == true - platforms false = configurations, bAdd = true - added, bAdd = false - removed.
     //
-    void PlatformConfigurationsUpdated(std::initializer_list<std::string> items, bool bPlatforms, bool bAdd);
+    void PlatformConfigurationsUpdated(std::initializer_list<std::wstring> items, bool bPlatforms, bool bAdd);
 };
+
+pugi::xml_node LocateInsert(pugi::xml_node current, bool asChild, const wchar_t* name2select,
+    const wchar_t* confName, const wchar_t* platform, const wchar_t* label = nullptr, bool bLabelAfterCondition = true);
+
 

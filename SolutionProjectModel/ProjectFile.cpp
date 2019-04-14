@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ProjectFile.h"
+#include "Project.h"
 #include <filesystem>
 #include <algorithm>
 
@@ -16,6 +17,14 @@ ProjectFile::ProjectFile()
 {
     ReflectConnectChildren(nullptr);
 }
+
+void ProjectFile::VisitTool(std::function<void(BuildToolProperties&)> visitConf, const char* configurationName, const char* platformName)
+{
+    if(!project)
+        return;
+
+}
+
 
 //
 // Generic autoprobe - file extension to guessed type.

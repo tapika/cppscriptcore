@@ -125,22 +125,22 @@ wstring Project::GetGuid(void)
 }
 
 
-void Project::AddPlatform(const char* platform)
+void Project::AddPlatform(const wchar_t* platform)
 {
     AddPlatforms({ platform });
 }
 
-void Project::AddPlatforms(initializer_list<string> _platforms)
+void Project::AddPlatforms(initializer_list<wstring> _platforms)
 {
     PlatformConfigurationsUpdated(_platforms, true, true);
 }
 
-void Project::AddConfiguration(const char* configuration)
+void Project::AddConfiguration(const wchar_t* configuration)
 {
     AddConfigurations( { configuration } );
 }
 
-void Project::AddConfigurations(std::initializer_list<std::string> _configurations)
+void Project::AddConfigurations(std::initializer_list<std::wstring> _configurations)
 {
     PlatformConfigurationsUpdated(_configurations, false, true);
 }
@@ -148,16 +148,16 @@ void Project::AddConfigurations(std::initializer_list<std::string> _configuratio
 const wchar_t* PropertyGroup = L"PropertyGroup";
 
 
-vector<string>& Project::GetConfigurationNames()
+vector<wstring>& Project::GetConfigurationNames()
 {
     if (configurationNames.size() == 0)
     {
-        static vector<string> dummyDefaults;
+        static vector<wstring> dummyDefaults;
 
         if (dummyDefaults.size() == 0)
         {
-            dummyDefaults.push_back("Debug");
-            dummyDefaults.push_back("Release");
+            dummyDefaults.push_back(L"Debug");
+            dummyDefaults.push_back(L"Release");
         }
 
         return dummyDefaults;
@@ -171,15 +171,9 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
 {
     xml_node next, current = project().first_child();
     wstring name2select = _name2select;
-    wstring label;
-
-    if(_label)
-        label = _label;
 
     wstring name;
-    xml_node selected;
     bool bLabelAfterCondition = false;
-
 
     if( name2select == L"ImportGroup")
     {
@@ -211,20 +205,46 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
         }
     }
 
-    
-    // Locate node if exists
-    for (next = current.next_sibling(); !next.empty(); current = next, next = next.next_sibling())
+    return LocateInsert(current, false, _name2select, confName, platform, _label, bLabelAfterCondition);
+}
+
+
+//
+//  Locates xml node for specific configuration / platform, and appends new xml code if not found.
+//  name2select specifies xml node name, 
+//  label specifies additional selector / label xml attribute.
+//
+xml_node LocateInsert( xml_node current, bool asChild, const wchar_t* name2select,
+    const wchar_t* confName, const wchar_t* platform, const wchar_t* label, bool bLabelAfterCondition )
+{
+    xml_node next;
+    wstring name;
+    xml_attribute attr;
+    xml_node selected;
+
+    if(label && *label == 0)
+        label = nullptr;
+
+    if( asChild )
+        next = current.first_child();
+    else
+        next = current.next_sibling();
+
+    for (; !next.empty(); current = next, next = next.next_sibling())
     {
         name = next.name();
-        if( name != name2select )
+        if (name != name2select)
             break;
 
-        auto attr = next.attribute(L"Label");
-        if( label != attr.value() )
-            break;
+        if( label )
+        {
+            auto attr = next.attribute(L"Label");
+            if (wcscmp(label,attr.value()) != 0)
+                break;
+        }
 
         attr = next.attribute(L"Condition");
-        if( attr.empty() )
+        if (attr.empty())
         {
             selected = next;
             break;
@@ -233,22 +253,30 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
         static wregex reEqual(L"'(.*?)'=='(.*)'");
         wstring attrValue(attr.value());
         wsmatch sm;
-        if( !regex_search(attrValue, sm, reEqual) )
+        if (!regex_search(attrValue, sm, reEqual))
             continue;
     }
 
     // Insert new node if does not exists already.
-    if( selected.empty() )
+    if (selected.empty())
     {
-        selected = current.parent().insert_child_after(_name2select, current);
+        if (asChild)
+        {
+            if(current.empty())
+                selected = current.append_child(name2select);
+            else
+                selected = current.insert_child_after(name2select, current);
+        }
+        else
+            selected = current.parent().insert_child_after(name2select, current);
         selected.append_attribute(L"Condition").set_value(wformat(L"'$(Configuration)|$(Platform)'=='%s|%s'", confName, platform).c_str());
 
-        if( label.length() )
+        if (label)
         {
             if (bLabelAfterCondition)
-                selected.prepend_attribute(L"Label").set_value(_label);
+                selected.prepend_attribute(L"Label").set_value(label);
             else
-                selected.append_attribute(L"Label").set_value(_label);
+                selected.append_attribute(L"Label").set_value(label);
         }
     }
 
@@ -257,24 +285,24 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
 
 
 
-void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool bPlatforms, bool bAdd)
+void Project::PlatformConfigurationsUpdated(initializer_list<wstring> items, bool bPlatforms, bool bAdd)
 {
-    vector<string>* pConfigurations = &configurationNames;
+    vector<wstring>* pConfigurations = &configurationNames;
 
     if (configurationNames.size() == 0)
     {
         if (bPlatforms)
             pConfigurations = &GetConfigurationNames();
         else
-            PlatformConfigurationsUpdated({ "Debug" , "Release" }, false, false);
+            PlatformConfigurationsUpdated({ L"Debug" , L"Release" }, false, false);
     }
     
-    vector<string>* listMain = (bPlatforms) ? &platforms : pConfigurations;
-    vector<string>* list2 = (bPlatforms) ? pConfigurations : &platforms;
+    vector<wstring>* listMain = (bPlatforms) ? &platforms : pConfigurations;
+    vector<wstring>* list2 = (bPlatforms) ? pConfigurations : &platforms;
 
-    for (initializer_list<string>::iterator i = items.begin(); i != items.end(); i++)
+    for (initializer_list<wstring>::iterator i = items.begin(); i != items.end(); i++)
     {
-        const string& name = *i;
+        const wstring& name = *i;
         const auto& it = find(listMain->begin(), listMain->end(), name);
         bool found = it != listMain->end();
 
@@ -301,8 +329,8 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
         for (int j = from; j != to; j += inc)
         {
             int to;         // Index where to insert / from where to remove within single configuration array
-            string platform;
-            string configuration;
+            wstring platform;
+            wstring configuration;
 
             if (bPlatforms)
             {
@@ -317,9 +345,7 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 configuration = name;
             }
 
-            wstring wConfigurationName = as_wide(configuration);
-            wstring wPlatform = as_wide(platform);
-            wstring platformConfiguration = as_wide(configuration + "|" + platform);
+            wstring platformConfiguration = configuration + L"|" + platform;
             shared_ptr<VCConfiguration> conf = nullptr;
 
             if (bAdd)
@@ -327,8 +353,8 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 conf.reset(new VCConfiguration());
                 configurations.insert(configurations.begin() + to, conf);
                 conf->project = this;
-                conf->configurationName = wConfigurationName;
-                conf->platform = wPlatform;
+                conf->configurationName = configuration;
+                conf->platform = platform;
                 to--;   //Xml node backshift - previous node after which to insert.
             }
 
@@ -352,14 +378,14 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 else
                     pc = itemGroup.append_child(ProjectConfiguration);
 
-                pc.append_child(L"Configuration").text().set(as_wide(configuration).c_str());
-                pc.append_child(L"Platform").text().set(as_wide(platform).c_str());
+                pc.append_child(L"Configuration").text().set(configuration.c_str());
+                pc.append_child(L"Platform").text().set(platform.c_str());
                 pc.append_attribute(L"Include").set_value( platformConfiguration.c_str() );
             }
             else
                 itemGroup.remove_child(c);
 
-            xml_node node = selectProjectNodes(L"PropertyGroup", L"Configuration", wConfigurationName.c_str(), wPlatform.c_str());
+            xml_node node = selectProjectNodes(L"PropertyGroup", L"Configuration", configuration.c_str(), platform.c_str());
 
             if( bAdd )
             {
@@ -371,7 +397,7 @@ void Project::PlatformConfigurationsUpdated(initializer_list<string> items, bool
                 general.CharacterSet = charset_Unicode;
             }
 
-            node = selectProjectNodes(L"ImportGroup", L"PropertySheets", wConfigurationName.c_str(), wPlatform.c_str());
+            node = selectProjectNodes(L"ImportGroup", L"PropertySheets", configuration.c_str(), platform.c_str());
 
             if (bAdd)
             {
@@ -485,6 +511,7 @@ ProjectFile* Project::File(const wchar_t* file, bool add)
 
     shared_ptr<ProjectFile> p(new ProjectFile());
     p->relativePath = relativePath;
+    p->project = this;
     p->node = itemGroup.append_child(as_wide(EnumToString(newType)).c_str());
     p->node.append_attribute(L"Include").set_value(relativePath.c_str());
     files.push_back(p);
@@ -494,9 +521,9 @@ ProjectFile* Project::File(const wchar_t* file, bool add)
 //
 // Visits each project configuration, if configurationName & platformName - uses additional filtering, otherwise visits all configurations.
 //
-void Project::VisitConfigurations(std::function<void (VCConfiguration&)> visitConf, const char* configurationName, const char* platformName)
+void Project::VisitConfigurations(std::function<void (VCConfiguration&)> visitConf, const wchar_t* configurationName, const wchar_t* platformName)
 {
-    vector<string>& confNames = GetConfigurationNames();
+    vector<wstring>& confNames = GetConfigurationNames();
     for (size_t p = 0; p < platforms.size(); p++)
         for( size_t c = 0; c < confNames.size(); c++)
         {
@@ -546,10 +573,10 @@ bool Project::Load(const wchar_t* file)
     for (xml_node conf : node.children())
     {
         const wchar_t* xmltag[] = { L"Configuration" , L"Platform" };
-        void (Project::*func [])(const char*) = { &Project::AddConfiguration, &Project::AddPlatform };
+        void (Project::*func [])(const wchar_t*) = { &Project::AddConfiguration, &Project::AddPlatform };
 
         for( int i = 0; i < _countof(xmltag); i++)
-            (this->*func[i])( as_utf8(conf.child(xmltag[i]).text().get()).c_str() );
+            (this->*func[i])( conf.child(xmltag[i]).text().get() );
     }
 
     return true;
