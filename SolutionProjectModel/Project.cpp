@@ -217,7 +217,7 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
 xml_node LocateInsert( xml_node current, bool asChild, const wchar_t* name2select,
     const wchar_t* confName, const wchar_t* platform, const wchar_t* label, bool bLabelAfterCondition )
 {
-    xml_node next;
+    xml_node next, parent;
     wstring name;
     xml_attribute attr;
     xml_node selected;
@@ -226,7 +226,11 @@ xml_node LocateInsert( xml_node current, bool asChild, const wchar_t* name2selec
         label = nullptr;
 
     if( asChild )
+    {
+        parent = current;
         next = current.first_child();
+        current = xml_node();
+    }
     else
         next = current.next_sibling();
 
@@ -263,9 +267,9 @@ xml_node LocateInsert( xml_node current, bool asChild, const wchar_t* name2selec
         if (asChild)
         {
             if(current.empty())
-                selected = current.append_child(name2select);
+                selected = parent.append_child(name2select);
             else
-                selected = current.insert_child_after(name2select, current);
+                selected = parent.insert_child_after(name2select, current);
         }
         else
             selected = current.parent().insert_child_after(name2select, current);

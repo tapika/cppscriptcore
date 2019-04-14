@@ -4,6 +4,7 @@
 #include "MacroHelpers.h"             //DOFOREACH_SEMICOLON
 #include <memory>                     //shared_ptr
 #include <vector>
+#include <string>
 
 // warning C4275: non dll-interface class 'pugi::xml_document' used as base for dll-interface class 'Solution'
 #pragma warning( disable: 4275 )
@@ -18,22 +19,58 @@
 #endif
 
 class FieldInfo;
+class ReflectClass;
+
+
+typedef CppTypeInfo& (*pfuncGetClassInfo)();
+
 class SPM_DLLEXPORT CppTypeInfo
 {
 public:
+    static std::map< std::string, pfuncGetClassInfo > classNameToClassInfo;
+
     //  Type (class) name
     CStringA name;
     std::vector<FieldInfo> fields;
 
-    //
     // Gets field by name, nullptr if not found.
-    //
     FieldInfo* GetField(const char* name);
 
-    //
     // Get field index, -1 if not found.
-    //
     int GetFieldIndex(const char* name);
+
+    //  Creates new class instance, converts it to ReflectClass* base class
+    virtual ReflectClass* ReflectCreateInstance() = 0;
+
+    //  Creates new class instance, tries to convert it to T - if ok, assigns it to shared_ptr
+    template <class T>
+    void ReflectCreateInstance( std::shared_ptr<T>& ptr )
+    {
+        ReflectClass* base = ReflectCreateInstance();
+        T* t = dynamic_cast<T*>(base);
+        if(!t)
+        {
+            delete base;
+            return;
+        }
+
+        ptr.reset(t);
+    }
+};
+
+class ReflectRegisterClassInfo
+{
+public:
+    ReflectRegisterClassInfo( const char* className, pfuncGetClassInfo func);
+};
+
+template <class T>
+class CppTypeInfoT : public CppTypeInfo
+{
+    ReflectClass* ReflectCreateInstance()
+    {
+        return new T;
+    }
 };
 
 
@@ -86,7 +123,7 @@ defines wont expand correctly.
                                                                 \
     static CppTypeInfo& GetType()                               \
     {                                                           \
-        static CppTypeInfo t;                                   \
+        static CppTypeInfoT<className> t;                       \
         if( t.name.GetLength() ) return t;                      \
         t.name = #className;                                    \
         FieldInfo fi;                                           \
@@ -219,5 +256,10 @@ public:
     {
         return (T*) this;
     }
+
+    static ReflectRegisterClassInfo _registerClassInfo;
 };
+
+template <class T>
+ReflectRegisterClassInfo ReflectClassT<T>::_registerClassInfo (typeid(T).name(), &T::GetType);
 

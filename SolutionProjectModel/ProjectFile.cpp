@@ -5,6 +5,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace pugi;
 using namespace std::filesystem;
 
 string lowercased( string s )
@@ -18,11 +19,52 @@ ProjectFile::ProjectFile()
     ReflectConnectChildren(nullptr);
 }
 
-void ProjectFile::VisitTool(std::function<void(BuildToolProperties&)> visitConf, const char* configurationName, const char* platformName)
+void ProjectFile::VisitTool(
+    std::function<void(PlatformConfigurationProperties&)> visitConf, 
+    CppTypeInfo* confType,
+    const wchar_t* _configurationName, const wchar_t* _platform)
 {
     if(!project)
         return;
 
+    function<void(const wchar_t*, const wchar_t*)> visitTool = [&]( const wchar_t* configurationName, const wchar_t* platform )
+    {
+        auto it = find_if(tools.begin(), tools.end(), [&](auto& t) { return t->platform == platform && t->configurationName == configurationName; });
+        if (it != tools.end())
+        {
+            if(visitConf)
+                visitConf(**it);
+
+            return;
+        }
+        
+        if(!confType)
+            return;
+
+        shared_ptr<PlatformConfigurationProperties> props;
+        confType->ReflectCreateInstance(props);
+        props->node = LocateInsert(node, true, as_wide(confType->name).c_str(), configurationName, platform);
+        tools.push_back(props);
+
+        if (visitConf)
+            visitConf(*props);
+    };
+
+    if (_configurationName == nullptr || _platform == nullptr)
+    {
+        project->VisitConfigurations
+        (
+            [&](VCConfiguration& c)
+            {
+                visitTool(c.platform.c_str(), c.configurationName.c_str());
+            },
+            _configurationName, _platform
+        );
+    } 
+    else
+    {
+        visitTool(_configurationName, _platform);
+    }
 }
 
 

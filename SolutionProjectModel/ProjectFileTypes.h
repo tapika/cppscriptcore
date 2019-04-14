@@ -1,4 +1,5 @@
 #pragma once
+#include "../pugixml/pugixml.hpp"           //pugi::xml_node
 #include "EnumReflect.h"
 #include "CppReflect.h"
 
@@ -87,7 +88,7 @@ DECLARE_ENUM(EItemType, "",
     Natvis
 );
 
-class SPM_DLLEXPORT ProjectItemGeneralConf : ReflectClassT<ProjectItemGeneralConf>
+class SPM_DLLEXPORT ProjectItemGeneralConf : public ReflectClassT<ProjectItemGeneralConf>
 {
 public:
     REFLECTABLE(ProjectItemGeneralConf,
@@ -137,7 +138,7 @@ DECLARE_ENUM(EKeyword, "projecttype_",
     projecttype_GradlePackage
 );
 
-class SPM_DLLEXPORT ProjectGlobalConf : ReflectClassT<ProjectGlobalConf>
+class SPM_DLLEXPORT ProjectGlobalConf : public ReflectClassT<ProjectGlobalConf>
 {
 public:
     REFLECTABLE(ProjectGlobalConf,
@@ -239,11 +240,21 @@ DECLARE_ENUM(EGenerateDebugInformation, "debuginfo_",
 );
 
 
-class SPM_DLLEXPORT BuildToolProperties
+class SPM_DLLEXPORT PlatformConfigurationProperties
 {
+public:
+    // So can safely delete by base pointer.
+    virtual ~PlatformConfigurationProperties() { }
+
+    // Configuration name / platform of specific configuration
+    std::wstring configurationName;
+    std::wstring platform;
+
+    pugi::xml_node node;
+
 };
 
-class SPM_DLLEXPORT CustomBuildToolProperties : BuildToolProperties, ReflectClassT<CustomBuildToolProperties>
+class SPM_DLLEXPORT CustomBuildToolProperties : public PlatformConfigurationProperties, public ReflectClassT<CustomBuildToolProperties>
 {
 public:
     REFLECTABLE(CustomBuildToolProperties,
@@ -263,7 +274,7 @@ public:
 
 
 
-class SPM_DLLEXPORT LinkerSystemConf: ReflectClassT<LinkerSystemConf>
+class SPM_DLLEXPORT LinkerSystemConf: public ReflectClassT<LinkerSystemConf>
 {
 public:
     REFLECTABLE(LinkerSystemConf,
@@ -271,7 +282,7 @@ public:
     );
 };
 
-class SPM_DLLEXPORT LinkerDebuggingConf : ReflectClassT<LinkerDebuggingConf>
+class SPM_DLLEXPORT LinkerDebuggingConf : public ReflectClassT<LinkerDebuggingConf>
 {
 public:
     REFLECTABLE(LinkerDebuggingConf,

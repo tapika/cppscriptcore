@@ -6,7 +6,7 @@
 class Project;
 
 
-class SPM_DLLEXPORT VCConfiguration : ReflectClassT<VCConfiguration>
+class SPM_DLLEXPORT VCConfiguration : public PlatformConfigurationProperties, public ReflectClassT<VCConfiguration>
 {
 public:
     Project* project;
@@ -17,31 +17,13 @@ public:
     VCConfiguration() :
         project(nullptr)
     {
-        Init();
-    }
-
-    VCConfiguration(const VCConfiguration& clone) :
-        project(clone.project),
-        configurationName(clone.configurationName),
-        platform(clone.platform)
-    {
-        Init();
-    }
-
-    void Init()
-    {
         // Define configuration "category" (will be used when serializing / restoring)
         Linker.propertyName = "Link";
         CCpp.propertyName = "ClCompile";
         ReflectConnectChildren(nullptr);
     }
 
-
     virtual void OnAfterSetProperty(ReflectPath& path);
-
-    // Configuration name / platform of specific configuration
-    std::wstring configurationName;
-    std::wstring platform;
 
     //
     // Individual tools settings, depending on project type (static library, dynamic library) individual tool configuration is not necessarily used.

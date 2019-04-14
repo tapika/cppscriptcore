@@ -7,6 +7,9 @@ using namespace pugi;
 using namespace boolinq;
 
 
+std::map< std::string, pfuncGetClassInfo > CppTypeInfo::classNameToClassInfo;
+
+
 FieldInfo* CppTypeInfo::GetField(const char* name)
 {
     for( auto& f: fields )
@@ -23,6 +26,15 @@ int CppTypeInfo::GetFieldIndex(const char* name)
             return (int)i;
 
     return -1;
+}
+
+
+ReflectRegisterClassInfo::ReflectRegisterClassInfo(const char* className, pfuncGetClassInfo func)
+{
+    if (strncmp(className, "class ", 6) == 0)
+        className += 6;
+
+    CppTypeInfo::classNameToClassInfo[className] = func;
 }
 
 //

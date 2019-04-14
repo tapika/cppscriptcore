@@ -9,7 +9,7 @@
 //  Project
 //---------------------------------------------------------
 class SPM_DLLEXPORT Project :
-    ReflectClassT<Project>,
+    public ReflectClassT<Project>,
     pugi::xml_document
 {
 public:

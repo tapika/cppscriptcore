@@ -27,6 +27,12 @@ void main(void)
 
     auto f = p.File(L"..\\SolutionProjectModel.dll", true);
     f->General.ItemType = CustomBuild;
+    //f->VisitTool(nullptr, &CustomBuildToolProperties::GetType());
+    f->VisitTool(
+        [](PlatformConfigurationProperties&)
+        {
+        }
+    , &CustomBuildToolProperties::GetType());
 
 
 

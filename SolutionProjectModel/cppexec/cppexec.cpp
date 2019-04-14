@@ -7,7 +7,7 @@ using namespace std;
 using namespace filesystem;
 
 
-class CommandLineArguments : ReflectClassT<CommandLineArguments>
+class CommandLineArguments : public ReflectClassT<CommandLineArguments>
 {
 public:
     CommandLineArguments(): 
