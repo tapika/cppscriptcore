@@ -31,7 +31,12 @@ void main(void)
         [](PlatformConfigurationProperties* props)
         {
             CustomBuildToolProperties& custtool= *((CustomBuildToolProperties*)props);
-            custtool.Command = "echo Hello world";
+            CStringW cmd = "..\\cppexec.exe %(FullPath) >$(IntermediateOutputPath)%(Filename).def";
+            cmd += "\n";
+            cmd += "lib /nologo /def:$(IntermediateOutputPath)%(Filename).def /machine:$(Platform) /out:$(IntermediateOutputPath)%(Filename)_lib.lib";
+            custtool.Message = "Generating static library for %(Identity)...";
+            custtool.Command = cmd;
+            custtool.Outputs = "$(IntermediateOutputPath)%(Filename)_lib.lib";
         }
     , &CustomBuildToolProperties::GetType());
 
