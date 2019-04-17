@@ -5,7 +5,14 @@
 #include <algorithm>            //transform
 using namespace std;
 using namespace filesystem;
+#include <comdef.h>             //_COM_SMARTPTR_TYPEDEF
+#include <Setup.Configuration.h>
 
+_COM_SMARTPTR_TYPEDEF(ISetupConfiguration, __uuidof(ISetupConfiguration));
+_COM_SMARTPTR_TYPEDEF(IEnumSetupInstances, __uuidof(IEnumSetupInstances));
+_COM_SMARTPTR_TYPEDEF(ISetupInstance, __uuidof(ISetupInstance));
+_COM_SMARTPTR_TYPEDEF(ISetupInstanceCatalog, __uuidof(ISetupInstanceCatalog));
+_COM_SMARTPTR_TYPEDEF(ISetupPropertyStore, __uuidof(ISetupPropertyStore));
 
 class CommandLineArguments : public ReflectClassT<CommandLineArguments>
 {
@@ -31,6 +38,13 @@ string getFileExtension( const wchar_t* filePath )
     transform(ext.begin(), ext.end(), ext.begin(), tolower);
     return ext;
 }
+
+typedef struct
+{
+    int     version;
+    wstring InstallPath;
+}VisualStudioInfo;
+
 
 
 int _wmain(int argc, wchar_t** argv)
@@ -161,6 +175,57 @@ int _wmain(int argc, wchar_t** argv)
     {
         printf("Error: Could not save project file '%S'", scriptToRun.stem().c_str() );
         return -4;
+    }
+
+    // Idea copied from vswhere, except whole implementation was re-written from scratch.
+    ISetupConfigurationPtr setupCfg;
+    IEnumSetupInstancesPtr enumInstances;
+
+    vector<VisualStudioInfo> instances;
+    auto lcid = GetUserDefaultLCID();
+
+    function< void(HRESULT)> hrc = [](HRESULT hr)
+    {
+        if (FAILED(hr))
+            throw _com_error(hr);
+    };
+
+    try {
+        hrc(CoInitialize(nullptr));
+        hrc(setupCfg.CreateInstance(__uuidof(SetupConfiguration)));
+        hrc(setupCfg->EnumInstances(&enumInstances));
+
+        while(true)
+        {
+            ISetupInstance* p = nullptr;
+            unsigned long ul = 0;
+            HRESULT hr = enumInstances->Next(1, &p, &ul);
+            if (hr != S_OK )
+                break;
+
+            ISetupInstancePtr setupi(p, false);
+            ISetupInstanceCatalogPtr instanceCatalog;
+            ISetupPropertyStorePtr store;
+            hrc(setupi->QueryInterface(&instanceCatalog));
+            hrc(instanceCatalog->GetCatalogInfo(&store));
+
+            CComVariant v;
+            hrc(store->GetValue(L"productLineVersion", &v));
+
+            VisualStudioInfo vsinfo;
+            vsinfo.version = atoi(CStringA(v).GetBuffer());
+            CComBSTR instpath;
+            // GetDisplayName can be used to get name of instance.
+            hrc(setupi->GetInstallationPath(&instpath));
+            vsinfo.InstallPath = instpath;
+            instances.push_back(vsinfo);
+        }
+        
+        CoUninitialize();
+    }                        
+    catch (_com_error ce)
+    {
+        printf("Error: %S\n", ce.ErrorMessage());
     }
 
     return 0;
