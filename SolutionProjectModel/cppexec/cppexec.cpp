@@ -35,8 +35,8 @@ string getFileExtension( const wchar_t* filePath )
 
 int _wmain(int argc, wchar_t** argv)
 {
-    path exePath(argv[0]);
-    auto exeDir = weakly_canonical(exePath).parent_path();
+    path exePath = weakly_canonical(argv[0]);
+    auto exeDir = exePath.parent_path();
     path scriptToRun;
 
     for (auto& pit : directory_iterator(exeDir))
@@ -131,13 +131,31 @@ int _wmain(int argc, wchar_t** argv)
             c.General.OutDir = LR"(.\)";
             c.General.UseDebugLibraries = true;
             c.General.LinkIncremental = true;
+            c.General.ConfigurationType = conftype_DynamicLibrary;
             c.CCpp.Optimization.Optimization = optimization_Disabled;
-            c.CCpp.General.AdditionalIncludeDirectories = exeDir.append("SolutionProjectModel").c_str();
+            c.CCpp.General.AdditionalIncludeDirectories = path(exeDir).append("SolutionProjectModel").c_str();
             c.CCpp.Language.LanguageStandard = cpplang_stdcpp17;
             c.Linker.System.SubSystem = subsystem_Windows;
             c.Linker.Debugging.GenerateDebugInformation = debuginfo_true;
         }
     );
+
+    auto dll = path(exeDir).append("SolutionProjectModel.dll");
+    auto f = p.File(dll.c_str(), true);
+    f->General.ItemType = CustomBuild;
+    auto exePathRelative = relative(exePath, projectDir);
+    f->VisitTool(
+        [&](PlatformConfigurationProperties* props)
+        {
+            CustomBuildToolProperties& custtool = *((CustomBuildToolProperties*)props);
+            CStringW cmd = CStringW("\"") + exePathRelative.c_str() + "\" %(FullPath) >$(IntermediateOutputPath)%(Filename).def";
+            cmd += "\n";
+            cmd += "lib /nologo /def:$(IntermediateOutputPath)%(Filename).def /machine:$(Platform) /out:$(IntermediateOutputPath)%(Filename)_lib.lib";
+            custtool.Message = "Generating static library for %(Identity)...";
+            custtool.Command = cmd;
+            custtool.Outputs = "$(IntermediateOutputPath)%(Filename)_lib.lib";
+        }
+    , &CustomBuildToolProperties::GetType());
 
     if( !p.Save() )
     {

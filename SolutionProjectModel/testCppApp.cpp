@@ -4,7 +4,7 @@
 using namespace std;
 using namespace filesystem;
 
-void main(void)
+void __declspec(dllexport) main(void)
 {
     Project p(L"HelloWorld");
 
