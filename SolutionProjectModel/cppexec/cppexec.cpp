@@ -113,7 +113,7 @@ int _wmain(int argc, wchar_t** argv)
         }
     }
 
-    if(scriptToRun.empty())
+    if(scriptToRun.empty() && !cmdargs.location)
     {
         printf("Usage: %S [options] <.cpp script to run>\r\n", exePath.filename().c_str());
         printf("where options could be:\r\n");
