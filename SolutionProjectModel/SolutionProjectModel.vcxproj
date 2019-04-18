@@ -201,6 +201,7 @@
     <ClCompile Include="ProjectFile.cpp" />
     <ClCompile Include="ProjectFileTypes.cpp" />
     <ClCompile Include="Solution.cpp" />
+    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="VCConfiguration.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -215,6 +216,7 @@
     <ClInclude Include="ProjectFile.h" />
     <ClInclude Include="Solution.h" />
     <ClInclude Include="ProjectFileTypes.h" />
+    <ClInclude Include="helpers.h" />
     <ClInclude Include="TypeTraits.h" />
     <ClInclude Include="VCConfiguration.h" />
   </ItemGroup>

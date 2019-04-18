@@ -68,6 +68,13 @@ wstring Project::GetSaveDirectory()
     return dir;
 }
 
+wstring Project::GetProjectSaveLocation()
+{
+    auto file = GetSaveDirectory();
+    file += L"\\" + name + L".vcxproj";
+    return file;
+}
+
 
 void Project::SetVsVersion(int _vsVersion)
 {

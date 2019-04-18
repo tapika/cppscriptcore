@@ -1,5 +1,6 @@
 #include "..\Project.h"
 #include "expdef.h"             //printPeExports
+#include "..\helpers.h"
 #include <filesystem>
 #include <atlconv.h>            //CW2A
 #include <algorithm>            //transform
@@ -177,30 +178,34 @@ int _wmain(int argc, wchar_t** argv)
         return -4;
     }
 
-    // Idea copied from vswhere, except whole implementation was re-written from scratch.
-    ISetupConfigurationPtr setupCfg;
-    IEnumSetupInstancesPtr enumInstances;
-
     vector<VisualStudioInfo> instances;
-    auto lcid = GetUserDefaultLCID();
 
-    function< void(HRESULT)> hrc = [](HRESULT hr)
+    // Idea copied from vswhere, except whole implementation was re-written from scratch.
     {
-        if (FAILED(hr))
-            throw _com_error(hr);
-    };
+        ISetupConfigurationPtr setupCfg;
+        IEnumSetupInstancesPtr enumInstances;
 
-    try {
+        auto lcid = GetUserDefaultLCID();
+
+        function<void(HRESULT)> hrc = [](HRESULT hr)
+        {
+            if (FAILED(hr))
+            {
+                USES_CONVERSION;
+                throw exception(CW2A(_com_error(hr).ErrorMessage()));
+            }
+        };
+
         hrc(CoInitialize(nullptr));
         hrc(setupCfg.CreateInstance(__uuidof(SetupConfiguration)));
         hrc(setupCfg->EnumInstances(&enumInstances));
 
-        while(true)
+        while (true)
         {
             ISetupInstance* p = nullptr;
             unsigned long ul = 0;
             HRESULT hr = enumInstances->Next(1, &p, &ul);
-            if (hr != S_OK )
+            if (hr != S_OK)
                 break;
 
             ISetupInstancePtr setupi(p, false);
@@ -220,15 +225,45 @@ int _wmain(int argc, wchar_t** argv)
             vsinfo.InstallPath = instpath;
             instances.push_back(vsinfo);
         }
-        
-        CoUninitialize();
-    }                        
-    catch (_com_error ce)
-    {
-        printf("Error: %S\n", ce.ErrorMessage());
     }
+    CoUninitialize();
 
-    return 0;
+    auto it = max_element(instances.begin(), instances.end(), [](auto e1, auto e2) { return e1.version < e2.version; });
+    if (it == instances.end())
+        throw exception("No Visual Studio installation found");
+
+    auto devenv = path(it->InstallPath).append("Common7\\IDE\\devenv.com");
+
+    auto quoted = [](wstring f) -> wstring
+    {
+        return wstring(L"\"") + f + L"\"";
+    };
+
+    wprintf(L"%s: compile... ", scriptToRun.filename().c_str());
+    wstring cmd = wstring(L"cmd /C ") + quoted( quoted(devenv.c_str()) + L" /build " + quoted(L"Debug^|x64") + L" " + quoted(p.GetProjectSaveLocation()) ) + L" >logBuild.txt";
+    // printf("%S\n", cmd.c_str());
+    int error = 0;
+    error = _wsystem(cmd.c_str());
+    if (error != 0)
+        throw exception("Compilation failured");
+
+    auto dllPath = path(projectDir).append(scriptToRun.stem().wstring() + L".dll");
+    if( !exists(dllPath) )
+        throw exception(sFormat("Compilation failed: dll does not exists: '%s'", dllPath.u8string().c_str()).c_str());
+
+    HMODULE h = LoadLibraryW(dllPath.c_str());
+    if (!h)
+        ThrowLastError();
+
+    FARPROC proc = GetProcAddress(h, "main");
+
+    if (!proc)
+        throwFormat("Dll entry point function 'main' not found.");
+
+    printf("execute:\n\n");
+    int r = (int)proc();
+    FreeLibrary(h);
+    return r;
 }
 
 int wmain(int argc, wchar_t** argv)

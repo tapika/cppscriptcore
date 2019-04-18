@@ -12,6 +12,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="ProjectFileTypes.cpp" />
     <ClCompile Include="VCConfiguration.cpp" />
+    <ClCompile Include="helpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solution.h" />
@@ -31,6 +32,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="boolinq.h" />
     <ClInclude Include="VCConfiguration.h" />
+    <ClInclude Include="helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">

@@ -25,6 +25,7 @@ public:
     //  Gets project save directory.
     //
     std::wstring GetSaveDirectory();
+    std::wstring GetProjectSaveLocation();
 
     //
     // Clears existing project
