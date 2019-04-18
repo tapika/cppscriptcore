@@ -19,13 +19,15 @@ class CommandLineArguments : public ReflectClassT<CommandLineArguments>
 {
 public:
     CommandLineArguments(): 
-        _local(false)
+        _local(false),
+        _vs(0)
     {
     
     }
 
     REFLECTABLE(CommandLineArguments,
-        (bool)local
+        (bool)local,
+        (int)vs
     );
 };
 
@@ -95,7 +97,15 @@ int _wmain(int argc, wchar_t** argv)
             continue;
         }
 
-        int findex = type.GetFieldIndex(CW2A(arg+1));
+        string cmdarg(CW2A(arg + 1));
+
+        if( cmdarg == "?" || cmdarg == "h")
+        {
+            scriptToRun.clear();
+            break;
+        }
+
+        int findex = type.GetFieldIndex(cmdarg.c_str());
         if(findex < 0 )
             continue;
 
@@ -120,7 +130,9 @@ int _wmain(int argc, wchar_t** argv)
     {
         printf("Usage: %S [options] <.cpp script to run>\r\n", exePath.filename().c_str());
         printf("where options could be:\r\n");
-        printf("    -local    - Keep generated project locally.\r\n");
+        printf("\r\n");
+        printf("    -local          - Keep generated project next to script.\r\n");
+        printf("    -vs <version>   - use specific Visual studio (2019, 2017...)\r\n");
         return -2;
     }
 
@@ -228,9 +240,22 @@ int _wmain(int argc, wchar_t** argv)
     }
     CoUninitialize();
 
-    auto it = max_element(instances.begin(), instances.end(), [](auto e1, auto e2) { return e1.version < e2.version; });
-    if (it == instances.end())
-        throw exception("No Visual Studio installation found");
+    vector<VisualStudioInfo>::iterator it;
+
+    if(cmdargs.vs != 0)
+    {
+        it = find_if(instances.begin(), instances.end(), [&](auto vsinfo) { return vsinfo.version == cmdargs.vs; });
+
+        if (it == instances.end())
+            throwFormat("Visual studio %d was not found on this machine", cmdargs.vs);
+    }
+    else
+    {
+        it = max_element(instances.begin(), instances.end(), [](auto e1, auto e2) { return e1.version < e2.version; });
+
+        if (it == instances.end())
+            throw exception("No Visual Studio installation found");
+    }
 
     auto devenv = path(it->InstallPath).append("Common7\\IDE\\devenv.com");
 
