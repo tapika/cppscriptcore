@@ -471,7 +471,7 @@ ProjectFile* Project::File(const wchar_t* file, bool add)
         pathFile = path(projectDir).append(file);
 
     pathFile = weakly_canonical(pathFile);
-    wstring relativePath = relative(pathFile, projectDir);
+    wstring relativePath = proximate(pathFile, projectDir);
 
     auto it = find_if(files.begin(), files.end(), [relativePath](auto& f) { return f->relativePath == relativePath; } );
     if( it != files.end() )

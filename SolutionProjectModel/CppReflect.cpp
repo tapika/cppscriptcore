@@ -230,11 +230,8 @@ void ReflectClass::ReflectConnectChildren(ReflectClass* parent)
 
         if (child->propertyName.length() == 0)
         {
-            from( child->GetType().fields ).foreach( [&](FieldInfo fi) 
-                {
-                    mapFieldToIndex[fi.name] = idx++;
-                }
-            );
+            for (auto fi : child->GetType().fields)
+                mapFieldToIndex[fi.name] = idx++;
         }
 
     }
