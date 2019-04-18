@@ -20,6 +20,7 @@ class CommandLineArguments : public ReflectClassT<CommandLineArguments>
 public:
     CommandLineArguments(): 
         _local(false),
+        _location(false),
         _vs(0)
     {
     
@@ -27,6 +28,7 @@ public:
 
     REFLECTABLE(CommandLineArguments,
         (bool)local,
+        (bool)location,
         (int)vs
     );
 };
@@ -133,62 +135,67 @@ int _wmain(int argc, wchar_t** argv)
         printf("\r\n");
         printf("    -local          - Keep generated project next to script.\r\n");
         printf("    -vs <version>   - use specific Visual studio (2019, 2017...)\r\n");
+        printf("    -location       - Only display where Visual studio is located\r\n");
         return -2;
     }
 
     path projectDir;
 
-    if( cmdargs.local )
+    if (cmdargs.local)
         projectDir = scriptToRun.parent_path();
     else
         projectDir = temp_directory_path().append(L"cppscript").append(scriptToRun.stem().c_str());
 
-    if(!exists(projectDir))
-        create_directories(projectDir);
-
     Project p(scriptToRun.stem().c_str());
     p.SetSaveDirectory(projectDir.c_str());
-    p.AddPlatform(L"x64");
-    p.File(scriptToRun.c_str(), true);
 
-    p.VisitConfigurations(
-        [&](VCConfiguration& c)
-        {
-            c.General.IntDir = LR"(obj\$(ProjectName)_$(Configuration)_$(Platform)\)";
-            c.General.OutDir = LR"(.\)";
-            c.General.UseDebugLibraries = true;
-            c.General.LinkIncremental = true;
-            c.General.ConfigurationType = conftype_DynamicLibrary;
-            c.CCpp.Optimization.Optimization = optimization_Disabled;
-            c.CCpp.General.AdditionalIncludeDirectories = path(exeDir).append("SolutionProjectModel").c_str();
-            c.CCpp.Language.LanguageStandard = cpplang_stdcpp17;
-            c.Linker.System.SubSystem = subsystem_Windows;
-            c.Linker.Debugging.GenerateDebugInformation = debuginfo_true;
-        }
-    );
-
-    auto dll = path(exeDir).append("SolutionProjectModel.dll");
-    auto f = p.File(dll.c_str(), true);
-    f->General.ItemType = CustomBuild;
-    auto exePathRelative = relative(exePath, projectDir);
-    f->VisitTool(
-        [&](PlatformConfigurationProperties* props)
-        {
-            CustomBuildToolProperties& custtool = *((CustomBuildToolProperties*)props);
-            CStringW cmd = CStringW("\"") + exePathRelative.c_str() + "\" %(FullPath) >$(IntermediateOutputPath)%(Filename).def";
-            cmd += "\n";
-            cmd += "lib /nologo /def:$(IntermediateOutputPath)%(Filename).def /machine:$(Platform) /out:$(IntermediateOutputPath)%(Filename)_lib.lib";
-            custtool.Message = "Generating static library for %(Identity)...";
-            custtool.Command = cmd;
-            custtool.Outputs = "$(IntermediateOutputPath)%(Filename)_lib.lib";
-        }
-    , &CustomBuildToolProperties::GetType());
-
-    if( !p.Save() )
+    if (!cmdargs.location)
     {
-        printf("Error: Could not save project file '%S'", scriptToRun.stem().c_str() );
-        return -4;
-    }
+        if(!exists(projectDir))
+            create_directories(projectDir);
+
+        p.AddPlatform(L"x64");
+        p.File(scriptToRun.c_str(), true);
+
+        p.VisitConfigurations(
+            [&](VCConfiguration& c)
+            {
+                c.General.IntDir = LR"(obj\$(ProjectName)_$(Configuration)_$(Platform)\)";
+                c.General.OutDir = LR"(.\)";
+                c.General.UseDebugLibraries = true;
+                c.General.LinkIncremental = true;
+                c.General.ConfigurationType = conftype_DynamicLibrary;
+                c.CCpp.Optimization.Optimization = optimization_Disabled;
+                c.CCpp.General.AdditionalIncludeDirectories = path(exeDir).append("SolutionProjectModel").c_str();
+                c.CCpp.Language.LanguageStandard = cpplang_stdcpp17;
+                c.Linker.System.SubSystem = subsystem_Windows;
+                c.Linker.Debugging.GenerateDebugInformation = debuginfo_true;
+            }
+        );
+
+        auto dll = path(exeDir).append("SolutionProjectModel.dll");
+        auto f = p.File(dll.c_str(), true);
+        f->General.ItemType = CustomBuild;
+        auto exePathRelative = relative(exePath, projectDir);
+        f->VisitTool(
+            [&](PlatformConfigurationProperties* props)
+            {
+                CustomBuildToolProperties& custtool = *((CustomBuildToolProperties*)props);
+                CStringW cmd = CStringW("\"") + exePathRelative.c_str() + "\" %(FullPath) >$(IntermediateOutputPath)%(Filename).def";
+                cmd += "\n";
+                cmd += "lib /nologo /def:$(IntermediateOutputPath)%(Filename).def /machine:$(Platform) /out:$(IntermediateOutputPath)%(Filename)_lib.lib";
+                custtool.Message = "Generating static library for %(Identity)...";
+                custtool.Command = cmd;
+                custtool.Outputs = "$(IntermediateOutputPath)%(Filename)_lib.lib";
+            }
+        , &CustomBuildToolProperties::GetType());
+
+        if( !p.Save() )
+        {
+            printf("Error: Could not save project file '%S'", scriptToRun.stem().c_str() );
+            return -4;
+        }
+    } //if
 
     vector<VisualStudioInfo> instances;
 
@@ -248,6 +255,12 @@ int _wmain(int argc, wchar_t** argv)
 
         if (it == instances.end())
             throwFormat("Visual studio %d was not found on this machine", cmdargs.vs);
+
+        if (cmdargs.location)
+        {
+            wprintf(L"%s\n", it->InstallPath.c_str());
+            return 0;
+        }
     }
     else
     {
@@ -255,6 +268,17 @@ int _wmain(int argc, wchar_t** argv)
 
         if (it == instances.end())
             throw exception("No Visual Studio installation found");
+
+        if(cmdargs.location)
+        {
+            for( auto vsinfo: instances)
+            {
+                wprintf(L"Visual studio %d:\n", vsinfo.version);
+                wprintf(L"location: %s\n\n", vsinfo.InstallPath.c_str());
+            }
+
+            return 0;
+        }
     }
 
     auto devenv = path(it->InstallPath).append("Common7\\IDE\\devenv.com");
