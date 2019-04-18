@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "helpers.h"
 #include <atlstr.h>                     //CStringA
+#include <array>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -31,3 +34,20 @@ void ThrowLastError(DWORD code)
     throw exception(GetLastErrorMessageA(code).c_str());
 }
 
+int ExecCmd(const wchar_t* cmd)
+{
+    array<char, 128> buffer;
+    string r;
+    FILE* pipe = _wpopen(cmd, L"r");
+    if (!pipe)
+        throwFormat("Failed to create process '%S'", cmd);
+
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+        r += buffer.data();
+
+    int code = _pclose(pipe);
+    if(code != 0)
+        throwFormat("\n\n%s\n\nCommand '%S'", r.c_str(), cmd);
+
+    return code;
+}

@@ -265,12 +265,9 @@ int _wmain(int argc, wchar_t** argv)
     };
 
     wprintf(L"%s: compile... ", scriptToRun.filename().c_str());
-    wstring cmd = wstring(L"cmd /C ") + quoted( quoted(devenv.c_str()) + L" /build " + quoted(L"Debug^|x64") + L" " + quoted(p.GetProjectSaveLocation()) ) + L" >logBuild.txt";
+    wstring cmd = wstring(L"cmd /C ") + quoted( quoted(devenv.c_str()) + L" /nologo /build " + quoted(L"Debug^|x64") + L" " + quoted(p.GetProjectSaveLocation()) ) + L" 2>&1";
     // printf("%S\n", cmd.c_str());
-    int error = 0;
-    error = _wsystem(cmd.c_str());
-    if (error != 0)
-        throw exception("Compilation failured");
+    ExecCmd(cmd.c_str());
 
     auto dllPath = path(projectDir).append(scriptToRun.stem().wstring() + L".dll");
     if( !exists(dllPath) )

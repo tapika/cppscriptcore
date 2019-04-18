@@ -48,4 +48,5 @@ std::string SPM_DLLEXPORT GetLastErrorMessageA( DWORD code = GetLastError() );
 
 void SPM_DLLEXPORT ThrowLastError( DWORD code = GetLastError() );
 
+int SPM_DLLEXPORT ExecCmd( const wchar_t* cmd );
 
