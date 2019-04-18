@@ -63,7 +63,7 @@ int _wmain(int argc, wchar_t** argv)
         {
             if(scriptToRun.empty())
             {
-                scriptToRun = filePath;
+                scriptToRun = absolute(filePath);
             }
             else
             {
@@ -86,7 +86,7 @@ int _wmain(int argc, wchar_t** argv)
             
             if (ext == ".cpp")
             {
-                scriptToRun = arg;
+                scriptToRun = absolute(arg);
             } else if (ext == ".dll")
             {
                 return printPeExports(arg);
