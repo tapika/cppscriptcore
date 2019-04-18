@@ -116,6 +116,7 @@
     <ClCompile Include="Solution.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="VCConfiguration.cpp" />
+    <ClCompile Include="VisualStudioInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pugixml\pugiconfig.hpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="helpers.h" />
     <ClInclude Include="TypeTraits.h" />
     <ClInclude Include="VCConfiguration.h" />
+    <ClInclude Include="VisualStudioInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\pugixml\pugixml.natvis" />
@@ -142,11 +144,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\boost.1.69.0.0\build\boost.targets" Condition="Exists('packages\boost.1.69.0.0\build\boost.targets')" />
+    <Import Project="packages\Microsoft.VisualStudio.Setup.Configuration.Native.1.16.30\build\native\Microsoft.VisualStudio.Setup.Configuration.Native.targets" Condition="Exists('packages\Microsoft.VisualStudio.Setup.Configuration.Native.1.16.30\build\native\Microsoft.VisualStudio.Setup.Configuration.Native.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\boost.1.69.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\boost.1.69.0.0\build\boost.targets'))" />
+    <Error Condition="!Exists('packages\Microsoft.VisualStudio.Setup.Configuration.Native.1.16.30\build\native\Microsoft.VisualStudio.Setup.Configuration.Native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.VisualStudio.Setup.Configuration.Native.1.16.30\build\native\Microsoft.VisualStudio.Setup.Configuration.Native.targets'))" />
   </Target>
 </Project>

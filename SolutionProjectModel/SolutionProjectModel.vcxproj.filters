@@ -13,6 +13,7 @@
     <ClCompile Include="ProjectFileTypes.cpp" />
     <ClCompile Include="VCConfiguration.cpp" />
     <ClCompile Include="helpers.cpp" />
+    <ClCompile Include="VisualStudioInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solution.h" />
@@ -33,6 +34,7 @@
     <ClInclude Include="boolinq.h" />
     <ClInclude Include="VCConfiguration.h" />
     <ClInclude Include="helpers.h" />
+    <ClInclude Include="VisualStudioInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">

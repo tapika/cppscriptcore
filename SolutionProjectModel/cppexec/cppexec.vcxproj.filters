@@ -7,7 +7,4 @@
   <ItemGroup>
     <ClInclude Include="expdef.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
 </Project>
