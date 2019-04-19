@@ -42,7 +42,7 @@ int ExecCmd(const wchar_t* cmd)
     if (!pipe)
         throwFormat("Failed to create process '%S'", cmd);
 
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+    while (fgets(buffer.data(), (int)buffer.size(), pipe) != nullptr)
         r += buffer.data();
 
     int code = _pclose(pipe);
