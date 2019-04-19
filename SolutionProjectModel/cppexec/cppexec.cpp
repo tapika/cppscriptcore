@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <atlconv.h>                //CW2A
 #include <algorithm>                //transform
+#include <time.h>                   //time
 using namespace std;
 using namespace filesystem;
 
@@ -13,6 +14,7 @@ public:
     CommandLineArguments(): 
         _local(false),
         _location(false),
+        _time(false),
         _vs(0)
     {
     
@@ -21,6 +23,7 @@ public:
     REFLECTABLE(CommandLineArguments,
         (bool)local,
         (bool)location,
+        (bool)time,
         (int)vs
     );
 };
@@ -123,6 +126,9 @@ int _wmain(int argc, wchar_t** argv)
         printf("    -location       - Only display where Visual studio is located\r\n");
         return -2;
     }
+
+    time_t start, end;
+    time(&start);
 
     path projectDir;
 
@@ -245,6 +251,14 @@ int _wmain(int argc, wchar_t** argv)
     printf("execute:\n\n");
     int r = (int)proc();
     FreeLibrary(h);
+
+    if(cmdargs.time)
+    {
+        time(&end);
+        double diff = difftime(end, start);
+        printf("\n\nElapsed time: %.2lf seconds\n", diff);
+    }
+
     return r;
 }
 
