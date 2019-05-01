@@ -8,9 +8,7 @@
 //---------------------------------------------------------
 //  Project
 //---------------------------------------------------------
-class SPM_DLLEXPORT Project :
-    public ReflectClassT<Project>,
-    pugi::xml_document
+class SPM_DLLEXPORT Project : public ReflectClassT<Project>
 {
 public:
     Project();
@@ -122,6 +120,9 @@ protected:
 
     // Platform Toolset, e.g. "v141" (for vs2017), "142" (for vs2019), "Clang_5_0" ...
     std::string toolset;
+
+    // xml document.
+    pugi::xml_document xmldoc;
 
     pugi::xml_node project( );
     pugi::xml_node projectGlobals;

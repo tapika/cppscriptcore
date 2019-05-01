@@ -184,7 +184,7 @@ pugi::xml_node Project::selectProjectNodes(const wchar_t* _name2select, const wc
 
     if( name2select == L"ImportGroup")
     {
-        current = select_node(L"/Project/ImportGroup[@Label='ExtensionSettings']").node();
+        current = xmldoc.select_node(L"/Project/ImportGroup[@Label='ExtensionSettings']").node();
         bLabelAfterCondition = true;
     }
     else
@@ -558,7 +558,7 @@ void Project::New()
     // Reset parsing variables.
     markForPropertyGroup = projectGlobals = xml_node();
     
-    pugi::xml_document::reset();
+    xmldoc.reset();
     guid = GUID_NULL;
     SetVsVersion(2017);     // May change without further notice
 
@@ -574,12 +574,12 @@ void Project::New()
 bool Project::Load(const wchar_t* file)
 {
     New();
-    xml_parse_result res = load_file(file, parse_default | parse_declaration | parse_ws_pcdata_single);
+    xml_parse_result res = xmldoc.load_file(file, parse_default | parse_declaration | parse_ws_pcdata_single);
 
     if (res.status != status_ok)
         return false;
 
-    xml_node node = select_node(L"/Project/ItemGroup[@Label='ProjectConfigurations']").node();
+    xml_node node = xmldoc.select_node(L"/Project/ItemGroup[@Label='ProjectConfigurations']").node();
 
     for (xml_node conf : node.children())
     {
@@ -601,23 +601,23 @@ pugi::xml_node Project::project()
     // Specify utf-8 encoding.
     pugi::xml_node decl;
 
-    for (auto markInsert : children())
+    for (auto markInsert : xmldoc.children())
         if (markInsert.type() == pugi::node_declaration)
             decl = markInsert;
 
     // Xml declaration
     if (decl.empty())
     {
-        decl = prepend_child(pugi::node_declaration);
+        decl = xmldoc.prepend_child(pugi::node_declaration);
         decl.append_attribute(L"version") = L"1.0";
         decl.append_attribute(L"encoding") = L"utf-8";
     }
 
     // Project itself
-    xml_node proj = child(L"Project");
+    xml_node proj = xmldoc.child(L"Project");
     if (proj.empty())
     {
-        proj = append_child(L"Project");
+        proj = xmldoc.append_child(L"Project");
         proj.append_attribute(L"DefaultTargets").set_value(L"Build");
         proj.append_attribute(L"xmlns").set_value(L"http://schemas.microsoft.com/developer/msbuild/2003");
     }
@@ -690,7 +690,7 @@ bool Project::Save(const wchar_t* file)
     if(filesystem::exists(fpath))
         copy(fpath, path(fpath + L".bkp"), copy_options::overwrite_existing);
 
-    bool b  = save_file(fpath.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
+    bool b  = xmldoc.save_file(fpath.c_str(), L"  ", format_indent | format_save_file_text | format_write_bom, encoding_utf8);
     return b;
 }
 
