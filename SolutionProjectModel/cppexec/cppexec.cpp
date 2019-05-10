@@ -5,6 +5,8 @@
 #include <atlconv.h>                //CW2A
 #include <algorithm>                //transform
 #include <time.h>                   //time
+#include "spdlog/spdlog.h"
+
 using namespace std;
 using namespace filesystem;
 
@@ -12,6 +14,7 @@ class CommandLineArguments : public ReflectClassT<CommandLineArguments>
 {
 public:
     CommandLineArguments(): 
+        _autorun(false),
         _local(false),
         _location(false),
         _time(false),
@@ -21,6 +24,7 @@ public:
     }
 
     REFLECTABLE(CommandLineArguments,
+        (bool)autorun,
         (bool)local,
         (bool)location,
         (bool)time,
@@ -45,25 +49,6 @@ int _wmain(int argc, wchar_t** argv)
     path exePath = weakly_canonical(argv[0]);
     auto exeDir = exePath.parent_path();
     path scriptToRun;
-
-    for (auto& pit : directory_iterator(exeDir))
-    {
-        auto& filePath = pit.path();
-        auto ext = getFileExtension(filePath.c_str());
-
-        if( ext == ".cpp")
-        {
-            if(scriptToRun.empty())
-            {
-                scriptToRun = absolute(filePath);
-            }
-            else
-            {
-                scriptToRun.clear();
-                break;
-            }
-        }
-    } //for
 
     auto& type = CommandLineArguments::GetType();
     CommandLineArguments cmdargs;
@@ -116,9 +101,32 @@ int _wmain(int argc, wchar_t** argv)
         }
     }
 
+    if (scriptToRun.empty() && cmdargs.autorun)
+    {
+        for (auto& pit : directory_iterator(exeDir))
+        {
+            auto& filePath = pit.path();
+            auto ext = getFileExtension(filePath.c_str());
+
+            if (ext == ".cpp")
+            {
+                if (scriptToRun.empty())
+                {
+                    scriptToRun = absolute(filePath);
+                }
+                else
+                {
+                    scriptToRun.clear();
+                    break;
+                }
+            }
+        } //for
+    }
+
     if(scriptToRun.empty() && !cmdargs.location)
     {
-        printf("Usage: %S [options] <.cpp script to run>\r\n", exePath.filename().c_str());
+        spdlog::set_pattern("%v");
+        spdlog::info("Usage: {0} [options] <.cpp script to run>\r\n", exePath.filename().u8string().c_str());
         printf("where options could be:\r\n");
         printf("\r\n");
         printf("    -local          - Keep generated project next to script.\r\n");

@@ -14,6 +14,30 @@
     <ClCompile Include="VCConfiguration.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="VisualStudioInfo.cpp" />
+    <ClCompile Include="logTesting\src\gtest.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-death-test.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-filepath.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-matchers.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-port.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-printers.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-test-part.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
+    <ClCompile Include="logTesting\src\gtest-typed-test.cc">
+      <Filter>logTesting</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solution.h" />
@@ -35,10 +59,16 @@
     <ClInclude Include="VCConfiguration.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="VisualStudioInfo.h" />
+    <ClInclude Include="logTesting\src\gtest-internal-inl.h">
+      <Filter>logTesting</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">
       <UniqueIdentifier>{dc4500a1-3168-41af-9b6a-7a1298a4c3bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting">
+      <UniqueIdentifier>{d55b8b8c-cba2-4a50-80ac-592ec1faa483}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
