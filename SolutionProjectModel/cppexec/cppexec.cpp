@@ -141,6 +141,17 @@ int _wmain(int argc, wchar_t** argv)
 
     if (cmdargs.test)
     {
+        RegisterDynamicTest(new testing::DynamicTestInfo("suite2", "test3",
+            [](testing::DynamicTestInfo& test)
+            {
+                //EXPECT_TRUE(false);
+                EXPECT_TRUE(true);
+                //throw exception("ups... I did it again");
+            }
+            ,
+            __FILE__, __LINE__
+        ));
+
         testing::InitGoogleTest(&argc, argv);
         return RUN_ALL_TESTS();
     }
@@ -306,9 +317,11 @@ int wmain(int argc, wchar_t** argv)
     }
 }
 
-TEST(testsuite, testcase)
+TEST(NormalGoogleSuite, NormalGoogleTest2)
 {
+
 }
+
 
 volatile static const char* gtestMarker = R"(
 Following data is just a dummy data for google unit test detection
