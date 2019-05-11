@@ -41,6 +41,7 @@ public:
         : out_handle_(OutHandle::handle())
         , mutex_(ConsoleMutex::mutex())
     {
+        set_pattern("%v");      //Output only message itself, so can be used for console printing
         set_color_mode_(mode);
         colors_[level::trace] = WHITE;
         colors_[level::debug] = CYAN;

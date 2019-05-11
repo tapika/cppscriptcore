@@ -9,6 +9,7 @@
 
 using namespace std;
 using namespace filesystem;
+using namespace spdlog;
 
 class CommandLineArguments : public ReflectClassT<CommandLineArguments>
 {
@@ -125,13 +126,12 @@ int _wmain(int argc, wchar_t** argv)
 
     if(scriptToRun.empty() && !cmdargs.location)
     {
-        spdlog::set_pattern("%v");
-        spdlog::info("Usage: {0} [options] <.cpp script to run>\r\n", exePath.filename().u8string().c_str());
-        printf("where options could be:\r\n");
-        printf("\r\n");
-        printf("    -local          - Keep generated project next to script.\r\n");
-        printf("    -vs <version>   - use specific Visual studio (2019, 2017...)\r\n");
-        printf("    -location       - Only display where Visual studio is located\r\n");
+        info("Usage: {0} [options] <.cpp script to run>", exePath.filename().u8string().c_str());
+        info("where options could be:");
+        info("");
+        info("    -local          - Keep generated project next to script.");
+        info("    -vs <version>   - use specific Visual studio (2019, 2017...)");
+        info("    -location       - Only display where Visual studio is located");
         return -2;
     }
 
