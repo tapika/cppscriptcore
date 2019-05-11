@@ -119,6 +119,162 @@
     <ClInclude Include="logTesting\gtest\internal\gtest-type-util.h">
       <Filter>logTesting\gtest\internal</Filter>
     </ClInclude>
+    <ClInclude Include="logTesting\spdlog\async.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\async_logger.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\common.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\formatter.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\logger.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\spdlog.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\tweakme.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\version.h">
+      <Filter>logTesting\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\async_logger_impl.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\circular_q.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\console_globals.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\file_helper.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\fmt_helper.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\log_msg.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\logger_impl.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\mpmc_blocking_q.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\null_mutex.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\os.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\pattern_formatter.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\periodic_worker.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\registry.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\details\thread_pool.h">
+      <Filter>logTesting\spdlog\details</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bin_to_hex.h">
+      <Filter>logTesting\spdlog\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\fmt.h">
+      <Filter>logTesting\spdlog\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\ostr.h">
+      <Filter>logTesting\spdlog\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\chrono.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\color.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\core.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\format.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\format-inl.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\locale.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\ostream.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\posix.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\printf.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\ranges.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\fmt\bundled\time.h">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\android_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\ansicolor_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\base_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\basic_file_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\daily_file_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\dist_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\msvc_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\null_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\ostream_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\rotating_file_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\stdout_color_sinks.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\stdout_sinks.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\syslog_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\systemd_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\spdlog\sinks\wincolor_sink.h">
+      <Filter>logTesting\spdlog\sinks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">
@@ -133,6 +289,21 @@
     <Filter Include="logTesting\gtest\internal">
       <UniqueIdentifier>{406763bc-5a1c-43fe-8f6c-53d79102b10b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="logTesting\spdlog">
+      <UniqueIdentifier>{59a2c522-071e-456f-b689-d5b4ba09fc68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting\spdlog\details">
+      <UniqueIdentifier>{d7c87920-dbec-4c61-96e9-abd91d974e4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting\spdlog\fmt">
+      <UniqueIdentifier>{ff06b098-7e7f-471f-80cd-db5e0334a264}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting\spdlog\fmt\bundled">
+      <UniqueIdentifier>{9c146ade-259a-419c-b293-42d8426a1f98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting\spdlog\sinks">
+      <UniqueIdentifier>{96a4da7c-7137-4a17-97f3-7774e8986d24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\pugixml\pugixml.natvis">
@@ -143,6 +314,9 @@
     <None Include="packages.config" />
     <None Include="logTesting\gtest\internal\gtest-type-util.h.pump">
       <Filter>logTesting\gtest\internal</Filter>
+    </None>
+    <None Include="logTesting\spdlog\fmt\bundled\LICENSE.rst">
+      <Filter>logTesting\spdlog\fmt\bundled</Filter>
     </None>
   </ItemGroup>
 </Project>
