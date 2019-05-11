@@ -59,7 +59,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;SPM_EXPORT;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GTEST_CREATE_SHARED_LIBRARY;_CRT_SECURE_NO_WARNINGS;SPM_EXPORT;_WINDOWS;_USRDLL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>packages\boost.1.69.0.0\lib\native\include;logTesting</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -82,7 +82,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;SPM_EXPORT;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GTEST_CREATE_SHARED_LIBRARY;_CRT_SECURE_NO_WARNINGS;SPM_EXPORT;_WINDOWS;_USRDLL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>packages\boost.1.69.0.0\lib\native\include;logTesting</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -156,6 +156,25 @@
     <ClInclude Include="boolinq.h" />
     <ClInclude Include="CppReflect.h" />
     <ClInclude Include="EnumReflect.h" />
+    <ClInclude Include="logTesting\gtest\gtest-death-test.h" />
+    <ClInclude Include="logTesting\gtest\gtest-matchers.h" />
+    <ClInclude Include="logTesting\gtest\gtest-message.h" />
+    <ClInclude Include="logTesting\gtest\gtest-param-test.h" />
+    <ClInclude Include="logTesting\gtest\gtest-printers.h" />
+    <ClInclude Include="logTesting\gtest\gtest-spi.h" />
+    <ClInclude Include="logTesting\gtest\gtest-test-part.h" />
+    <ClInclude Include="logTesting\gtest\gtest-typed-test.h" />
+    <ClInclude Include="logTesting\gtest\gtest.h" />
+    <ClInclude Include="logTesting\gtest\gtest_pred_impl.h" />
+    <ClInclude Include="logTesting\gtest\gtest_prod.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-death-test-internal.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-filepath.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-internal.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-param-util.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-port-arch.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-port.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-string.h" />
+    <ClInclude Include="logTesting\gtest\internal\gtest-type-util.h" />
     <ClInclude Include="logTesting\src\gtest-internal-inl.h" />
     <ClInclude Include="MacroHelpers.h" />
     <ClInclude Include="pch.h" />
@@ -172,6 +191,7 @@
     <Natvis Include="..\pugixml\pugixml.natvis" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="logTesting\gtest\internal\gtest-type-util.h.pump" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

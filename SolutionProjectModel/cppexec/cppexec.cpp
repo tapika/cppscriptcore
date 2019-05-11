@@ -6,6 +6,7 @@
 #include <algorithm>                //transform
 #include <time.h>                   //time
 #include "spdlog/spdlog.h"
+#include "gtest/gtest.h"
 
 using namespace std;
 using namespace filesystem;
@@ -19,6 +20,8 @@ public:
         _local(false),
         _location(false),
         _time(false),
+        _test(false),
+        _tests(false),
         _vs(0)
     {
     
@@ -29,6 +32,8 @@ public:
         (bool)local,
         (bool)location,
         (bool)time,
+        (bool)test,
+        (bool)tests,
         (int)vs
     );
 };
@@ -73,7 +78,17 @@ int _wmain(int argc, wchar_t** argv)
             continue;
         }
 
-        string cmdarg(CW2A(arg + 1));
+        while (*arg == L'-' || *arg == L'/')
+            arg++;
+
+        string cmdarg((char*)CW2A(arg));
+
+        // E.g. --gtest_list_tests, --gtest_filter= ...
+        if (cmdarg.length() >= 6 && cmdarg.substr(0, 6) == "gtest_")
+        {
+            cmdargs.test = true;
+            break;
+        }
 
         if( cmdarg == "?" || cmdarg == "h")
         {
@@ -124,6 +139,12 @@ int _wmain(int argc, wchar_t** argv)
         } //for
     }
 
+    if (cmdargs.test)
+    {
+        testing::InitGoogleTest(&argc, argv);
+        return RUN_ALL_TESTS();
+    }
+
     if(scriptToRun.empty() && !cmdargs.location)
     {
         info("Usage: {0} [options] <.cpp script to run>", exePath.filename().u8string().c_str());
@@ -132,6 +153,8 @@ int _wmain(int argc, wchar_t** argv)
         info("    -local          - Keep generated project next to script.");
         info("    -vs <version>   - use specific Visual studio (2019, 2017...)");
         info("    -location       - Only display where Visual studio is located");
+        info("");
+        info("    -test           - run self-tests");
         return -2;
     }
 

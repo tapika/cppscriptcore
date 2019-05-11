@@ -62,6 +62,63 @@
     <ClInclude Include="logTesting\src\gtest-internal-inl.h">
       <Filter>logTesting</Filter>
     </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest_pred_impl.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest_prod.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-death-test.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-matchers.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-message.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-param-test.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-printers.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-spi.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-test-part.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\gtest-typed-test.h">
+      <Filter>logTesting\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-death-test-internal.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-filepath.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-internal.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-param-util.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-port.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-port-arch.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-string.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="logTesting\gtest\internal\gtest-type-util.h">
+      <Filter>logTesting\gtest\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pugixml">
@@ -69,6 +126,12 @@
     </Filter>
     <Filter Include="logTesting">
       <UniqueIdentifier>{d55b8b8c-cba2-4a50-80ac-592ec1faa483}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting\gtest">
+      <UniqueIdentifier>{845c7320-d9ea-4677-a032-ad5c95bb0aca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logTesting\gtest\internal">
+      <UniqueIdentifier>{406763bc-5a1c-43fe-8f6c-53d79102b10b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -78,5 +141,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="logTesting\gtest\internal\gtest-type-util.h.pump">
+      <Filter>logTesting\gtest\internal</Filter>
+    </None>
   </ItemGroup>
 </Project>
