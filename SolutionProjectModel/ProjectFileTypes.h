@@ -142,10 +142,16 @@ class SPM_DLLEXPORT ProjectGlobalConf : public ReflectClassT<ProjectGlobalConf>
 {
 public:
     REFLECTABLE(ProjectGlobalConf,
-        // This is typically non-configurable by end-user.
-        (CStringA)ProjectGuid,
-        (CStringA)ItemsProjectGuid,
+    // These are typically non-configurable by end-user.
         
+        // Shared items project specific
+        (CStringA)MSBuildAllProjects,
+        // Shared items project specific
+        (bool)HasSharedItems,
+
+        (CStringA)ProjectGuid,
+        // Shared items project specific
+        (CStringA)ItemsProjectGuid,
         (EKeyword)Keyword,
         (CStringW)WindowsTargetPlatformVersion
     );

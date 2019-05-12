@@ -719,8 +719,12 @@ bool Project::Save(const wchar_t* file)
 
     project();
 
-    if( projectType == projecttype_CppSharedItemsProject)
+    if (projectType == projecttype_CppSharedItemsProject)
+    {
+        Globals.MSBuildAllProjects = "$(MSBuildAllProjects);$(MSBuildThisFileFullPath)";
+        Globals.HasSharedItems = true;
         Globals.ItemsProjectGuid = GetGuid().c_str();
+    }
     else
         Globals.ProjectGuid = GetGuid().c_str();
     
