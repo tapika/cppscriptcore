@@ -101,41 +101,41 @@ public:
 //
 //  Visual Studio project tagging.
 //
-DECLARE_ENUM(EKeyword, "projecttype_",
+DECLARE_ENUM(EKeyword, "keyword_",
     //
     // For sub-folders for example (Also default value). Also for utility projects.
     //
-    projecttype_None = 0,
+    keyword_None = 0,
 
     //
     // Windows project (32 or 64 bit)
     //
-    projecttype_Win32Proj,
+    keyword_Win32Proj,
 
     //
     // Same as Win32Proj, for some reason exists as separate value
     //
-    projecttype_ManagedCProj,
+    keyword_ManagedCProj,
 
     //
     // Android project
     //
-    projecttype_Android,
+    keyword_Android,
 
     //
     // Windows application with MFC support
     //
-    projecttype_MFCProj,
+    keyword_MFCProj,
 
     //
     // Android packaging project (does not exists on file format level)
     //
-    projecttype_AntPackage,
+    keyword_AntPackage,
 
     /// <summary>
     /// Typically set for Android packaging project. (does not exists on file format level)
     /// </summary>
-    projecttype_GradlePackage
+    keyword_GradlePackage
 );
 
 class SPM_DLLEXPORT ProjectGlobalConf : public ReflectClassT<ProjectGlobalConf>
@@ -144,6 +144,8 @@ public:
     REFLECTABLE(ProjectGlobalConf,
         // This is typically non-configurable by end-user.
         (CStringA)ProjectGuid,
+        (CStringA)ItemsProjectGuid,
+        
         (EKeyword)Keyword,
         (CStringW)WindowsTargetPlatformVersion
     );

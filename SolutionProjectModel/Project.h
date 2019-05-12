@@ -5,6 +5,13 @@
 #include <functional>                       //std::functional
 #include <guiddef.h>                        //GUID
 
+
+typedef enum SPM_DLLEXPORT {
+    projecttype_Console,
+    projecttype_CppSharedItemsProject
+}EProjectType;
+
+
 //---------------------------------------------------------
 //  Project
 //---------------------------------------------------------
@@ -24,11 +31,12 @@ public:
     //
     std::wstring GetSaveDirectory();
     std::wstring GetProjectSaveLocation();
+    std::wstring GetProjectExtension();
 
     //
     // Clears existing project
     //
-    void New();
+    void New(EProjectType projectType = projecttype_Console);
 
     //
     // Loads .vcxproj file.
@@ -87,6 +95,8 @@ public:
 
 
 protected:
+    EProjectType projectType;
+
     // Project name, typically used to identify project within solution or specify saved filename if file is not specified during save.
     std::wstring name;
 

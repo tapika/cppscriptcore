@@ -71,9 +71,22 @@ wstring Project::GetSaveDirectory()
 wstring Project::GetProjectSaveLocation()
 {
     auto file = GetSaveDirectory();
-    file += L"\\" + name + L".vcxproj";
+    file += L"\\" + name + GetProjectExtension();
     return file;
 }
+
+std::wstring Project::GetProjectExtension()
+{
+    switch (projectType)
+    {
+        case projecttype_Console:
+        default:
+            return L".vcxproj";
+        case projecttype_CppSharedItemsProject:
+            return L".vcxitems";
+    }
+}
+
 
 
 void Project::SetVsVersion(int _vsVersion)
@@ -553,18 +566,33 @@ void Project::VisitConfigurations(std::function<void (VCConfiguration&)> visitCo
 //
 // Clears existing project
 //
-void Project::New()
+void Project::New(EProjectType _projectType)
 {
     // Reset parsing variables.
     markForPropertyGroup = projectGlobals = xml_node();
     
     xmldoc.reset();
     guid = GUID_NULL;
-    SetVsVersion(2017);     // May change without further notice
+    projectType = _projectType;
 
-    ReflectConnectChildren(nullptr);
-    Globals.Keyword = projecttype_Win32Proj;
-    Globals.WindowsTargetPlatformVersion = "10.0.17134.0";
+    switch (projectType)
+    {
+        case projecttype_Console:
+        {
+            SetVsVersion(2017);     // May change without further notice
+
+            ReflectConnectChildren(nullptr);
+
+            Globals.Keyword = keyword_Win32Proj;
+            Globals.WindowsTargetPlatformVersion = "10.0.17134.0";
+        }
+            break;
+
+        case projecttype_CppSharedItemsProject:
+            ReflectConnectChildren(nullptr);
+            break;
+    }
+
 }
 
 
@@ -618,13 +646,17 @@ pugi::xml_node Project::project()
     if (proj.empty())
     {
         proj = xmldoc.append_child(L"Project");
-        proj.append_attribute(L"DefaultTargets").set_value(L"Build");
+        if(projectType == projecttype_Console)
+            proj.append_attribute(L"DefaultTargets").set_value(L"Build");
         proj.append_attribute(L"xmlns").set_value(L"http://schemas.microsoft.com/developer/msbuild/2003");
     }
 
     // Project configurations
+
     xml_node itemGroup = proj.first_child();
-    if (itemGroup.empty())
+    bool needsSpecialTags = projectType == projecttype_Console;
+
+    if (needsSpecialTags && itemGroup.empty())
     {
         itemGroup = proj.append_child(L"ItemGroup");
         itemGroup.append_attribute(L"Label").set_value(L"ProjectConfigurations");
@@ -637,13 +669,16 @@ pugi::xml_node Project::project()
         if (projectGlobals.empty())
         {
             // Project globals (Guid, etc...)
-            projectGlobals = proj.insert_child_after(PropertyGroup, itemGroup);
+            if(itemGroup.empty())
+                projectGlobals = proj.append_child(PropertyGroup);
+            else
+                projectGlobals = proj.insert_child_after(PropertyGroup, itemGroup);
             projectGlobals.append_attribute(L"Label").set_value(L"Globals");
         }
     }
 
     // Magical xml imports.
-    if (markForPropertyGroup.empty())
+    if (needsSpecialTags && markForPropertyGroup.empty())
     {
         proj.append_child(L"Import").append_attribute(L"Project").set_value(Microsoft_Cpp_Default_props);
         proj.append_child(L"Import").append_attribute(L"Project").set_value(Microsoft_Cpp_props);
@@ -680,10 +715,14 @@ bool Project::Save(const wchar_t* file)
         guid = GUID_NULL;
     }
     else
-        fpath = name + L".vcxproj";
+        fpath = name + GetProjectExtension();
 
     project();
-    Globals.ProjectGuid = GetGuid().c_str();
+
+    if( projectType == projecttype_CppSharedItemsProject)
+        Globals.ItemsProjectGuid = GetGuid().c_str();
+    else
+        Globals.ProjectGuid = GetGuid().c_str();
     
     fpath = GetSaveDirectory() + L"\\" + fpath;
 
