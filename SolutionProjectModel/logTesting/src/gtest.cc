@@ -2583,8 +2583,31 @@ DynamicTestInfo::DynamicTestInfo(
 
 void DynamicTestInfo::TestBody()
 {
-    testBody(*this);
+    testBody(this);
 }
+
+ScriptBasedTestInfo::ScriptBasedTestInfo(
+    const std::filesystem::path& _filePath,
+    const std::filesystem::path& fromDir,
+    functionTestBody _testBody) :
+    DynamicTestInfo("", "", _testBody, _filePath.u8string().c_str(), 1)
+{
+    filePath = _filePath;
+
+    auto relPath = std::filesystem::relative(filePath, fromDir);
+
+    // Remove GTA's unsupported characters from path.
+    std::string dirSuite = replaceAll(replaceAll(relPath.parent_path().u8string(), "\\", "/"), ":", "");
+
+    if (dirSuite.length() == 0)
+        dirSuite = "tests";
+
+    test_suite_name_ = dirSuite;
+
+    // GTA at the moment does not support dot's in test name.
+    name_ = replaceAll(relPath.filename().u8string(), ".", "_");
+}
+
 
 // Destructs a TestInfo object.
 TestInfo::~TestInfo()

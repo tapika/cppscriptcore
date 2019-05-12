@@ -58,6 +58,7 @@
 #include <ostream>
 #include <type_traits>
 #include <vector>
+#include <filesystem>
 
 #include "gtest/internal/gtest-internal.h"
 #include "gtest/internal/gtest-string.h"
@@ -786,8 +787,8 @@ class GTEST_API_ TestInfo {
   }
 
   // These fields are immutable properties of the test.
-  const std::string test_suite_name_;    // test suite name
-  const std::string name_;               // Test name
+  std::string test_suite_name_;    // test suite name
+  std::string name_;               // Test name
   // Name of the parameter type, or NULL if this is not a typed or a
   // type-parameterized test.
   const std::unique_ptr<const ::std::string> type_param_;
@@ -818,7 +819,7 @@ class GTEST_API_ TestInfo {
 class GTEST_API_ DynamicTestInfo : public TestInfo, public internal::TestFactoryBase, public Test
 {
 public:
-    typedef std::function<void(DynamicTestInfo&)> functionTestBody;
+    typedef std::function<void(DynamicTestInfo*)> functionTestBody;
 
 
     DynamicTestInfo( 
@@ -843,6 +844,58 @@ public:
 
     virtual void TestBody();
     functionTestBody testBody;
+};
+
+
+template <typename T>
+std::basic_string<T> replaceAll(const std::basic_string<T>& s, const T* from, const T* to)
+{
+    auto length = std::char_traits<T>::length;
+    size_t toLen = length(to), fromLen = length(from), delta = toLen - fromLen;
+    bool pass = false;
+    std::string ns = s;
+
+    size_t newLen = ns.length();
+
+    for (bool estimate : { true, false })
+    {
+        size_t pos = 0;
+
+        for (; (pos = ns.find(from, pos)) != std::string::npos; pos++)
+        {
+            if (estimate)
+            {
+                newLen += delta;
+                pos += fromLen;
+            }
+            else
+            {
+                ns.replace(pos, fromLen, to);
+                pos += delta;
+            }
+        }
+
+        if (estimate)
+            ns.resize(newLen);
+    }
+
+    return ns;
+}
+
+//
+//  Script means that test location will be reported as first line of file path itself.
+//
+class GTEST_API_ ScriptBasedTestInfo : public DynamicTestInfo
+{
+public:
+    std::filesystem::path filePath;
+
+    ScriptBasedTestInfo(
+        const std::filesystem::path& filePath,
+        const std::filesystem::path& fromDir,
+        functionTestBody _testBody
+    );
+
 };
 
 

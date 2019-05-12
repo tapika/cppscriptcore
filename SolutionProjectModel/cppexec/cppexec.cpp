@@ -141,16 +141,28 @@ int _wmain(int argc, wchar_t** argv)
 
     if (cmdargs.test)
     {
-        RegisterDynamicTest(new testing::DynamicTestInfo("suite2", "test3",
-            [](testing::DynamicTestInfo& test)
-            {
-                //EXPECT_TRUE(false);
-                EXPECT_TRUE(true);
-                //throw exception("ups... I did it again");
-            }
-            ,
-            __FILE__, __LINE__
-        ));
+        auto testsDir = path(exeDir).append("tests");
+        if(!exists(testsDir))
+            testsDir = path(exeDir).append("SolutionProjectModel\\tests");
+
+        auto testLauncher = [](testing::DynamicTestInfo* _test)
+        {
+            auto test = dynamic_cast<testing::ScriptBasedTestInfo*>(_test);
+            //EXPECT_TRUE(false);
+            EXPECT_TRUE(true);
+            //throw exception("ups... I did it again");
+        };
+
+        for (auto& pit : recursive_directory_iterator(testsDir))
+        {
+            auto& filePath = pit.path();
+            auto relPath = relative(filePath, testsDir.parent_path());
+
+            if (is_directory(filePath))
+                continue;
+
+            RegisterDynamicTest(new testing::ScriptBasedTestInfo(filePath, testsDir.parent_path(), testLauncher));
+        }
 
         testing::InitGoogleTest(&argc, argv);
         return RUN_ALL_TESTS();
@@ -316,12 +328,6 @@ int wmain(int argc, wchar_t** argv)
         return -3;
     }
 }
-
-TEST(NormalGoogleSuite, NormalGoogleTest2)
-{
-
-}
-
 
 volatile static const char* gtestMarker = R"(
 Following data is just a dummy data for google unit test detection
