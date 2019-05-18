@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <algorithm>
 #include <windows.h>
 
 #ifdef SPM_EXPORT
@@ -49,4 +50,26 @@ std::string SPM_DLLEXPORT GetLastErrorMessageA( DWORD code = GetLastError() );
 void SPM_DLLEXPORT ThrowLastError( DWORD code = GetLastError() );
 
 int SPM_DLLEXPORT ExecCmd( const wchar_t* cmd );
+
+//
+//  Lowercases string
+//
+template <typename T>
+std::basic_string<T> lowercase(const std::basic_string<T>& s)
+{
+    std::basic_string<T> s2 = s;
+    std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    return std::move(s2);
+}
+
+//
+// Uppercases string
+//
+template <typename T>
+std::basic_string<T> uppercase(const std::basic_string<T>& s)
+{
+    std::basic_string<T> s2 = s;
+    std::transform(s2.begin(), s2.end(), s2.begin(), toupper);
+    return std::move(s2);
+}
 

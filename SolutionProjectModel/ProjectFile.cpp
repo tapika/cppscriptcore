@@ -88,6 +88,7 @@ EItemType ProjectFile::GetFromPath(const wchar_t* file)
         {"c", ClCompile},
         {"cxx", ClCompile},
         {"cpp", ClCompile},
+        {"cc", ClCompile},
         {"java", JavaCompile},
         {"template", GradleTemplate},
         {"rc", ResourceCompile},

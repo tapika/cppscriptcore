@@ -88,6 +88,11 @@ public:
     //
     ProjectFile* File(const wchar_t* file, bool add);
 
+    ProjectFile* AddFile(const wchar_t* file)
+    {
+        return File(file, true);
+    }
+
     //
     // Visits each project configuration, if configurationName & platformName - uses additional filtering, otherwise visits all configurations.
     //
