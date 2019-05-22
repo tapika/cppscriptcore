@@ -310,6 +310,15 @@ public:
     );
 };
 
+class SPM_DLLEXPORT LinkerInputConf : public ReflectClassT<LinkerInputConf>
+{
+public:
+    REFLECTABLE(LinkerInputConf,
+        (std::wstring)AdditionalDependencies
+    );
+};
+
+
 //
 // Character set - unicode MBCS.
 //
@@ -396,6 +405,14 @@ public:
     );
 };
 
+class SPM_DLLEXPORT CCppPreprocessorConf : public ReflectClassT<CCppPreprocessorConf>
+{
+public:
+    REFLECTABLE(CCppPreprocessorConf,
+        (std::wstring)PreprocessorDefinitions
+    );
+};
+
 class SPM_DLLEXPORT CCppLanguageConf : public ReflectClassT<CCppLanguageConf>
 {
 public:
@@ -411,6 +428,7 @@ public:
     REFLECTABLE(CCppConf,
         (CCppGeneralConf)General,
         (CCppOptimizationConf)Optimization,
+        (CCppPreprocessorConf)Preprocessor,
         (CCppLanguageConf)Language
     );
 };
@@ -457,7 +475,8 @@ class SPM_DLLEXPORT LinkerConf: public ReflectClassT<LinkerConf>
 public:
     REFLECTABLE(LinkerConf,
         (LinkerSystemConf)System,
-        (LinkerDebuggingConf)Debugging
+        (LinkerDebuggingConf)Debugging,
+        (LinkerInputConf)Input
     );
 };
 

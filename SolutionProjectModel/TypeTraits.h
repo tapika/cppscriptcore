@@ -171,6 +171,43 @@ public:
     }
 };
 
+template <>
+class TypeTraitsT<std::wstring> : public TypeTraits
+{
+public:
+    virtual const char* name() { return "std::wstring"; }
+
+    virtual CStringW ToString(void* pField)
+    {
+        return ((std::wstring*)pField)->c_str();
+    }
+
+    virtual void FromString(void* pField, const wchar_t* value)
+    {
+        *((std::wstring*)pField) = value;
+    }
+};
+
+
+template <>
+class TypeTraitsT<std::string> : public TypeTraits
+{
+public:
+    virtual const char* name() { return "std::string"; }
+
+    virtual CStringW ToString(void* pField)
+    {
+        return ((std::string*)pField)->c_str();
+    }
+
+    virtual void FromString(void* pField, const wchar_t* value)
+    {
+        auto& s = *((std::string*)pField);
+        s = CW2A(value);
+    }
+};
+
+
 
 template <>
 class TypeTraitsT<int> : public TypeTraits
