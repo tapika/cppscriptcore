@@ -393,7 +393,8 @@ public:
     REFLECTABLE(CCppGeneralConf,
 
         // Additional Include Directories, ';' separated list.
-        (CStringW)AdditionalIncludeDirectories
+        (CStringW)AdditionalIncludeDirectories,
+        (bool)MultiProcessorCompilation
     );
 };
 

@@ -15,7 +15,7 @@ void __declspec(dllexport) main(void)
 
     Project proj(L"gn");
 
-    proj.SetSaveDirectory(LR"(D:\Prototyping\crashpad\gn)");
+    proj.SetSaveDirectory(LR"(C:\PrototypingQuick\CrashPad\gn)");
     //proj.SetVsVersion(2019);
     proj.AddPlatform(L"x64");
 
@@ -216,6 +216,7 @@ void __declspec(dllexport) main(void)
             c.General.LinkIncremental = true;
             c.CCpp.Optimization.Optimization = optimization_Disabled;
             c.CCpp.General.AdditionalIncludeDirectories = L".;out";
+            c.CCpp.General.MultiProcessorCompilation = true;
             c.CCpp.Preprocessor.PreprocessorDefinitions = defines + L";%(PreprocessorDefinitions)";
             c.Linker.System.SubSystem = subsystem_Console;
             c.Linker.Input.AdditionalDependencies = L"ws2_32.lib;Shlwapi.lib;%(AdditionalDependencies)";
